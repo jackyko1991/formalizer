@@ -1,0 +1,36 @@
+{
+  "name": "formalizer-web",
+  "private": true,
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "node --test tests/*.test.ts",
+    "links": "node scripts/check-links.mjs"
+  },
+  "dependencies": {
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.43.15",
+    "@fontsource/noto-sans": "5.3.0",
+    "@fontsource/noto-sans-tc": "5.3.1",
+    "@fontsource/source-code-pro": "^5.3.1",
+    "@uiw/react-codemirror": "^4.25.12",
+    "katex": "^0.19.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/katex": "^0.16.8",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
+  }
+}

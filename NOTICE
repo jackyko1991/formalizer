@@ -1,0 +1,11 @@
+Formalizer
+Copyright 2026 Jacky Ko
+
+This product includes software developed as part of Tensorizer (https://github.com/jackyko1991/tensorizer),
+licensed under the Apache License, Version 2.0.
+
+Problem statements (added as the problems are imported) are taken from, with their original licences kept in each
+problem folder:
+- openai/NavierStokesAndEuler (https://github.com/openai/NavierStokesAndEuler), Apache License 2.0
+- openai/math (https://github.com/openai/math), Apache License 2.0
+- Google DeepMind, Formal Conjectures (https://github.com/google-deepmind/formal-conjectures), Apache License 2.0

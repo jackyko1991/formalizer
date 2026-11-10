@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "types": ["vite/client", "node"],
+    "paths": {
+      "@learnkit/web": ["../vendor/learnkit/web/src/index.ts"],
+      "react": ["./node_modules/@types/react"],
+      "react/*": ["./node_modules/@types/react/*"],
+      "katex": ["./node_modules/@types/katex"],
+      "@uiw/react-codemirror": ["./node_modules/@uiw/react-codemirror"],
+      "@codemirror/view": ["./node_modules/@codemirror/view"],
+      "@codemirror/state": ["./node_modules/@codemirror/state"]
+    }
+  },
+  "include": ["src", "tests", "vite.config.ts", "../vendor/learnkit/web/src"]
+}

@@ -1,0 +1,3 @@
+[submodule "vendor/learnkit"]
+	path = vendor/learnkit
+	url = git@github.com:jackyko1991/learnkit.git
