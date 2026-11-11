@@ -1,6 +1,7 @@
 import { go, RichText, Shell, Timeline, useLang, useRoute, type ShellPage } from "@learnkit/web";
 import { ERAS, HISTORY } from "./history";
 import ProblemPage from "./ProblemPage";
+import { RunnerButton, RunnerProvider } from "./RunnerPanel";
 import { PROBLEMS } from "./problems";
 import { STRINGS } from "./strings";
 
@@ -12,7 +13,11 @@ export default function App() {
   const route = useRoute("concept");
   const pages: ShellPage[] = [
     { id: "problems", label: t("page.problems") },
-    { id: "concept", label: t("page.concept"), tabs: [{ id: "history", label: t("tab.history") }] },
+    {
+      id: "concept",
+      label: t("page.concept"),
+      tabs: [{ id: "history", label: t("tab.history") }],
+    },
     { id: "skills", label: t("page.skills") },
     {
       id: "agents",
@@ -27,37 +32,34 @@ export default function App() {
   const history = route.page === "concept" && (route.tab ?? "history") === "history";
 
   return (
-    <Shell
-      brand={{
-        name: (
+    <RunnerProvider>
+      <Shell
+        brand={{
+          name: (
+            <>
+              Formal<span className="text-teal-200">izer</span>
+            </>
+          ),
+          tagline: t("tagline"),
+          logo: `${import.meta.env.BASE_URL}favicon.svg`,
+          home: () => go("concept", "history"),
+        }}
+        pages={pages}
+        route={route}
+        scrollId={SCROLL}
+        actions={<RunnerButton />}
+        footer={
           <>
-            Formal<span className="text-teal-200">izer</span>
+            <span>{t("footer.licence")}</span>
+            <a href={REPO_URL} target="_blank" rel="noreferrer" className="hover:text-gray-900">
+              GitHub
+            </a>
           </>
-        ),
-        tagline: t("tagline"),
-        logo: `${import.meta.env.BASE_URL}favicon.svg`,
-        home: () => go("concept", "history"),
-      }}
-      pages={pages}
-      route={route}
-      scrollId={SCROLL}
-      footer={
-        <>
-          <span>{t("footer.licence")}</span>
-          <a href={REPO_URL} target="_blank" rel="noreferrer" className="hover:text-gray-900">
-            GitHub
-          </a>
-        </>
-      }
-    >
-      {history ? (
-        <HistoryPage section={route.section} />
-      ) : route.page === "problems" ? (
-        <Problems id={route.tab} />
-      ) : (
-        <Coming />
-      )}
-    </Shell>
+        }
+      >
+        {history ? <HistoryPage section={route.section} /> : route.page === "problems" ? <Problems id={route.tab} /> : <Coming />}
+      </Shell>
+    </RunnerProvider>
   );
 }
 

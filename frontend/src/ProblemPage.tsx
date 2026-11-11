@@ -1,8 +1,9 @@
 import { RichText, useLang } from "@learnkit/web";
 import CodeMirror from "@uiw/react-codemirror";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Problem } from "./problems";
-import { check, fillFirstSorry, health, RunnerError, runnerUrl, type CheckResult, type Health } from "./runner";
+import { check, fillFirstSorry, RunnerError, type CheckResult } from "./runner";
+import { runnerReady, useRunner, type RunnerState } from "./RunnerPanel";
 
 const VERDICT_STYLE: Record<CheckResult["verdict"], string> = {
   proved: "border-green-200 bg-green-50 text-green-800",
@@ -19,8 +20,8 @@ export default function ProblemPage({ problem }: { problem: Problem }) {
   const [previous, setPrevious] = useState<CheckResult | null>(null);
   const [running, setRunning] = useState(false);
   const [problemText, setProblemText] = useState<string | null>(null);
-  const runner = useRunner();
-  const ready = runner !== "checking" && runner?.state === "ready";
+  const { runner, open: openRunner } = useRunner();
+  const ready = runnerReady(runner);
 
   useEffect(() => {
     setCode(problem.start);
@@ -60,7 +61,7 @@ export default function ProblemPage({ problem }: { problem: Problem }) {
         </div>
         <div className="overflow-hidden rounded-lg border border-gray-300 bg-white">
           <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-3 py-1.5 text-xs text-gray-500">
-            <span className="font-mono">Hello.lean</span>
+            <span className="font-mono">Proof.lean</span>
             <button
               onClick={() => (setCode(problem.start), setResult(null), setPrevious(null))}
               className="ml-auto rounded px-2 py-0.5 hover:bg-gray-200"
@@ -103,12 +104,14 @@ export default function ProblemPage({ problem }: { problem: Problem }) {
             </button>
           ))}
         </div>
-        <RunnerStatus runner={runner} />
+        <RunnerHint runner={runner} onOpen={openRunner} />
       </section>
 
       <section className="space-y-3" aria-live="polite" data-testid="result">
         {problemText && <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{problemText}</p>}
-        {!result && !problemText && <p className="rounded-lg border border-dashed border-gray-300 px-4 py-6 text-sm text-gray-500">{t("run.none")}</p>}
+        {!result && !problemText && (
+          <p className="rounded-lg border border-dashed border-gray-300 px-4 py-6 text-sm text-gray-500">{t("run.none")}</p>
+        )}
         {result && (
           <>
             <p className={`rounded-lg border px-4 py-3 text-sm font-medium ${VERDICT_STYLE[result.verdict]}`} data-testid="verdict">
@@ -138,14 +141,18 @@ export default function ProblemPage({ problem }: { problem: Problem }) {
                   <div className="p-3">
                     <p className="mb-1 text-[11px] font-semibold tracking-wide text-gray-500 uppercase">{t("goal.prove")}</p>
                     <p className="font-mono text-sm text-gray-900">⊢ {g.target}</p>
-                    {g.others.length > 0 && <p className="mt-1 text-xs text-gray-500">{t("goal.more").replace("{n}", String(g.others.length))}</p>}
+                    {g.others.length > 0 && (
+                      <p className="mt-1 text-xs text-gray-500">{t("goal.more").replace("{n}", String(g.others.length))}</p>
+                    )}
                   </div>
                 </div>
               </div>
             ))}
             {result.errors.map((e, i) => (
               <div key={i} className="rounded-lg border border-red-200 bg-white px-4 py-3" data-testid="lean-error">
-                <p className="text-xs font-medium text-red-700">{e.line ? t("error.at").replace("{line}", String(e.line)) : t("error.title")}</p>
+                <p className="text-xs font-medium text-red-700">
+                  {e.line ? t("error.at").replace("{line}", String(e.line)) : t("error.title")}
+                </p>
                 <pre className="mt-1 font-mono text-xs whitespace-pre-wrap text-gray-800">{e.message}</pre>
               </div>
             ))}
@@ -169,44 +176,16 @@ export default function ProblemPage({ problem }: { problem: Problem }) {
   );
 }
 
-/** Polls the local runner every few seconds: is Lean running on this computer, and is it warm? */
-function useRunner(): Health | null | "checking" {
-  const [state, setState] = useState<Health | null | "checking">("checking");
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => {
-    let alive = true;
-    const poll = async () => {
-      const h = await health();
-      if (!alive) return;
-      setState(h);
-      timer.current = setTimeout(poll, h?.state === "ready" ? 15000 : 3000);
-    };
-    void poll();
-    return () => {
-      alive = false;
-      clearTimeout(timer.current);
-    };
-  }, []);
-  return state;
-}
-
-function RunnerStatus({ runner }: { runner: Health | null | "checking" }) {
+/** A one-line pointer to the header's runner button while Lean isn't ready (the instructions live in its panel). */
+function RunnerHint({ runner, onOpen }: { runner: RunnerState; onOpen: () => void }) {
   const { t } = useLang();
-  if (runner === "checking") return null;
-  if (!runner)
-    return (
-      <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" data-testid="runner-offline">
-        <p className="font-medium">{t("runner.offline")}</p>
-        <p className="mt-1">{t("runner.start")}</p>
-        <pre className="mt-2 overflow-x-auto rounded bg-gray-900 px-3 py-2 font-mono text-xs text-gray-100">
-          {"git clone https://github.com/jackyko1991/formalizer\ncd formalizer && pixi run lean-build && pixi run runner"}
-        </pre>
-        <p className="mt-1 text-xs text-amber-800">{t("runner.where").replace("{url}", runnerUrl())}</p>
-      </div>
-    );
+  if (runner === "checking" || runnerReady(runner)) return null;
   return (
-    <p className="text-xs text-gray-500" data-testid="runner-status">
-      {t(`runner.state.${runner.state}`)} · {runner.runner === "lite" ? t("runner.lite") : t("runner.full")} · {runner.lean}
+    <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900" data-testid="runner-hint">
+      {runner ? t(`runner.state.${runner.state}`) : t("runner.offline")} ·{" "}
+      <button onClick={onOpen} className="font-medium underline underline-offset-2">
+        {t("runner.how")}
+      </button>
     </p>
   );
 }

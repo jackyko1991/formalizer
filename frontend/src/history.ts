@@ -48,6 +48,12 @@ export const HISTORY: TimelineCard[] = [
     id: "automath",
     era: "checkers",
     year: "1967",
+    image: {
+      src: "history/automath.webp",
+      alt: ["N. G. de Bruijn in 1947", "1947 年的 N. G. de Bruijn"],
+      credit: "Unknown photographer · Public domain · Wikimedia Commons",
+      creditUrl: "https://commons.wikimedia.org/wiki/File:Prof._dr._N._G._de_Bruyn,_1947.jpg",
+    },
     title: ["Automath: the first proof checker", "Automath：第一個證明檢查器"],
     body: [
       [
@@ -68,6 +74,14 @@ export const HISTORY: TimelineCard[] = [
     id: "mizar",
     era: "checkers",
     year: "1973",
+    image: {
+      src: "history/mizar.svg",
+      alt: [
+        "A Mizar proof written like prose, beside the shelves of the Mizar Mathematical Library",
+        "一段像散文一樣書寫的 Mizar 證明，旁邊是 Mizar 數學函式庫的書架",
+      ],
+      credit: "Drawing: Formalizer",
+    },
     title: ["Mizar: proofs that read like mathematics", "Mizar：讀起來像數學的證明"],
     body: [
       [
@@ -84,6 +98,14 @@ export const HISTORY: TimelineCard[] = [
     id: "lcf",
     era: "checkers",
     year: "1979",
+    image: {
+      src: "history/lcf.svg",
+      alt: [
+        "The LCF idea: tactics and automation outside, a small kernel inside that alone can create a theorem",
+        "LCF 的想法：戰術與自動化在外面，只有裡面的小核心能產生定理",
+      ],
+      credit: "Drawing: Formalizer",
+    },
     title: ["LCF: tactics, and a language built for proving", "LCF：戰術，以及為證明而生的語言"],
     body: [
       [
@@ -104,6 +126,12 @@ export const HISTORY: TimelineCard[] = [
     id: "coq",
     era: "checkers",
     year: "1989",
+    image: {
+      src: "history/coq.webp",
+      alt: ["Thierry Coquand in 2006", "2006 年的 Thierry Coquand"],
+      credit: "Andrej Bauer · CC BY-SA 2.5 si · Wikimedia Commons",
+      creditUrl: "https://commons.wikimedia.org/wiki/File:Thierry_Coquand_(cropped).jpg",
+    },
     title: ["Coq (now Rocq): propositions as types", "Coq（今名 Rocq）：命題即型別"],
     body: [
       [
@@ -124,6 +152,15 @@ export const HISTORY: TimelineCard[] = [
     id: "four-colour",
     era: "landmarks",
     year: "2005",
+    image: {
+      src: "history/four-colour.webp",
+      alt: [
+        "A 1976 postage meter strip from the University of Illinois reading “Four colors suffice”",
+        "1976 年伊利諾大學的郵資戳，寫著「四色足矣」",
+      ],
+      credit: "Smithsonian National Museum of American History · Public domain · Wikimedia Commons",
+      creditUrl: "https://commons.wikimedia.org/wiki/File:Postal_Meter_Strip_Honoring_the_Solution_of_the_Four_Color_Problem.jpg",
+    },
     title: ["The four colour theorem, checked in Coq", "四色定理，在 Coq 中驗證"],
     body: [
       [
@@ -131,12 +168,15 @@ export const HISTORY: TimelineCard[] = [
         "Appel 與 Haken 在 1976 年的證明依賴電腦檢查數百種構型，令許多數學家不安。Georges Gonthier 與 Benjamin Werner 在 Coq 中把整個證明（連同計算）形式化。",
       ],
       [
-        "After this, \"a computer was involved\" could mean *more* certainty, not less.",
+        'After this, "a computer was involved" could mean *more* certainty, not less.',
         "從此，「用了電腦」可以代表 *更* 可靠，而不是更不可靠。",
       ],
     ],
     sources: [
-      { label: "G. Gonthier, Formal Proof: The Four-Color Theorem, Notices AMS (2008)", url: "https://www.ams.org/notices/200811/tx081101382p.pdf" },
+      {
+        label: "G. Gonthier, Formal Proof: The Four-Color Theorem, Notices AMS (2008)",
+        url: "https://www.ams.org/notices/200811/tx081101382p.pdf",
+      },
       { label: "Four color theorem (Wikipedia)", url: "https://en.wikipedia.org/wiki/Four_color_theorem" },
     ],
   },
@@ -144,6 +184,12 @@ export const HISTORY: TimelineCard[] = [
     id: "odd-order",
     era: "landmarks",
     year: "2012",
+    image: {
+      src: "history/odd-order.webp",
+      alt: ["Walter Feit in 1970", "1970 年的 Walter Feit"],
+      credit: "Konrad Jacobs · CC BY-SA 2.0 de · Wikimedia Commons",
+      creditUrl: "https://commons.wikimedia.org/wiki/File:Walter_Feit.jpg",
+    },
     title: ["The odd order theorem", "奇數階定理"],
     body: [
       [
@@ -156,7 +202,10 @@ export const HISTORY: TimelineCard[] = [
       ],
     ],
     sources: [
-      { label: "Gonthier et al., A Machine-Checked Proof of the Odd Order Theorem (ITP 2013)", url: "https://inria.hal.science/hal-00816699" },
+      {
+        label: "Gonthier et al., A Machine-Checked Proof of the Odd Order Theorem (ITP 2013)",
+        url: "https://inria.hal.science/hal-00816699",
+      },
       { label: "Feit–Thompson theorem (Wikipedia)", url: "https://en.wikipedia.org/wiki/Feit%E2%80%93Thompson_theorem" },
     ],
   },
@@ -164,15 +213,24 @@ export const HISTORY: TimelineCard[] = [
     id: "kepler",
     era: "landmarks",
     year: "2014",
+    image: {
+      src: "history/kepler.webp",
+      alt: ["Cannonballs stacked in the face-centred cubic packing", "以面心立方方式堆疊的砲彈"],
+      credit: "Greg L · CC BY-SA 3.0 · Wikimedia Commons",
+      creditUrl: "https://commons.wikimedia.org/wiki/File:Cannonball_stack_with_FCC_unit_cell.jpg",
+    },
     title: ["Flyspeck: Kepler's conjecture", "Flyspeck：克卜勒猜想"],
     body: [
       [
-        "Thomas Hales proved in 1998 that oranges stacked the greengrocer's way are the densest packing of spheres, but referees said they were only \"99% certain\". He then led **Flyspeck**, which finished a formal proof in HOL Light and Isabelle in August 2014.",
+        'Thomas Hales proved in 1998 that oranges stacked the greengrocer\'s way are the densest packing of spheres, but referees said they were only "99% certain". He then led **Flyspeck**, which finished a formal proof in HOL Light and Isabelle in August 2014.',
         "Thomas Hales 在 1998 年證明：水果攤堆橘子的方式就是最密的球堆積，但審稿人只說「99% 確定」。於是他領導 **Flyspeck** 專案，於 2014 年 8 月在 HOL Light 與 Isabelle 中完成形式證明。",
       ],
     ],
     sources: [
-      { label: "Hales et al., A formal proof of the Kepler conjecture, Forum of Mathematics, Pi (2017)", url: "https://doi.org/10.1017/fmp.2017.1" },
+      {
+        label: "Hales et al., A formal proof of the Kepler conjecture, Forum of Mathematics, Pi (2017)",
+        url: "https://doi.org/10.1017/fmp.2017.1",
+      },
       { label: "Kepler conjecture (Wikipedia)", url: "https://en.wikipedia.org/wiki/Kepler_conjecture" },
     ],
   },
@@ -180,6 +238,11 @@ export const HISTORY: TimelineCard[] = [
     id: "lean",
     era: "lean",
     year: "2013",
+    image: {
+      src: "history/lean.svg",
+      alt: ["Lean's design: a small trusted kernel plus strong automation", "Lean 的設計：小而可信的核心，加上強大的自動化"],
+      credit: "Drawing: Formalizer",
+    },
     title: ["Lean is born", "Lean 誕生"],
     body: [
       [
@@ -196,6 +259,14 @@ export const HISTORY: TimelineCard[] = [
     id: "mathlib",
     era: "lean",
     year: "2017",
+    image: {
+      src: "history/mathlib.svg",
+      alt: [
+        "mathlib as one connected library: areas of mathematics built on shared foundations",
+        "mathlib 是一個相互連結的函式庫：各數學領域建立在共同的基礎上",
+      ],
+      credit: "Drawing: Formalizer",
+    },
     title: ["mathlib: one library for everyone", "mathlib：大家共用的一個函式庫"],
     body: [
       [
@@ -216,6 +287,12 @@ export const HISTORY: TimelineCard[] = [
     id: "nng",
     era: "lean",
     year: "2019",
+    image: {
+      src: "history/nng.webp",
+      alt: ["Kevin Buzzard in 2007", "2007 年的 Kevin Buzzard"],
+      credit: "Paula Buzzard · CC BY-SA 3.0 · Wikimedia Commons",
+      creditUrl: "https://commons.wikimedia.org/wiki/File:Kevin_buzzard_in_2007.jpg",
+    },
     title: ["The Natural Number Game", "自然數遊戲"],
     body: [
       [
@@ -232,6 +309,12 @@ export const HISTORY: TimelineCard[] = [
     id: "liquid-tensor",
     era: "lean",
     year: "2020–2022",
+    image: {
+      src: "history/liquid-tensor.webp",
+      alt: ["Peter Scholze in 2014", "2014 年的 Peter Scholze"],
+      credit: "George Bergman · CC BY-SA 4.0 · Wikimedia Commons",
+      creditUrl: "https://commons.wikimedia.org/wiki/File:Peter_Scholze_2014_cropped.jpg",
+    },
     title: ["The Liquid Tensor Experiment", "液態張量實驗"],
     body: [
       [
@@ -244,7 +327,10 @@ export const HISTORY: TimelineCard[] = [
       ],
     ],
     sources: [
-      { label: "P. Scholze, Liquid Tensor Experiment (Xena blog, 2020)", url: "https://xenaproject.wordpress.com/2020/12/05/liquid-tensor-experiment/" },
+      {
+        label: "P. Scholze, Liquid Tensor Experiment (Xena blog, 2020)",
+        url: "https://xenaproject.wordpress.com/2020/12/05/liquid-tensor-experiment/",
+      },
       { label: "Liquid Tensor Experiment repository", url: "https://github.com/leanprover-community/liquid" },
     ],
   },
@@ -252,6 +338,14 @@ export const HISTORY: TimelineCard[] = [
     id: "lean4",
     era: "lean",
     year: "2021–2023",
+    image: {
+      src: "history/lean4.svg",
+      alt: [
+        "Lean 4: a program, a theorem and a tactic in the same file and language",
+        "Lean 4：程式、定理與戰術寫在同一個檔案、同一種語言裡",
+      ],
+      credit: "Drawing: Formalizer",
+    },
     title: ["Lean 4: a prover that is also a programming language", "Lean 4：同時是程式語言的證明器"],
     body: [
       [
@@ -272,6 +366,12 @@ export const HISTORY: TimelineCard[] = [
     id: "pfr",
     era: "lean",
     year: "2023",
+    image: {
+      src: "history/pfr.webp",
+      alt: ["Terence Tao in 2026", "2026 年的陶哲軒"],
+      credit: "Institute for Pure & Applied Mathematics · CC BY 4.0 · Wikimedia Commons",
+      creditUrl: "https://commons.wikimedia.org/wiki/File:Terence_Tao_at_IPAM%27s_Fireside_Chat_2026_(50m16s)_(cropped).jpg",
+    },
     title: ["PFR: a new theorem, formalized in three weeks", "PFR：新定理，三週形式化"],
     body: [
       [
@@ -284,7 +384,10 @@ export const HISTORY: TimelineCard[] = [
       ],
     ],
     sources: [
-      { label: "T. Tao, Formalizing the proof of PFR in Lean4 using Blueprint (2023)", url: "https://terrytao.wordpress.com/2023/11/18/formalizing-the-proof-of-pfr-in-lean4-using-blueprint-a-short-tour/" },
+      {
+        label: "T. Tao, Formalizing the proof of PFR in Lean4 using Blueprint (2023)",
+        url: "https://terrytao.wordpress.com/2023/11/18/formalizing-the-proof-of-pfr-in-lean4-using-blueprint-a-short-tour/",
+      },
       { label: "PFR project", url: "https://github.com/teorth/pfr" },
     ],
   },
@@ -292,6 +395,12 @@ export const HISTORY: TimelineCard[] = [
     id: "flt",
     era: "lean",
     year: "2024",
+    image: {
+      src: "history/flt.webp",
+      alt: ["Andrew Wiles in 1995", "1995 年的 Andrew Wiles"],
+      credit: "Klaus Barner · CC BY-SA 3.0 · Wikimedia Commons",
+      creditUrl: "https://commons.wikimedia.org/wiki/File:Andrew_Wiles,_Boston_1995.JPG",
+    },
     title: ["Fermat's Last Theorem project", "費馬最後定理計畫"],
     body: [
       [
@@ -308,6 +417,11 @@ export const HISTORY: TimelineCard[] = [
     id: "etp",
     era: "lean",
     year: "2024–2025",
+    image: {
+      src: "history/etp.svg",
+      alt: ["A corner of the implication table: which laws imply which", "蘊含表的一角：哪些定律蘊含哪些定律"],
+      credit: "Drawing: Formalizer",
+    },
     title: ["The Equational Theories Project", "等式理論計畫"],
     body: [
       [
@@ -324,6 +438,11 @@ export const HISTORY: TimelineCard[] = [
     id: "alphaproof",
     era: "ai",
     year: "2024",
+    image: {
+      src: "history/alphaproof.svg",
+      alt: ["A search over Lean proof steps: one path is accepted by Lean", "在 Lean 證明步驟中搜尋：其中一條路徑被 Lean 接受"],
+      credit: "Drawing: Formalizer",
+    },
     title: ["AlphaProof: olympiad proofs in Lean", "AlphaProof：以 Lean 寫的奧數證明"],
     body: [
       [
@@ -332,13 +451,21 @@ export const HISTORY: TimelineCard[] = [
       ],
     ],
     sources: [
-      { label: "Google DeepMind: AI achieves silver-medal standard solving IMO problems (2024)", url: "https://deepmind.google/discover/blog/ai-solves-imo-problems-at-silver-medal-level/" },
+      {
+        label: "Google DeepMind: AI achieves silver-medal standard solving IMO problems (2024)",
+        url: "https://deepmind.google/discover/blog/ai-solves-imo-problems-at-silver-medal-level/",
+      },
     ],
   },
   {
     id: "formal-conjectures",
     era: "ai",
     year: "2025",
+    image: {
+      src: "history/formal-conjectures.svg",
+      alt: ["Open problems stated in Lean, each still ending in sorry", "以 Lean 陳述的未解問題，每一個都還以 sorry 結尾"],
+      credit: "Drawing: Formalizer",
+    },
     title: ["Formal Conjectures: open problems, stated in Lean", "Formal Conjectures：以 Lean 寫下的未解問題"],
     body: [
       [
@@ -348,13 +475,21 @@ export const HISTORY: TimelineCard[] = [
     ],
     sources: [
       { label: "Formal Conjectures", url: "https://google-deepmind.github.io/formal-conjectures/" },
-      { label: "Navier–Stokes statement (Formal Conjectures)", url: "https://github.com/google-deepmind/formal-conjectures/blob/8bf45ed70d48b2b2a501de9c00b26bfa38c573ee/FormalConjectures/Millenium/NavierStokes.lean" },
+      {
+        label: "Navier–Stokes statement (Formal Conjectures)",
+        url: "https://github.com/google-deepmind/formal-conjectures/blob/8bf45ed70d48b2b2a501de9c00b26bfa38c573ee/FormalConjectures/Millenium/NavierStokes.lean",
+      },
     ],
   },
   {
     id: "imo-2025",
     era: "ai",
     year: "2025",
+    image: {
+      src: "history/imo-2025.svg",
+      alt: ["IMO 2025: Lean proofs for five of the six problems", "IMO 2025：六題中有五題有 Lean 證明"],
+      credit: "Drawing: Formalizer",
+    },
     title: ["IMO 2025: gold-medal level, with formal proofs", "IMO 2025：金牌水準，並有形式證明"],
     body: [
       [
@@ -371,6 +506,14 @@ export const HISTORY: TimelineCard[] = [
     id: "comparator",
     era: "ai",
     year: "2025–2026",
+    image: {
+      src: "history/comparator.svg",
+      alt: [
+        "Comparator's three checks inside a sandbox: same statement, standard axioms, a second kernel",
+        "Comparator 在沙盒中的三項檢查：相同陳述、標準公理、第二個核心",
+      ],
+      credit: "Drawing: Formalizer",
+    },
     title: ["Comparator: checking a proof you didn't write", "Comparator：檢查不是你寫的證明"],
     body: [
       [
@@ -382,14 +525,17 @@ export const HISTORY: TimelineCard[] = [
         "Formalizer 也這樣批改每一題：陳述就是測試，核心就是閱卷人。",
       ],
     ],
-    sources: [
-      { label: "leanprover/comparator", url: "https://github.com/leanprover/comparator" },
-    ],
+    sources: [{ label: "leanprover/comparator", url: "https://github.com/leanprover/comparator" }],
   },
   {
     id: "openai-2026",
     era: "ai",
     year: "2026",
+    image: {
+      src: "history/openai-2026.svg",
+      alt: ["A velocity field, and the Lean statement certified for Navier–Stokes", "一個速度場，以及為 Navier–Stokes 認證的 Lean 陳述"],
+      credit: "Drawing: Formalizer",
+    },
     title: ["Lean certificates for Navier–Stokes and Euler", "Navier–Stokes 與 Euler 的 Lean 證書"],
     body: [
       [

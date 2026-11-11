@@ -1,5 +1,6 @@
 // The History page and UI strings: complete in English and Traditional Chinese, sourced. Run: npm test
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import { test } from "node:test";
 import { ERAS, HISTORY } from "../src/history.ts";
 import { LANGS, STRINGS } from "../src/strings.ts";
@@ -7,7 +8,9 @@ import { LANGS, STRINGS } from "../src/strings.ts";
 const filled = (row: readonly string[]) => row.length === LANGS.length && row.every((s) => s.trim().length > 0);
 
 test("every UI string has English and Traditional Chinese", () => {
-  const missing = Object.entries(STRINGS).filter(([, row]) => !filled(row)).map(([k]) => k);
+  const missing = Object.entries(STRINGS)
+    .filter(([, row]) => !filled(row))
+    .map(([k]) => k);
   assert.deepEqual(missing, []);
 });
 
@@ -43,5 +46,16 @@ test("inline code and maths are balanced in every text", () => {
   for (const s of texts) {
     assert.equal((s.match(/`/g) ?? []).length % 2, 0, `unbalanced \` in: ${s.slice(0, 60)}`);
     assert.equal((s.replace(/\\\$/g, "").match(/\$/g) ?? []).length % 2, 0, `unbalanced $ in: ${s.slice(0, 60)}`);
+  }
+});
+
+test("every history card has a picture on disk, with alt text; photos credit and link their source", () => {
+  for (const c of HISTORY) {
+    assert.ok(c.image, `${c.id}: no picture`);
+    const { src, alt, credit, creditUrl } = c.image;
+    assert.ok(existsSync(new URL(`../public/${src}`, import.meta.url)), `${c.id}: missing public/${src}`);
+    assert.ok(filled(alt), `${c.id}: alt text`);
+    assert.ok(credit.trim(), `${c.id}: credit`);
+    if (src.endsWith(".webp")) assert.match(creditUrl ?? "", /^https:\/\/commons\.wikimedia\.org\/wiki\/File:/, `${c.id}: source link`);
   }
 });
