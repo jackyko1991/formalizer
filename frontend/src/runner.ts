@@ -46,7 +46,27 @@ export interface CheckResult {
   axioms: Record<string, string[]>;
   /** what the theorems depend on (null when the runner couldn't draw it) */
   graph?: Graph | null;
+  /** with `decls`: every declaration of the code and its status (the research workspace's blueprint) */
+  decls?: Decl[];
   ms: number;
+}
+
+/** A declaration of the checked code, from `#decl_status` (lean/Formalizer/DepGraph.lean) and backend/check.py. */
+export interface Decl {
+  name: string;
+  kind: "theorem" | "def" | "axiom" | "inductive";
+  /** lines in the checked (joined) code */
+  line: number;
+  endLine: number;
+  /** its own proof uses `sorry` */
+  sorry: boolean;
+  /** every axiom it rests on, through the other declarations too */
+  axioms: string[];
+  /** the declarations of the code it uses */
+  uses: string[];
+  /** error: Lean rejects it · sorry: its own proof has one · depends: rests on a sorry or a non-standard axiom ·
+   * proved: standard axioms only · def: a definition or type */
+  status: "proved" | "sorry" | "depends" | "error" | "def";
 }
 
 export interface GraphNode {
@@ -79,13 +99,13 @@ export async function health(signal?: AbortSignal): Promise<Health | null> {
   }
 }
 
-export async function check(code: string, theorems: string[], statements: string[]): Promise<CheckResult> {
+export async function check(code: string, theorems: string[], statements: string[], decls = false): Promise<CheckResult> {
   let res: Response;
   try {
     res = await fetch(`${runnerUrl()}/api/check`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, theorems, statements }),
+      body: JSON.stringify({ code, theorems, statements, decls }),
     });
   } catch {
     throw new RunnerError("offline");
