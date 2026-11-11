@@ -1,1 +1,11 @@
 import Formalizer.Hello
+import Formalizer.Pages.Method
+import Formalizer.Pages.Feynman
+import Formalizer.Pages.LeanMaths
+import Formalizer.Pages.Kernel
+import Formalizer.Pages.Limits
+import Formalizer.Pages.Tactics
+import Formalizer.Pages.Search
+import Formalizer.Pages.Structure
+import Formalizer.Pages.Errors
+import Formalizer.Pages.Verify

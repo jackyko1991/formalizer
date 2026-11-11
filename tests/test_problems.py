@@ -1,6 +1,7 @@
-"""The tutorial track (problems/tutorial.json): every problem is well formed, and with real Lean its starting file
-is incomplete, its reference solution is proved, and pressing its chips in order (as the page does) reaches a proof.
-The Lean part is skipped when the toolchain or the built REPL is missing; CI builds both."""
+"""Every problem file in problems/ (one per topic: tutorial.json, geometry.json, linear-algebra.json): each problem is
+well formed, and with real Lean its starting file is incomplete, its reference solution is proved, and pressing its
+chips in order (as the page does) reaches a proof. The Lean part is skipped when the toolchain or the built REPL is
+missing; CI builds both."""
 
 import json
 import re
@@ -11,7 +12,8 @@ import pytest
 from tests.test_runner import REPL, client  # noqa: F401 (the shared runner fixture)
 
 ROOT = Path(__file__).resolve().parents[1]
-PROBLEMS = json.loads((ROOT / "problems" / "tutorial.json").read_text())
+FILES = {f.stem: json.loads(f.read_text()) for f in sorted((ROOT / "problems").glob("*.json"))}
+PROBLEMS = [p for problems in FILES.values() for p in problems]
 IDS = [p["id"] for p in PROBLEMS]
 SORRY = re.compile(r"\bsorry\b")
 
@@ -28,7 +30,8 @@ def insert_chip(code: str, chip: str, step: bool) -> str:
 
 
 def test_problems_are_well_formed():
-    assert len(IDS) == len(set(IDS)) and len(PROBLEMS) >= 15
+    assert set(FILES) == {"tutorial", "geometry", "linear-algebra"}, "a new topic also needs frontend/src/problems.ts"
+    assert len(IDS) == len(set(IDS)) and len(FILES["tutorial"]) >= 15
     for p in PROBLEMS:
         assert re.fullmatch(r"[a-z0-9-]+", p["id"]), p["id"]
         assert p["level"] in ("L1", "L2", "L3") and p["runner"] == "lite"
@@ -39,10 +42,11 @@ def test_problems_are_well_formed():
             assert s in p["start"] and s in p["solution"], f"{p['id']}: statement missing"
         assert set(p["steps"]) <= set(p["tactics"]), p["id"]
         assert "import" not in p["start"], f"{p['id']}: the Lite track is core Lean only"
-    levels = [p["level"] for p in PROBLEMS]
-    assert levels == sorted(levels), "problems are listed level by level"
+    for name, problems in FILES.items():
+        levels = [p["level"] for p in problems]
+        assert levels == sorted(levels), f"{name}: problems are listed level by level"
     for level in ("L1", "L2", "L3"):
-        assert levels.count(level) >= 3, level
+        assert [p["level"] for p in FILES["tutorial"]].count(level) >= 3, level
 
 
 def check(client, p, code):  # noqa: F811

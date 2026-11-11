@@ -4,16 +4,20 @@
  * Text is [English, Traditional Chinese].
  */
 import type { Localized } from "@learnkit/web";
-import data from "../../problems/tutorial.json" with { type: "json" };
+import geometry from "../../problems/geometry.json" with { type: "json" };
+import linearAlgebra from "../../problems/linear-algebra.json" with { type: "json" };
+import tutorial from "../../problems/tutorial.json" with { type: "json" };
 
 export type Level = "L1" | "L2" | "L3";
 export const LEVELS: Level[] = ["L1", "L2", "L3"];
 
-export type Category = "tutorial" | "research";
+export type Category = "tutorial" | "geometry" | "linalg" | "research";
 
 /** Topics of the library, in order. The research showcase fills in with the Full runner (Mathlib). */
 export const CATEGORIES: { id: Category; icon: string; title: Localized; empty?: Localized }[] = [
   { id: "tutorial", icon: "⊢", title: ["Tutorial track", "教學路線"] },
+  { id: "geometry", icon: "△", title: ["Geometry", "幾何"] },
+  { id: "linalg", icon: "⊞", title: ["Linear algebra", "線性代數"] },
   {
     id: "research",
     icon: "∑",
@@ -49,4 +53,12 @@ export interface Problem {
   solution: string;
 }
 
-export const PROBLEMS: Problem[] = (data as Omit<Problem, "category">[]).map((p) => ({ category: "tutorial", ...p }));
+/** One file per topic in problems/, all checked the same way by tests/test_problems.py. */
+const FILES: [Category, unknown[]][] = [
+  ["tutorial", tutorial],
+  ["geometry", geometry],
+  ["linalg", linearAlgebra],
+];
+export const PROBLEMS: Problem[] = FILES.flatMap(([category, list]) =>
+  (list as Omit<Problem, "category">[]).map((p) => ({ ...p, category })),
+);
