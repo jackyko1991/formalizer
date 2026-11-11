@@ -25,6 +25,20 @@ that statement with the standard axioms (`propext`, `Quot.sound`, `Classical.cho
 Lean runs **on your own computer** (a Docker runner, or a Lean toolchain for developers); the site never sends
 your proofs to a hosted server.
 
+## Run locally
+
+The problems need a Lean runner on your computer. Install Lean's installer [elan](https://lean-lang.org/install/)
+and [pixi](https://pixi.sh), then:
+
+```sh
+git clone https://github.com/jackyko1991/formalizer && cd formalizer
+pixi run lean-build   # builds the Lean project and the REPL (the first time takes a while)
+pixi run runner       # the runner on http://localhost:8790
+```
+
+Then open https://jackyko1991.github.io/formalizer/: the chip at the top right turns green when the site finds the
+runner. Nothing is sent anywhere else.
+
 ## Develop
 
 ```sh
