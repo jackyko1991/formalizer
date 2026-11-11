@@ -104,7 +104,16 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
   const [previous, setPrevious] = useState<CheckResult | null>(null);
   const [running, setRunning] = useState(false);
   const [problemText, setProblemText] = useState<string | null>(null);
-  const [lowerTab, setLowerTab] = useState<"statement" | "hint" | "graph">("statement");
+  const [lowerTab, setLowerTab] = useState<"statement" | "hint">("statement");
+  // results: Lean's messages, or the dependency graph (shown by itself once the proof is done); ⤢ makes it full-page
+  const [resultTab, setResultTab] = useState<"messages" | "graph">("messages");
+  const [graphBig, setGraphBig] = useState(false);
+  useEffect(() => {
+    if (!graphBig) return;
+    const key = (e: KeyboardEvent) => e.key === "Escape" && setGraphBig(false);
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, [graphBig]);
   const [mobileTab, setMobileTab] = useState<MobileTab>("problem");
   const onPhone = (tab: MobileTab, display = "xl:block") => (mobileTab === tab ? "" : `hidden ${display}`);
   const { runner, open: openRunner } = useRunner();
@@ -125,6 +134,7 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
       setWhere(() => joined.where);
       setPrevious(result);
       setResult(next);
+      setResultTab(next.verdict === "proved" && next.graph ? "graph" : "messages");
       setMobileTab((tab) => (tab === "problem" ? "result" : tab));
     } catch (e) {
       setProblemText(e instanceof RunnerError && e.message === "offline" ? t("run.offline") : String(e instanceof Error ? e.message : e));
@@ -199,7 +209,7 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
 
         <div className="space-y-4 bg-gray-50/60 p-5 xl:min-h-0 xl:flex-1 xl:overflow-y-auto">
           <div role="tablist" className="flex gap-1">
-            {(["statement", "hint", "graph"] as const).map((tab) => (
+            {(["statement", "hint"] as const).map((tab) => (
               <button
                 key={tab}
                 role="tab"
@@ -225,14 +235,6 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
                 {t("statement.checked")} <span className="font-mono text-gray-700">{problem.theorems.join(", ")}</span>
               </p>
             </div>
-          ) : lowerTab === "graph" ? (
-            result?.graph ? (
-              <DepGraph graph={result.graph} />
-            ) : (
-              <p className="rounded-lg border border-dashed border-gray-300 px-4 py-6 text-sm text-gray-500" data-testid="graph-empty">
-                {t(result ? "graph.unavailable" : "graph.none")}
-              </p>
-            )
           ) : (
             <p className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm leading-relaxed text-gray-700" data-testid="hint">
               <RichText text={pick(problem.hint)} />
@@ -451,45 +453,83 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
           >
             <div className={PANEL_HEAD}>
               <span className={PANEL_TITLE}>{t("panel.result")}</span>
+              <span className="ml-auto flex items-center gap-1" role="tablist">
+                {(["messages", "graph"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    role="tab"
+                    aria-selected={resultTab === tab}
+                    onClick={() => setResultTab(tab)}
+                    data-testid={`result-tab-${tab}`}
+                    className={`rounded px-2 py-0.5 ${resultTab === tab ? "bg-white font-medium text-(--lk-accent) shadow-sm ring-1 ring-gray-200" : "text-gray-500 hover:text-gray-800"}`}
+                  >
+                    {t(`result.${tab}`)}
+                  </button>
+                ))}
+                {resultTab === "graph" && result?.graph && (
+                  <button
+                    onClick={() => setGraphBig(true)}
+                    title={t("graph.big")}
+                    aria-label={t("graph.big")}
+                    className="rounded px-1.5 text-gray-500 hover:bg-gray-200 hover:text-gray-800"
+                  >
+                    ⤢
+                  </button>
+                )}
+              </span>
               {result && <span className="text-gray-500">{result.ms} ms</span>}
             </div>
             <div className="min-h-32 flex-1 space-y-2 overflow-auto p-3">
               {problemText && <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{problemText}</p>}
-              {!result && !problemText && <p className="text-xs text-gray-400">{t("run.none")}</p>}
+              {!result && !problemText && <p className="text-xs text-gray-400">{t(resultTab === "graph" ? "graph.none" : "run.none")}</p>}
               {result && (
                 <>
                   <p className={`rounded-lg border px-3 py-2 text-sm font-medium ${VERDICT_STYLE[result.verdict]}`} data-testid="verdict">
                     {t(`verdict.${result.verdict}`)}
                   </p>
-                  {result.errors.map((e, i) => (
-                    <div key={i} className="rounded-lg border border-red-200 bg-white px-3 py-2" data-testid="lean-error">
-                      <p className="text-xs font-medium text-red-700">
-                        {e.line ? t("error.at").replace("{file}", at(e.line).file).replace("{line}", at(e.line).line) : t("error.title")}
+                  {resultTab === "graph" ? (
+                    result.graph ? (
+                      <>
+                        <DepGraph graph={result.graph} />
+                        {result.verdict === "proved" && <NextProblem id={problem.id} onSelect={onSelect} />}
+                      </>
+                    ) : (
+                      <p className="text-xs text-gray-400" data-testid="graph-empty">
+                        {t("graph.unavailable")}
                       </p>
-                      <pre className="mt-1 font-mono text-xs whitespace-pre-wrap text-gray-800">{e.message}</pre>
-                    </div>
-                  ))}
-                  <Notes items={[...(result.infos ?? []), ...result.warnings]} at={at} />
-                  {Object.keys(result.axioms).length > 0 && (
-                    <p className="text-xs text-gray-500" data-testid="axioms">
-                      {t("axioms.label")}{" "}
-                      {Object.entries(result.axioms)
-                        .map(([name, list]) => `${name}: ${list.length ? list.join(", ") : t("axioms.none")}`)
-                        .join(" · ")}
-                    </p>
-                  )}
-                  {result.verdict === "error" && (
-                    <button onClick={() => setLowerTab("hint")} className="text-xs text-(--lk-accent) hover:underline">
-                      {t("hint.show")}
-                    </button>
-                  )}
-                  {result.graph && (
-                    <button
-                      onClick={() => (setLowerTab("graph"), setMobileTab("problem"))}
-                      className="block text-xs text-(--lk-accent) hover:underline"
-                    >
-                      {t("graph.open")} →
-                    </button>
+                    )
+                  ) : (
+                    <>
+                      {result.errors.map((e, i) => (
+                        <div key={i} className="rounded-lg border border-red-200 bg-white px-3 py-2" data-testid="lean-error">
+                          <p className="text-xs font-medium text-red-700">
+                            {e.line
+                              ? t("error.at").replace("{file}", at(e.line).file).replace("{line}", at(e.line).line)
+                              : t("error.title")}
+                          </p>
+                          <pre className="mt-1 font-mono text-xs whitespace-pre-wrap text-gray-800">{e.message}</pre>
+                        </div>
+                      ))}
+                      <Notes items={[...(result.infos ?? []), ...result.warnings]} at={at} />
+                      {Object.keys(result.axioms).length > 0 && (
+                        <p className="text-xs text-gray-500" data-testid="axioms">
+                          {t("axioms.label")}{" "}
+                          {Object.entries(result.axioms)
+                            .map(([name, list]) => `${name}: ${list.length ? list.join(", ") : t("axioms.none")}`)
+                            .join(" · ")}
+                        </p>
+                      )}
+                      {result.verdict === "error" && (
+                        <button onClick={() => setLowerTab("hint")} className="text-xs text-(--lk-accent) hover:underline">
+                          {t("hint.show")}
+                        </button>
+                      )}
+                      {result.graph && (
+                        <button onClick={() => setResultTab("graph")} className="block text-xs text-(--lk-accent) hover:underline">
+                          {t("graph.open")} →
+                        </button>
+                      )}
+                    </>
                   )}
                   {result.verdict === "proved" && <NextProblem id={problem.id} onSelect={onSelect} />}
                 </>
@@ -498,6 +538,26 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
           </section>
         </div>
       </section>
+      {graphBig && result?.graph && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-white" role="dialog" aria-label={t("tab.graph")} data-testid="graph-full">
+          <div className="flex h-11 shrink-0 items-center gap-3 border-b border-gray-200 bg-gray-50 px-4 text-sm">
+            <span className="font-semibold text-gray-800">{t("tab.graph")}</span>
+            <span className="truncate text-gray-500">
+              <RichText text={pick(problem.title)} />
+            </span>
+            <button
+              onClick={() => setGraphBig(false)}
+              title={t("graph.small")}
+              className="ml-auto rounded px-2 py-0.5 text-gray-600 hover:bg-gray-200"
+            >
+              ⤡ {t("graph.small")}
+            </button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-auto p-6">
+            <DepGraph graph={result.graph} />
+          </div>
+        </div>
+      )}
     </>
   );
 }

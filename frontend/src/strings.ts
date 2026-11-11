@@ -65,6 +65,10 @@ export const STRINGS = {
   "tab.statement": ["Statement", "陳述"],
   "tab.hint": ["Hint", "提示"],
   "tab.graph": ["Dependency graph", "依賴圖"],
+  "result.messages": ["Messages", "訊息"],
+  "result.graph": ["Graph", "依賴圖"],
+  "graph.big": ["Show the graph full-page (Esc to close)", "全頁顯示依賴圖（按 Esc 關閉）"],
+  "graph.small": ["Close", "關閉"],
   "graph.none": [
     "Press Run: the graph of what your proof depends on appears here, from your theorem on the left to the axioms on the right.",
     "按執行：你的證明依賴哪些東西的圖會出現在這裡，從左邊你的定理，一路到右邊的公理。",
