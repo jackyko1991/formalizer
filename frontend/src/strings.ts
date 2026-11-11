@@ -65,6 +65,12 @@ export const STRINGS = {
   "hint.show": ["Stuck? Read the hint", "卡住了？看看提示"],
   "proof.about": ["Keep the statement, replace sorry", "保留陳述，換掉 sorry"],
   "panel.tactics": ["Tactics", "戰術"],
+  "panel.proof": ["Proof", "證明"],
+  "proof.reference": [
+    "A complete proof, in place of sorry. Read it line by line, or load it and press Run.",
+    "一個完整的證明，取代 sorry 的部分。逐行讀讀看，或載入後按執行。",
+  ],
+  "proof.use": ["Use this proof", "使用這個證明"],
   "panel.goals": ["Goals", "目標"],
   "panel.result": ["Result", "結果"],
   "goals.none": ["Press Run: the goals Lean still wants appear here.", "按執行：Lean 還要你證明的目標會出現在這裡。"],
@@ -100,7 +106,7 @@ export const STRINGS = {
   "notes.title": ["Lean also says", "Lean 還說"],
   "notes.at": ["line {line}", "第 {line} 行"],
   "next.title": ["Proved! Next problem", "證明完成！下一題"],
-  "next.done": ["Proved! That was the last tutorial problem.", "證明完成！這是教學的最後一題。"],
+  "next.done": ["Proved! That was the last problem.", "證明完成！這是最後一題。"],
   "next.list": ["Start again from the first problem", "從第一題重新開始"],
   "run.tryHint": ["Put this tactic where the first sorry is, then run", "把這個戰術放到第一個 sorry 的位置，然後執行"],
   "run.none": [

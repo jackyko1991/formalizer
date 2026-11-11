@@ -124,6 +124,8 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
   }
   const reset = () => (setCode(problem.start), setResult(null), setPrevious(null));
   const level = LEVEL_STYLE[problem.level];
+  // the tutorial track teaches tactic by tactic; the other topics show their complete proof instead
+  const guided = problem.category === "tutorial";
   const category = CATEGORIES.find((c) => c.id === problem.category)!;
   // hypotheses that weren't there at the same goal last time: the step's effect
   const before = new Set(previous?.goals.flatMap((g) => g.hypotheses) ?? []);
@@ -236,41 +238,63 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
             </div>
           </div>
 
-          {/* like Tensorizer's Parameters panel: what you can try, and Run */}
-          <aside className="flex w-full shrink-0 flex-col border-t border-gray-200 bg-white xl:w-60 xl:border-t-0 xl:border-l">
+          {/* like Tensorizer's Parameters panel: the tutorial offers tactics to try; the other topics show the whole proof */}
+          <aside
+            className={`flex w-full shrink-0 flex-col border-t border-gray-200 bg-white xl:border-t-0 xl:border-l ${guided ? "xl:w-60" : "xl:w-80"}`}
+          >
             <div className={PANEL_HEAD}>
-              <span className={PANEL_TITLE}>{t("panel.tactics")}</span>
+              <span className={PANEL_TITLE}>{t(guided ? "panel.tactics" : "panel.proof")}</span>
             </div>
-            <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-3">
-              <p className="pb-1 text-[11px] leading-snug text-gray-500">{t("run.tryHint")}</p>
-              {problem.tactics.map((tactic) => {
-                const step = problem.steps.includes(tactic) || /\bsorry\b/.test(tactic);
-                const first = tactic.split("\n")[0];
-                const label = first.length > 26 || first !== tactic ? `${first.slice(0, 24).trimEnd()} …` : tactic;
-                return (
-                  <button
-                    key={tactic}
-                    onClick={() => {
-                      // after a finishing try there's no sorry left: start again from the problem's file
-                      const next = insertChip(/\bsorry\b/.test(code) ? code : problem.start, tactic, problem.steps.includes(tactic));
-                      setCode(next);
-                      if (ready) void run(next);
-                    }}
-                    disabled={running}
-                    title={`${t(step ? "run.stepHint" : "run.tryHint")}\n\n${tactic}`}
-                    data-testid="tactic"
-                    className="flex w-full items-center gap-2 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-left font-mono text-xs text-gray-800 hover:border-(--lk-accent) disabled:opacity-40"
-                  >
-                    <span
-                      className={`shrink-0 rounded px-1 font-sans text-[10px] font-medium ${step ? "bg-sky-50 text-sky-700" : "bg-teal-50 text-(--lk-accent)"}`}
+            {!guided ? (
+              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3" data-testid="reference-proof">
+                <p className="text-[11px] leading-snug text-gray-500">{t("proof.reference")}</p>
+                <pre className="overflow-x-auto rounded-md border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-xs leading-relaxed text-gray-800">
+                  {proofBody(problem)}
+                </pre>
+                <button
+                  onClick={() => {
+                    setCode(problem.solution);
+                    if (ready) void run(problem.solution);
+                  }}
+                  disabled={running}
+                  data-testid="use-proof"
+                  className="w-full rounded-md border border-(--lk-accent) px-2.5 py-1.5 text-xs font-medium text-(--lk-accent) hover:bg-teal-50 disabled:opacity-40"
+                >
+                  {t("proof.use")}
+                </button>
+              </div>
+            ) : (
+              <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-3">
+                <p className="pb-1 text-[11px] leading-snug text-gray-500">{t("run.tryHint")}</p>
+                {problem.tactics.map((tactic) => {
+                  const step = problem.steps.includes(tactic) || /\bsorry\b/.test(tactic);
+                  const first = tactic.split("\n")[0];
+                  const label = first.length > 26 || first !== tactic ? `${first.slice(0, 24).trimEnd()} …` : tactic;
+                  return (
+                    <button
+                      key={tactic}
+                      onClick={() => {
+                        // after a finishing try there's no sorry left: start again from the problem's file
+                        const next = insertChip(/\bsorry\b/.test(code) ? code : problem.start, tactic, problem.steps.includes(tactic));
+                        setCode(next);
+                        if (ready) void run(next);
+                      }}
+                      disabled={running}
+                      title={`${t(step ? "run.stepHint" : "run.tryHint")}\n\n${tactic}`}
+                      data-testid="tactic"
+                      className="flex w-full items-center gap-2 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-left font-mono text-xs text-gray-800 hover:border-(--lk-accent) disabled:opacity-40"
                     >
-                      {t(step ? "run.step" : "run.try")}
-                    </span>
-                    <span className="min-w-0 truncate">{label}</span>
-                  </button>
-                );
-              })}
-            </div>
+                      <span
+                        className={`shrink-0 rounded px-1 font-sans text-[10px] font-medium ${step ? "bg-sky-50 text-sky-700" : "bg-teal-50 text-(--lk-accent)"}`}
+                      >
+                        {t(step ? "run.step" : "run.try")}
+                      </span>
+                      <span className="min-w-0 truncate">{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <div className="shrink-0 space-y-2 border-t border-gray-200 p-3">
               <RunnerHint runner={runner} onOpen={openRunner} />
               <button
@@ -368,6 +392,20 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
       </section>
     </>
   );
+}
+
+/** The lines of the reference solution that take the place of `sorry` in the starting file. */
+export function proofBody(problem: Pick<Problem, "start" | "solution">): string {
+  const at = problem.start.search(/\bsorry\b/);
+  const head = problem.start.slice(0, at);
+  const tail = problem.start.slice(at + "sorry".length);
+  if (at < 0 || !problem.solution.startsWith(head) || !problem.solution.endsWith(tail)) return problem.solution.trim();
+  const body = problem.solution.slice(head.length, problem.solution.length - tail.length);
+  const indent = head.slice(head.lastIndexOf("\n") + 1);
+  return body
+    .split("\n")
+    .map((line, i) => (i === 0 || !line.startsWith(indent) ? line : line.slice(indent.length)))
+    .join("\n");
 }
 
 /** "🧭 Collection · k of n ‹ ›" for each collection (learning path) the problem is in; nothing when it is in none. */
