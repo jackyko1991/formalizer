@@ -14,7 +14,7 @@ const SECTIONS: SectionInfo[] = [
   { id: "systems", title: ["The systems, 2024–2026", "2024–2026 年的系統"] },
   { id: "helpers", title: ["In the editor: tactic suggestions", "在編輯器裡：戰術建議"] },
   { id: "benchmarks", title: ["Benchmarks: miniF2F and PutnamBench", "評測基準：miniF2F 與 PutnamBench"] },
-  { id: "pro", title: ["AI suggestions in the workspace: Free, Pro, Campus", "工作區裡的 AI 建議：免費版、Pro、校園版"] },
+  { id: "pro", title: ["Product roadmap", "產品路線圖"] },
 ];
 
 export default function ProversAgent({ section }: { section: string | null }) {
