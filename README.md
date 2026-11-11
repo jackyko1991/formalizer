@@ -39,6 +39,18 @@ pixi run runner       # the runner on http://localhost:8790
 Then open https://jackyko1991.github.io/formalizer/: the chip at the top right turns green when the site finds the
 runner. Nothing is sent anywhere else.
 
+### With an AI agent
+
+The runner is also an MCP server at `http://localhost:8790/mcp` (tools `runner_status`, `list_problems`,
+`get_problem`, `check_proof`), and the skill in `plugins/formalizer/` teaches an agent the Formalizer way:
+
+```sh
+claude mcp add --transport http formalizer http://localhost:8790/mcp
+claude plugin marketplace add jackyko1991/formalizer && claude plugin install formalizer@formalizer
+```
+
+Other agents (Codex, OpenCode, VS Code, Claude Desktop): see the site's AI agent ▸ MCP and Skills pages.
+
 ## Develop
 
 ```sh

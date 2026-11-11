@@ -1,0 +1,12 @@
+{
+  "name": "formalizer",
+  "description": "Formalizer: formal mathematics in Lean 4, learned by doing. Skills for AI coding agents.",
+  "owner": { "name": "Jacky Ko" },
+  "plugins": [
+    {
+      "name": "formalizer",
+      "source": "./plugins/formalizer",
+      "description": "The Formalizer way: the statement is the test, Lean's kernel is the grader; prove step by step with a local Lean runner."
+    }
+  ]
+}

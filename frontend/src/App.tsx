@@ -26,6 +26,7 @@ import StructureSkill from "./pages/skills/Structure";
 import TacticsSkill from "./pages/skills/Tactics";
 import VerifySkill from "./pages/skills/Verify";
 import ProversAgent from "./pages/agents/Provers";
+import { McpAgent, SkillsAgent } from "./pages/agents/Setup";
 import { RunnerButton, RunnerProvider } from "./RunnerPanel";
 import { STRINGS } from "./strings";
 
@@ -155,8 +156,14 @@ export default function App() {
           ) : (
             <BooksReading section={route.tab === "books" ? route.section : null} />
           )
-        ) : route.page === "agents" && (route.tab ?? "provers") === "provers" ? (
-          <ProversAgent section={route.section} />
+        ) : route.page === "agents" ? (
+          route.tab === "skills" ? (
+            <SkillsAgent />
+          ) : route.tab === "mcp" ? (
+            <McpAgent />
+          ) : (
+            <ProversAgent section={route.section} />
+          )
         ) : route.page === "problems" ? (
           <ProblemsPage id={route.tab} />
         ) : (

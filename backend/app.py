@@ -2,6 +2,7 @@
 
 GET  /api/health   runner kind (lite | full), Lean version, pool state (warming | ready | failed)
 POST /api/check    {code, theorems, statements} → {verdict, errors, warnings, infos, goals, axioms, ms}
+POST /mcp          the same checks for an AI agent on this computer (MCP; see mcp.py)
 """
 
 from __future__ import annotations
@@ -14,12 +15,14 @@ import subprocess
 import time
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
 
 from .check import axioms_request, depgraph_request, imports, summarize, without_imports
 from .lean_pool import LeanCrash, LeanPool, LeanTimeout, WorkerConfig
+from .mcp import Mcp, local_origin
 
 ROOT = Path(__file__).resolve().parents[1]
 LEAN_DIR = Path(os.environ.get("FORMALIZER_LEAN_DIR", ROOT / "lean"))
@@ -143,3 +146,26 @@ async def check(req: CheckRequest) -> dict:
         raise HTTPException(503, str(e)) from None
     result = summarize(reply, len(body.split("\n")), req.theorems, body)
     return {**result, "ms": round((time.monotonic() - started) * 1000)}
+
+
+mcp = Mcp(check=lambda body: check(CheckRequest(**body)), health=health, version="0.1")
+
+
+@app.post("/mcp")
+async def mcp_post(request: Request) -> Response:
+    if not local_origin(request.headers.get("origin")):
+        return JSONResponse({"error": "only agents and pages on this computer may use this endpoint"}, 403)
+    try:
+        message = await request.json()
+    except ValueError:
+        return JSONResponse({"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "parse error"}}, 400)
+    if isinstance(message, list):  # a batch (older protocol versions)
+        replies = [r for r in [await mcp.reply(m) for m in message] if r is not None]
+        return JSONResponse(replies) if replies else Response(status_code=202)
+    reply = await mcp.reply(message)
+    return JSONResponse(reply) if reply is not None else Response(status_code=202)
+
+
+@app.get("/mcp")
+def mcp_get() -> Response:
+    return Response(status_code=405, headers={"Allow": "POST"})  # no server-to-agent stream

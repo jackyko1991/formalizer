@@ -5,6 +5,8 @@
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
+    "predev": "node ../scripts/agent_skill.mjs",
+    "prebuild": "node ../scripts/agent_skill.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",

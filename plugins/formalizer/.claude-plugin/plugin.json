@@ -1,0 +1,10 @@
+{
+  "name": "formalizer",
+  "version": "0.1.0",
+  "description": "The Formalizer way for Lean 4 proofs: keep the statement, replace sorry step by step, check every step with a local Lean runner, accept only standard axioms.",
+  "author": { "name": "Jacky Ko" },
+  "homepage": "https://jackyko1991.github.io/formalizer/#/agents/skills",
+  "repository": "https://github.com/jackyko1991/formalizer",
+  "license": "Apache-2.0",
+  "keywords": ["lean", "lean4", "theorem-proving", "formal-mathematics", "mathlib", "education"]
+}
