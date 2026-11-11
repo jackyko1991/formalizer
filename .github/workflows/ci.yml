@@ -1,0 +1,33 @@
+name: CI
+
+# The Lean runner: Python tests (pool lifecycle, REPL parsing) and the real end-to-end checks with Lean built from
+# the pinned toolchain. Needs no access to the private learnkit (the site build is in pages.yml).
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  runner:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1 # no submodules: the runner doesn't use learnkit
+      - uses: prefix-dev/setup-pixi@v0.11.2
+        with:
+          pixi-version: v0.70.0
+          # the official binary through the authenticated API (anonymous downloads hit rate-limit 403s)
+          pixi-url: https://api.github.com/repos/prefix-dev/pixi/releases/assets/435151918
+          pixi-url-headers: '{"Accept":"application/octet-stream","Authorization":"Bearer ${{ github.token }}"}'
+          cache: true
+      - name: Install Lean (elan, toolchain from lean/lean-toolchain)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -o elan-init.sh
+          sh elan-init.sh -y --no-modify-path --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v6.1.0
+        with:
+          path: lean/.lake
+          key: lake-${{ hashFiles('lean/lean-toolchain', 'lean/lakefile.toml', 'lean/lake-manifest.json') }}
+      - run: pixi run lean-build
+      - run: pixi run lint
+      - run: pixi run test

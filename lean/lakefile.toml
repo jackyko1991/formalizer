@@ -1,0 +1,13 @@
+# Formalizer's Lean project. Lite runner: core Lean + the REPL (no Mathlib). The Full runner adds Mathlib and
+# Comparator on the same toolchain (openai/math pins v4.34.1).
+name = "formalizer"
+version = "0.1.0"
+defaultTargets = ["Formalizer"]
+
+[[require]]
+name = "REPL"
+git = "https://github.com/leanprover-community/repl.git"
+rev = "v4.34.0"
+
+[[lean_lib]]
+name = "Formalizer"

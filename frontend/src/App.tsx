@@ -1,5 +1,7 @@
 import { go, RichText, Shell, Timeline, useLang, useRoute, type ShellPage } from "@learnkit/web";
 import { ERAS, HISTORY } from "./history";
+import ProblemPage from "./ProblemPage";
+import { PROBLEMS } from "./problems";
 import { STRINGS } from "./strings";
 
 const REPO_URL = "https://github.com/jackyko1991/formalizer";
@@ -48,7 +50,13 @@ export default function App() {
         </>
       }
     >
-      {history ? <HistoryPage section={route.section} /> : <Coming />}
+      {history ? (
+        <HistoryPage section={route.section} />
+      ) : route.page === "problems" ? (
+        <Problems id={route.tab} />
+      ) : (
+        <Coming />
+      )}
     </Shell>
   );
 }
@@ -88,6 +96,36 @@ function Coming() {
       >
         {t("coming.history")} →
       </button>
+    </div>
+  );
+}
+
+function Problems({ id }: { id: string | null }) {
+  const { t, pick } = useLang();
+  const problem = PROBLEMS.find((p) => p.id === id);
+  if (problem) return <ProblemPage problem={problem} />;
+  return (
+    <div className="mx-auto max-w-4xl px-5 py-8" data-testid="problems">
+      <h1 className="text-3xl font-semibold tracking-tight text-gray-900">{t("problems.title")}</h1>
+      <p className="mt-3 text-gray-600">
+        <RichText text={t("problems.intro")} />
+      </p>
+      <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+        {PROBLEMS.map((p) => (
+          <li key={p.id}>
+            <button
+              onClick={() => go("problems", p.id)}
+              className="w-full rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm hover:border-(--lk-accent)"
+            >
+              <p className="text-xs font-semibold text-(--lk-accent)">{p.level}</p>
+              <p className="mt-1 font-semibold text-gray-900">
+                <RichText text={pick(p.title)} />
+              </p>
+              <p className="mt-2 text-sm text-(--lk-accent)">{t("problems.open")} →</p>
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
