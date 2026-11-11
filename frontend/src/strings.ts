@@ -30,6 +30,7 @@ export const STRINGS = {
   "tab.provers": ["AI provers", "AI 證明器"],
   "tab.skills": ["Skills", "Skills"],
   "tab.mcp": ["MCP", "MCP"],
+  "tab.roadmap": ["Product roadmap", "產品路線圖"],
   "history.title": ["How mathematics learned to be checked by machines", "數學如何學會讓機器檢查"],
   "history.intro": [
     "From Automath in 1967 to the Lean certificates of 2026: the ideas behind every Formalizer problem. A proof assistant does not make mathematics true; it makes every step checkable, by a small program anyone can trust.",

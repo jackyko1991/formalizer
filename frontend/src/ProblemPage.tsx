@@ -397,7 +397,7 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
                 })}
                 {/* Formalizer Pro (pending): live suggestions from Lean's search, a local prover, or the visitor's agent */}
                 <button
-                  onClick={() => go("agents", "provers", "pro")}
+                  onClick={() => go("agents", "roadmap")}
                   data-testid="pro-pending"
                   className="mt-2 flex w-full items-center justify-between gap-2 rounded-md border border-dashed border-gray-300 px-2.5 py-1.5 text-left text-xs text-gray-500 hover:border-(--lk-accent) hover:text-gray-800"
                 >

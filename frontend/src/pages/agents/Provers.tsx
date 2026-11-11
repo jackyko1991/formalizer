@@ -1,7 +1,7 @@
 /**
  * AI agent ▸ AI provers (#/agents/provers[/<section>]): how AI theorem provers fit Lean (they propose, the kernel
  * checks), the systems (AlphaProof, DeepSeek-Prover, Goedel-Prover, Seed-Prover, Aristotle, in-editor helpers), the
- * benchmarks (miniF2F, PutnamBench) and the planned suggestions in the workspace (Free on your computer; Pro and Campus hosted, pending).
+ * benchmarks (miniF2F, PutnamBench). The plan for suggestions in the workspace is the Product roadmap tab (Roadmap.tsx).
  * Figures were checked against the papers and project pages in November 2026.
  */
 import { Callout, List, P, Page, Section, SiteLink, Sources, Table, type SectionInfo } from "../kit";
@@ -14,7 +14,6 @@ const SECTIONS: SectionInfo[] = [
   { id: "systems", title: ["The systems, 2024–2026", "2024–2026 年的系統"] },
   { id: "helpers", title: ["In the editor: tactic suggestions", "在編輯器裡：戰術建議"] },
   { id: "benchmarks", title: ["Benchmarks: miniF2F and PutnamBench", "評測基準：miniF2F 與 PutnamBench"] },
-  { id: "pro", title: ["Product roadmap", "產品路線圖"] },
 ];
 
 export default function ProversAgent({ section }: { section: string | null }) {
@@ -96,8 +95,8 @@ export default function ProversAgent({ section }: { section: string | null }) {
         />
         <P
           t={[
-            "These are the first level of the free AI suggestions (section 6), because they are free, fast and exact. AI provers help where they give up: proofs of several steps, or steps that need an idea.",
-            "這些是免費 AI 建議的第一層（第 6 節），因為它們免費、快速又精確。AI 證明器幫的是它們放棄的地方：好幾步的證明，或需要一個想法的那一步。",
+            "These are the first level of the free AI suggestions (see the Product roadmap), because they are free, fast and exact. AI provers help where they give up: proofs of several steps, or steps that need an idea.",
+            "這些是免費 AI 建議的第一層（見產品路線圖），因為它們免費、快速又精確。AI 證明器幫的是它們放棄的地方：好幾步的證明，或需要一個想法的那一步。",
           ]}
         />
         <SiteLink to={["skills", "search"]} label={["Finding lemmas", "找引理"]} />
@@ -250,95 +249,6 @@ export default function ProversAgent({ section }: { section: string | null }) {
             { label: "Tsoukalas et al., PutnamBench (2024)", url: "https://arxiv.org/abs/2407.11214" },
           ]}
         />
-      </Section>
-
-      <Section page={PAGE} id="pro" n={6} title={SECTIONS[5].title}>
-        <Callout kind="warn" title={["Mostly pending", "大多仍在籌備中"]}>
-          <P
-            t={[
-              "This is the plan for AI suggestions in the problem workspace. Today the Tactics panel holds hand-picked tactics for each problem and a Proof switch. Of the plan below, only level 3 works now: your own agent through the skill and MCP pages.",
-              "這是題目工作區 AI 建議的計畫。目前戰術面板裡是每道題手選的戰術與一個「答案」開關。下面的計畫中，現在能用的只有第 3 層：透過 Skill 與 MCP 頁面接上你自己的代理。",
-            ]}
-          />
-        </Callout>
-        <P
-          t={[
-            "**Free (community): everything that runs on your computer or on an account you already have.** No sign-up, nothing locked away. Every suggestion is checked by your runner before it is shown, so a suggestion you see is one Lean already accepts.",
-            "**免費（社群版）：凡是在你電腦上、或用你自己已有帳號就能跑的，全部免費。** 不必註冊，沒有任何功能被鎖住。每個建議在顯示前都先由你的執行器檢查過，所以你看到的建議都是 Lean 已經接受的。",
-          ]}
-        />
-        <Table
-          head={[
-            ["Free level", "免費層級"],
-            ["Where the suggestion comes from", "建議從哪裡來"],
-            ["Needs", "需要"],
-          ]}
-          rows={[
-            [
-              ["1. Ask Lean", "1. 問 Lean"],
-              [
-                "`exact?`, `apply?`, `rw?`, `simp?` at the `sorry` you click",
-                "在你點選的 `sorry` 上執行 `exact?`、`apply?`、`rw?`、`simp?`",
-              ],
-              ["the runner only", "只要執行器"],
-            ],
-            [
-              ["2. Your model", "2. 你的模型"],
-              [
-                "an open prover in your own Ollama (DeepSeek-Prover-V2-7B, Goedel-Prover-V2-8B), or a model of your choice with your own API key",
-                "你自己 Ollama 裡的開放證明器（DeepSeek-Prover-V2-7B、Goedel-Prover-V2-8B），或用你自己的 API 金鑰呼叫你選的模型",
-              ],
-              [
-                "Ollama and a model download (several GB, a computer with enough memory), or an API key. With a key, your proof goes to that provider: your choice.",
-                "Ollama 與模型下載（數 GB，電腦記憶體要夠），或一把 API 金鑰。用金鑰時，你的證明會送到那家服務商：由你決定。",
-              ],
-            ],
-            [
-              ["3. Your agent (works now)", "3. 你的代理（現在就能用）"],
-              [
-                "your own AI coding agent works on the problem through Formalizer's skill and MCP server",
-                "你自己的 AI 程式代理透過 Formalizer 的 skill 與 MCP 伺服器來做題",
-              ],
-              ["an agent such as Claude Code", "一個代理，例如 Claude Code"],
-            ],
-          ]}
-        />
-        <P
-          t={[
-            "**Pro (pending): the same suggestions with nothing to set up.** Many computers can't run an 8B model well, and setting up Ollama or an API key is a hurdle of its own. Pro is a button next to the `sorry`: a hosted prover proposes tactics, Lean checks them, and only checked ones come back. No download, no key, no fan noise. This is the one place where your proof leaves your computer, and only when you press the button.",
-            "**Pro（籌備中）：同樣的建議，什麼都不用設定。** 很多電腦跑不太動 8B 模型，而設定 Ollama 或 API 金鑰本身就是一道門檻。Pro 是 `sorry` 旁的一個按鈕：由託管的證明器提議戰術、Lean 檢查，只送回檢查通過的。不用下載、不用金鑰、風扇也不會狂轉。這是你的證明唯一會離開你電腦的地方，而且只在你按下按鈕時。",
-          ]}
-        />
-        <P
-          t={[
-            "**Campus (pending): a licence for a class.** Students open the site in a browser and sign in: checking and an AI tutor run in a hosted sandbox, so no one installs Lean. The teacher sees each student's dependency graph and the goals where students get stuck.",
-            "**校園版（籌備中）：給整個班級的授權。** 學生用瀏覽器打開網站登入：檢查與 AI 助教都在託管的沙盒裡執行，誰都不必安裝 Lean。老師可以看到每位學生的依賴圖，以及學生卡關的目標。",
-          ]}
-        />
-        <List
-          items={[
-            [
-              "**Hidden until asked**, like the Proof switch: the tutorial is for learning, so suggestions appear only when you ask for them at a `sorry`.",
-              "**不問就不顯示**，和「答案」開關一樣：教學題是用來學的，只有你在某個 `sorry` 上主動要求時才會出現建議。",
-            ],
-            [
-              "**Same grading in every tier.** An AI proof goes through the same check as yours: statement unchanged, no `sorry`, standard axioms only, and its dependency graph shown.",
-              "**每一層都是同樣的評分。** AI 的證明和你的走同一套檢查：陳述不變、沒有 `sorry`、只用標準公理，並顯示它的依賴圖。",
-            ],
-            [
-              "**Always visible where it runs:** each suggestion button says *on this computer*, *your key* or *hosted*.",
-              "**在哪裡執行一定看得到：** 每個建議按鈕都會標明 *本機*、*你的金鑰* 或 *託管*。",
-            ],
-            [
-              "**AlphaProof** is not on the list: it has no public weights or interface.",
-              "**AlphaProof** 不在名單上：它沒有公開的權重或介面。",
-            ],
-          ]}
-        />
-        <p className="flex flex-wrap gap-4">
-          <SiteLink to={["agents", "skills"]} label={["Agent skill", "代理 Skill"]} />
-          <SiteLink to={["agents", "mcp"]} label={["MCP server", "MCP 伺服器"]} />
-        </p>
       </Section>
     </Page>
   );

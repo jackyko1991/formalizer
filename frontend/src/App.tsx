@@ -26,6 +26,7 @@ import StructureSkill from "./pages/skills/Structure";
 import TacticsSkill from "./pages/skills/Tactics";
 import VerifySkill from "./pages/skills/Verify";
 import ProversAgent from "./pages/agents/Provers";
+import RoadmapAgent from "./pages/agents/Roadmap";
 import { McpAgent, SkillsAgent } from "./pages/agents/Setup";
 import ResearchPage from "./research/ResearchPage";
 import { RunnerButton, RunnerProvider } from "./RunnerPanel";
@@ -80,6 +81,7 @@ export default function App() {
         { id: "provers", label: t("tab.provers") },
         { id: "skills", label: t("tab.skills") },
         { id: "mcp", label: t("tab.mcp") },
+        { id: "roadmap", label: t("tab.roadmap") },
       ],
       defaultTab: "provers",
     },
@@ -163,6 +165,9 @@ export default function App() {
             <SkillsAgent />
           ) : route.tab === "mcp" ? (
             <McpAgent />
+          ) : route.tab === "roadmap" || (route.tab === "provers" && route.section === "pro") ? (
+            // the roadmap was section "pro" of AI provers: that address still leads here
+            <RoadmapAgent section={route.tab === "roadmap" ? route.section : null} />
           ) : (
             <ProversAgent section={route.section} />
           )
