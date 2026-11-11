@@ -46,7 +46,7 @@ export default function App() {
       id: "concept",
       label: t("page.concept"),
       // no menu under the header tab: the sub-pages are the tab row on the page (SubTabs)
-      defaultTab: "history",
+      defaultTab: CONCEPT_TABS[0],
     },
     { id: "skills", label: t("page.skills"), defaultTab: "tactics" },
     {
@@ -60,12 +60,13 @@ export default function App() {
     { id: "reading", label: t("page.reading") },
   ];
   const concept = route.page === "concept";
-  const history = concept && (route.tab ?? "history") === "history";
+  const conceptTab = CONCEPT_TABS.includes(route.tab as never) ? route.tab! : CONCEPT_TABS[0];
+  const history = concept && conceptTab === "history";
   const conceptTabs = CONCEPT_TABS.map((id) => ({ id, label: t(`tab.${id}`) }));
   const skillsTabs = SKILLS_TABS.map((id) => ({ id, label: t(`skills.${id}`) }));
   const skills = route.page === "skills";
   const skillsTab = SKILLS_TABS.includes(route.tab as never) ? route.tab! : "tactics";
-  const ConceptView = concept && !history ? CONCEPT_PAGES[route.tab ?? ""] : undefined;
+  const ConceptView = concept && !history ? CONCEPT_PAGES[conceptTab] : undefined;
   const SkillsView = SKILLS_PAGES[skillsTab];
 
   return (
@@ -79,7 +80,7 @@ export default function App() {
           ),
           tagline: t("tagline"),
           logo: `${import.meta.env.BASE_URL}favicon.svg`,
-          home: () => go("concept", "history"),
+          home: () => go("concept", CONCEPT_TABS[0]),
         }}
         pages={pages}
         route={route}
@@ -105,7 +106,7 @@ export default function App() {
           </>
         }
       >
-        {concept && <SubTabs page="concept" tabs={conceptTabs} active={route.tab ?? "history"} />}
+        {concept && <SubTabs page="concept" tabs={conceptTabs} active={conceptTab} />}
         {skills && <SubTabs page="skills" tabs={skillsTabs} active={skillsTab} />}
         {history ? (
           <HistoryPage section={route.section} />
