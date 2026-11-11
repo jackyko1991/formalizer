@@ -12,7 +12,8 @@ import pytest
 from tests.test_runner import REPL, client  # noqa: F401 (the shared runner fixture)
 
 ROOT = Path(__file__).resolve().parents[1]
-FILES = {f.stem: json.loads(f.read_text()) for f in sorted((ROOT / "problems").glob("*.json"))}
+FILES = {f.stem: json.loads(f.read_text()) for f in sorted((ROOT / "problems").glob("*.json")) if f.stem != "collections"}
+COLLECTIONS = json.loads((ROOT / "problems" / "collections.json").read_text())
 PROBLEMS = [p for problems in FILES.values() for p in problems]
 IDS = [p["id"] for p in PROBLEMS]
 SORRY = re.compile(r"\bsorry\b")
@@ -47,6 +48,19 @@ def test_problems_are_well_formed():
         assert levels == sorted(levels), f"{name}: problems are listed level by level"
     for level in ("L1", "L2", "L3"):
         assert [p["level"] for p in FILES["tutorial"]].count(level) >= 3, level
+
+
+def test_collections_are_well_formed():
+    """Collections are ordered learning paths across topics (the 🧭 bar on a problem page)."""
+    ids = [c["id"] for c in COLLECTIONS]
+    assert len(ids) == len(set(ids))
+    for c in COLLECTIONS:
+        assert re.fullmatch(r"[a-z0-9-]+", c["id"]), c["id"]
+        for key in ("title", "summary"):
+            assert len(c[key]) == 2 and all(s.strip() for s in c[key]), f"{c['id']}: {key} needs en + zh-Hant"
+        assert len(c["items"]) >= 2 and len(c["items"]) == len(set(c["items"])), c["id"]
+        unknown = [i for i in c["items"] if i not in IDS]
+        assert not unknown, f"{c['id']}: unknown problems {unknown}"
 
 
 def check(client, p, code):  # noqa: F811

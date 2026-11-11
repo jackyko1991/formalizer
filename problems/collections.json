@@ -1,0 +1,47 @@
+[
+  {
+    "id": "first-steps",
+    "title": ["First steps in Lean", "Lean 的第一步"],
+    "summary": [
+      "Five one-line proofs: read the goal, pick one tactic, watch it turn green.",
+      "五個一行的證明：讀懂目標、挑一個戰術，看著它變綠。"
+    ],
+    "items": ["hello", "add-comm", "check-cases", "squeeze", "reverse-twice"]
+  },
+  {
+    "id": "points-to-matrices",
+    "title": ["From points to matrices", "從點到矩陣"],
+    "summary": [
+      "Geometry with whole-number coordinates, then the vectors and 2 × 2 matrices behind it.",
+      "用整數座標做幾何，接著是背後的向量與 2 × 2 矩陣。"
+    ],
+    "items": [
+      "geo-pythagoras",
+      "geo-distance",
+      "geo-perpendicular",
+      "la-vec-add-comm",
+      "la-det-identity",
+      "la-mul-identity",
+      "la-equal-rows-det",
+      "la-det-mul"
+    ]
+  },
+  {
+    "id": "beyond-omega",
+    "title": ["When omega gives up", "當 omega 放棄時"],
+    "summary": [
+      "omega solves linear arithmetic, but not products of unknowns. Each problem here needs another move: compute, rewrite, a calc chain, or grind.",
+      "omega 能解線性算術，卻不能處理未知數相乘。這裡每一題都需要別的招式：計算、改寫、calc 推導鏈，或 grind。"
+    ],
+    "items": ["check-cases", "regroup", "gauss", "geo-dist-symm", "la-smul-distrib", "la-equal-rows-det", "la-det-mul"]
+  },
+  {
+    "id": "step-by-step",
+    "title": ["Building a proof step by step", "一步一步搭起證明"],
+    "summary": [
+      "Proofs in several moves: each step leaves a smaller goal, until nothing is left.",
+      "分好幾步完成的證明：每一步都留下更小的目標，直到什麼都不剩。"
+    ],
+    "items": ["rewrite-chain", "le-chain", "even-sum", "cases-or", "induction-double", "calc-chain", "geo-shift"]
+  }
+]

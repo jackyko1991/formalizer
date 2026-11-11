@@ -6,6 +6,7 @@
 import type { Localized } from "@learnkit/web";
 import geometry from "../../problems/geometry.json" with { type: "json" };
 import linearAlgebra from "../../problems/linear-algebra.json" with { type: "json" };
+import collections from "../../problems/collections.json" with { type: "json" };
 import tutorial from "../../problems/tutorial.json" with { type: "json" };
 
 export type Level = "L1" | "L2" | "L3";
@@ -62,3 +63,17 @@ const FILES: [Category, unknown[]][] = [
 export const PROBLEMS: Problem[] = FILES.flatMap(([category, list]) =>
   (list as Omit<Problem, "category">[]).map((p) => ({ ...p, category })),
 );
+
+/** An ordered learning path across topics (problems/collections.json); a problem may be in several. */
+export interface Collection {
+  id: string;
+  title: Localized;
+  summary: Localized;
+  /** problem ids, in order */
+  items: string[];
+}
+export const COLLECTIONS = collections as Collection[];
+
+/** The collections a problem belongs to, with its position in each. */
+export const collectionsOf = (id: string) =>
+  COLLECTIONS.flatMap((c) => (c.items.includes(id) ? [{ collection: c, index: c.items.indexOf(id) }] : []));

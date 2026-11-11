@@ -4,7 +4,7 @@
  */
 import { plainText, RichText, useLang } from "@learnkit/web";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CATEGORIES, LEVELS, PROBLEMS, type Level, type Problem } from "./problems";
+import { CATEGORIES, COLLECTIONS, LEVELS, PROBLEMS, type Level, type Problem } from "./problems";
 
 export const LEVEL_STYLE: Record<Level, { dot: string; text: string }> = {
   L1: { dot: "bg-green-500", text: "text-green-700" },
@@ -40,6 +40,9 @@ export default function ProblemLibrary({ selected, onSelect }: { selected: strin
     [],
   );
   const words = fold(query).split(/\s+/).filter(Boolean);
+  // collections: chosen under the search box, they list their problems in order
+  const [collection, setCollection] = useState<string | null>(null);
+  const current = COLLECTIONS.find((c) => c.id === collection) ?? null;
   const hits = words.length ? index.filter((e) => words.every((w) => e.text.includes(w))).map((e) => e.p) : [];
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
@@ -117,7 +120,51 @@ export default function ProblemLibrary({ selected, onSelect }: { selected: strin
         </div>
       </div>
 
-      {words.length > 0 ? (
+      {words.length === 0 && (
+        <label className="mb-2 flex items-center gap-1.5 px-1 text-xs text-gray-500" data-testid="collections">
+          <span className="shrink-0">📚</span>
+          <select
+            value={collection ?? ""}
+            onChange={(e) => setCollection(e.target.value || null)}
+            aria-label={t("coll.title")}
+            data-testid="collection-select"
+            className="min-w-0 flex-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 focus:border-(--lk-accent) focus:outline-none"
+          >
+            <option value="">
+              {t("coll.title")}: {t("coll.all")}
+            </option>
+            {COLLECTIONS.map((c) => (
+              <option key={c.id} value={c.id} title={pick(c.summary)}>
+                {pick(c.title)} ({c.items.length})
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {words.length === 0 && current ? (
+        <div data-testid="collection-list">
+          <div className="flex items-center justify-between px-2 pb-1">
+            <span className="text-xs font-semibold text-gray-800">{pick(current.title)}</span>
+            <button onClick={() => setCollection(null)} className="text-[11px] text-(--lk-accent) hover:underline">
+              {t("coll.all")}
+            </button>
+          </div>
+          <p className="px-2 pb-1 text-[11px] text-gray-500">{pick(current.summary)}</p>
+          <ol>
+            {current.items.map((id, i) => (
+              <li key={id} className="flex items-start gap-1">
+                <span className="mt-1.5 w-5 shrink-0 text-right font-mono text-[10px] text-gray-400">{i + 1}.</span>
+                <ul className="min-w-0 flex-1">
+                  {item(
+                    PROBLEMS.find((p) => p.id === id)!,
+                    true,
+                  )}
+                </ul>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ) : words.length > 0 ? (
         <div data-testid="search-results">
           <p className="px-2 pb-1 text-[11px] text-gray-500">{t("search.count").replace("{n}", String(hits.length))}</p>
           {hits.length === 0 && <p className="px-2 py-2 text-sm text-gray-400">{t("search.none")}</p>}

@@ -9,7 +9,7 @@ import { go, plainText, RichText, useLang } from "@learnkit/web";
 import CodeMirror from "@uiw/react-codemirror";
 import { useEffect, useState } from "react";
 import ProblemLibrary, { LEVEL_STYLE } from "./ProblemLibrary";
-import { CATEGORIES, PROBLEMS, type Problem } from "./problems";
+import { CATEGORIES, collectionsOf, PROBLEMS, type Problem } from "./problems";
 import { check, insertChip, RunnerError, type CheckResult, type Issue } from "./runner";
 import { runnerReady, useRunner, type RunnerState } from "./RunnerPanel";
 
@@ -125,8 +125,6 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
   const reset = () => (setCode(problem.start), setResult(null), setPrevious(null));
   const level = LEVEL_STYLE[problem.level];
   const category = CATEGORIES.find((c) => c.id === problem.category)!;
-  const track = PROBLEMS.filter((p) => p.category === problem.category);
-  const at = track.findIndex((p) => p.id === problem.id);
   // hypotheses that weren't there at the same goal last time: the step's effect
   const before = new Set(previous?.goals.flatMap((g) => g.hypotheses) ?? []);
 
@@ -169,32 +167,7 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
           <p className="mt-2 text-sm leading-relaxed text-gray-600">
             <RichText text={pick(problem.summary)} />
           </p>
-          <div className="mt-2 flex items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-xs" data-testid="series">
-            <span className="font-medium text-gray-800">🧭 {pick(category.title)}</span>
-            <span className="text-gray-500">
-              {t("series.of")
-                .replace("{i}", String(at + 1))
-                .replace("{n}", String(track.length))}
-            </span>
-            <span className="ml-auto flex items-center gap-1">
-              <button
-                onClick={() => onSelect(track[at - 1].id)}
-                disabled={at <= 0}
-                title={t("series.prev")}
-                className="rounded px-1.5 text-gray-600 hover:bg-white disabled:opacity-30"
-              >
-                ‹
-              </button>
-              <button
-                onClick={() => onSelect(track[at + 1].id)}
-                disabled={at >= track.length - 1}
-                title={t("series.next")}
-                className="rounded px-1.5 text-gray-600 hover:bg-white disabled:opacity-30"
-              >
-                ›
-              </button>
-            </span>
-          </div>
+          <CollectionNav problemId={problem.id} onSelect={onSelect} />
         </div>
 
         <div className="space-y-4 bg-gray-50/60 p-5 xl:min-h-0 xl:flex-1 xl:overflow-y-auto">
@@ -394,6 +367,51 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
         </div>
       </section>
     </>
+  );
+}
+
+/** "🧭 Collection · k of n ‹ ›" for each collection (learning path) the problem is in; nothing when it is in none. */
+function CollectionNav({ problemId, onSelect }: { problemId: string; onSelect: (id: string) => void }) {
+  const { t, pick } = useLang();
+  const found = collectionsOf(problemId);
+  if (!found.length) return null;
+  return (
+    <div className="mt-2 space-y-1">
+      {found.map(({ collection: c, index }) => (
+        <div
+          key={c.id}
+          data-testid="series-nav"
+          className="flex flex-wrap items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-xs"
+        >
+          <span className="cursor-help font-medium text-gray-800" title={pick(c.summary)}>
+            🧭 {pick(c.title)}
+          </span>
+          <span className="text-gray-500">
+            {t("series.of")
+              .replace("{i}", String(index + 1))
+              .replace("{n}", String(c.items.length))}
+          </span>
+          <span className="ml-auto flex items-center gap-1">
+            <button
+              onClick={() => onSelect(c.items[index - 1])}
+              disabled={index <= 0}
+              title={t("series.prev")}
+              className="rounded px-1.5 text-gray-600 hover:bg-white disabled:opacity-30"
+            >
+              ‹
+            </button>
+            <button
+              onClick={() => onSelect(c.items[index + 1])}
+              disabled={index >= c.items.length - 1}
+              title={t("series.next")}
+              className="rounded px-1.5 text-gray-600 hover:bg-white disabled:opacity-30"
+            >
+              ›
+            </button>
+          </span>
+        </div>
+      ))}
+    </div>
   );
 }
 

@@ -54,6 +54,8 @@ export const STRINGS = {
   "search.clear": ["Clear the search", "清除搜尋"],
   "search.count": ["{n} found", "找到 {n} 題"],
   "search.none": ["Nothing matches.", "沒有符合的題目。"],
+  "coll.title": ["Collections", "題組"],
+  "coll.all": ["All problems", "所有題目"],
   "series.of": ["{i} of {n}", "第 {i} 題，共 {n} 題"],
   "series.prev": ["Previous problem", "上一題"],
   "series.next": ["Next problem", "下一題"],
