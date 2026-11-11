@@ -6,7 +6,6 @@ import {
   SeriesPage,
   seriesText,
   Shell,
-  SubTabs,
   Timeline,
   useLang,
   useRoute,
@@ -31,8 +30,6 @@ import { STRINGS } from "./strings";
 
 const REPO_URL = "https://github.com/jackyko1991/formalizer";
 const SCROLL = "fz-scroll";
-/** height of the Concept tab bar (SubTabs), kept free by the History page's sticky parts */
-const TABS_PX = 52;
 /** Concept's sub-pages (Tensorizer's order, History last); only History is built so far */
 const CONCEPT_TABS = ["method", "feynman", "maths", "kernel", "limits", "history"] as const;
 const SKILLS_TABS = ["tactics", "search", "structure", "errors", "verify"] as const;
@@ -62,10 +59,16 @@ export default function App() {
     {
       id: "concept",
       label: t("page.concept"),
-      // no menu under the header tab: the sub-pages are the tab row on the page (SubTabs)
+      // sub-pages are a list under the header tab, like AI agent and Further reading
+      tabs: CONCEPT_TABS.map((id) => ({ id, label: t(`tab.${id}`) })),
       defaultTab: CONCEPT_TABS[0],
     },
-    { id: "skills", label: t("page.skills"), defaultTab: "tactics" },
+    {
+      id: "skills",
+      label: t("page.skills"),
+      tabs: SKILLS_TABS.map((id) => ({ id, label: t(`skills.${id}`) })),
+      defaultTab: SKILLS_TABS[0],
+    },
     {
       id: "agents",
       label: t("page.agents"),
@@ -87,8 +90,6 @@ export default function App() {
   const concept = route.page === "concept";
   const conceptTab = CONCEPT_TABS.includes(route.tab as never) ? route.tab! : CONCEPT_TABS[0];
   const history = concept && conceptTab === "history";
-  const conceptTabs = CONCEPT_TABS.map((id) => ({ id, label: t(`tab.${id}`) }));
-  const skillsTabs = SKILLS_TABS.map((id) => ({ id, label: t(`skills.${id}`) }));
   const skills = route.page === "skills";
   const skillsTab = SKILLS_TABS.includes(route.tab as never) ? route.tab! : "tactics";
   const ConceptView = concept && !history ? CONCEPT_PAGES[conceptTab] : undefined;
@@ -131,8 +132,6 @@ export default function App() {
           </>
         }
       >
-        {concept && <SubTabs page="concept" tabs={conceptTabs} active={conceptTab} />}
-        {skills && <SubTabs page="skills" tabs={skillsTabs} active={skillsTab} />}
         {history ? (
           <HistoryPage section={route.section} />
         ) : ConceptView ? (
@@ -171,7 +170,6 @@ function HistoryPage({ section }: { section: string | null }) {
         eras={ERAS}
         cards={HISTORY}
         scrollRoot={SCROLL}
-        stickyOffset={TABS_PX}
         focus={section}
         labels={{ contents: STRINGS.timeline, sources: STRINGS.sources, open: STRINGS["timeline.open"] }}
         // keep the address shareable without a new history entry (no hashchange, so no re-render)

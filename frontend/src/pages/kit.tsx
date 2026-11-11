@@ -74,7 +74,7 @@ export function Page({
       <PageToc
         scrollRoot={SCROLL}
         title={pick(["On this page", "本頁內容"])}
-        className="top-20"
+        className="top-6"
         items={sections.map((s, i) => ({ id: `${id}-${s.id}`, label: pick(s.title), mark: i + 1 }))}
       />
       <article className="min-w-0 max-w-4xl flex-1 space-y-8">
@@ -96,7 +96,7 @@ export function Page({
 export function Section({ page, id, n, title, children }: { page: string; id: string; n: number; title: L; children: ReactNode }) {
   const { pick } = useLang();
   return (
-    <section id={`${page}-${id}`} className="scroll-mt-20 rounded-xl border border-gray-200 bg-white p-6" data-testid="page-section">
+    <section id={`${page}-${id}`} className="scroll-mt-6 rounded-xl border border-gray-200 bg-white p-6" data-testid="page-section">
       <h2 className="flex items-baseline gap-3 text-lg font-semibold text-gray-900">
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-(--lk-accent) text-sm text-white">{n}</span>
         <RichText text={pick(title)} />

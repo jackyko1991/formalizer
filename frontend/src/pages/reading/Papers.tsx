@@ -19,7 +19,7 @@ export default function PapersReading({ section }: { section: string | null }) {
       <PageToc
         scrollRoot={SCROLL}
         title={pick(["On this page", "本頁內容"])}
-        className="top-20"
+        className="top-6"
         items={PAPER_GROUPS.map((g, i) => ({ id: `papers-${g.id}`, mark: i + 1, label: pick(g.title) }))}
       />
       <article className="min-w-0 max-w-4xl flex-1 space-y-10">
@@ -34,7 +34,7 @@ export default function PapersReading({ section }: { section: string | null }) {
           </p>
         </header>
         {PAPER_GROUPS.map((g, i) => (
-          <section key={g.id} id={`papers-${g.id}`} className="scroll-mt-20">
+          <section key={g.id} id={`papers-${g.id}`} className="scroll-mt-6">
             <h2 className="flex flex-wrap items-baseline gap-3 text-lg font-semibold text-gray-900">
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-(--lk-accent) text-sm text-white">{i + 1}</span>
               {pick(g.title)}
