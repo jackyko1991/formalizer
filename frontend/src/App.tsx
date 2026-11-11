@@ -1,6 +1,20 @@
-import { go, RichText, routeHash, Shell, SubTabs, Timeline, useLang, useRoute, type ShellPage } from "@learnkit/web";
+import {
+  go,
+  READING_TABS,
+  RichText,
+  routeHash,
+  SeriesPage,
+  seriesText,
+  Shell,
+  SubTabs,
+  Timeline,
+  useLang,
+  useRoute,
+  type ShellPage,
+} from "@learnkit/web";
 import { ERAS, HISTORY } from "./history";
 import ProblemsPage from "./ProblemPage";
+import BooksReading from "./pages/reading/Books";
 import FeynmanConcept from "./pages/concept/Feynman";
 import KernelConcept from "./pages/concept/Kernel";
 import LeanMathsConcept from "./pages/concept/LeanMaths";
@@ -21,6 +35,8 @@ const TABS_PX = 52;
 /** Concept's sub-pages (Tensorizer's order, History last); only History is built so far */
 const CONCEPT_TABS = ["method", "feynman", "maths", "kernel", "limits", "history"] as const;
 const SKILLS_TABS = ["tactics", "search", "structure", "errors", "verify"] as const;
+/** Further reading: books & papers, then the learnkit series (Code labs, Explorables) */
+const READING = ["books", "labs", "explorables"] as const;
 type PageView = (props: { section: string | null }) => React.ReactNode;
 const CONCEPT_PAGES: Record<string, PageView> = {
   method: MethodConcept,
@@ -38,7 +54,7 @@ const SKILLS_PAGES: Record<string, PageView> = {
 };
 
 export default function App() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const route = useRoute("concept");
   const pages: ShellPage[] = [
     { id: "problems", label: t("page.problems") },
@@ -57,7 +73,12 @@ export default function App() {
         { id: "mcp", label: t("tab.mcp") },
       ],
     },
-    { id: "reading", label: t("page.reading") },
+    {
+      id: "reading",
+      label: t("page.reading"),
+      // a menu under the header tab, like AI agent ▸ Skills / MCP: the reading list, then the sister sites
+      tabs: READING.map((id) => ({ id, label: seriesText(READING_TABS[id], lang) })),
+    },
   ];
   const concept = route.page === "concept";
   const conceptTab = CONCEPT_TABS.includes(route.tab as never) ? route.tab! : CONCEPT_TABS[0];
@@ -114,6 +135,18 @@ export default function App() {
           <ConceptView key={route.tab} section={route.section} />
         ) : skills ? (
           <SkillsView key={skillsTab} section={route.section} />
+        ) : route.page === "reading" ? (
+          route.tab === "labs" || route.tab === "explorables" ? (
+            <SeriesPage
+              key={route.tab}
+              kind={route.tab === "labs" ? "lab" : "explorable"}
+              current="formalizer"
+              lang={lang}
+              onOther={() => go("reading", route.tab === "labs" ? "explorables" : "labs")}
+            />
+          ) : (
+            <BooksReading section={route.tab === "books" ? route.section : null} />
+          )
         ) : route.page === "problems" ? (
           <ProblemsPage id={route.tab} />
         ) : (
