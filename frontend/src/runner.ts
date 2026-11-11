@@ -87,3 +87,30 @@ export function insertChip(code: string, chip: string, step = false): string {
   const text = chip.replaceAll("\n", "\n" + indent) + (step ? `\n${indent}sorry` : "");
   return code.slice(0, m.index) + text + code.slice(m.index + "sorry".length);
 }
+
+/** One file of a proof. A problem may ship extra files (e.g. a read-only library); the reader may add lemma files. */
+export interface LeanFile {
+  name: string;
+  code: string;
+  readonly?: boolean;
+}
+
+/**
+ * Several files checked as one: joined in order (the main file last, so lemmas come before their use), with a map
+ * from a line of the joined text back to its file and line there.
+ */
+export function joinFiles(files: LeanFile[]): { code: string; where: (line: number) => { file: string; line: number } } {
+  const starts: { file: string; first: number }[] = [];
+  let next = 1;
+  const parts = files.map((f) => {
+    const text = f.code.endsWith("\n") ? f.code : `${f.code}\n`;
+    starts.push({ file: f.name, first: next });
+    next += text.split("\n").length - 1;
+    return text;
+  });
+  const where = (line: number) => {
+    const at = [...starts].reverse().find((s) => s.first <= line) ?? starts[0];
+    return { file: at.file, line: line - at.first + 1 };
+  };
+  return { code: parts.join(""), where };
+}

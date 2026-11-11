@@ -517,16 +517,16 @@ export const HISTORY: TimelineCard[] = [
     image: {
       src: "history/comparator.svg",
       alt: [
-        "Comparator's three checks inside a sandbox: same statement, standard axioms, a second kernel",
-        "Comparator 在沙盒中的三項檢查：相同陳述、標準公理、第二個核心",
+        "Comparator's checks inside a sandbox: same statement, standard axioms, and optionally a second kernel",
+        "Comparator 在沙盒中的檢查：相同陳述、標準公理，以及可選的第二個核心",
       ],
       credit: "Drawing: Formalizer",
     },
     title: ["Comparator: checking a proof you didn't write", "Comparator：檢查不是你寫的證明"],
     body: [
       [
-        "When a model writes thousands of lines of Lean, nobody wants to read them all. The Lean FRO's **Comparator** checks only what matters: the solution proves *exactly* the fixed challenge statement, uses only the standard axioms (`propext`, `Quot.sound`, `Classical.choice`), and passes a second, independent kernel (nanoda), all inside a sandbox.",
-        "當模型寫出數千行 Lean，沒人想全部讀完。Lean FRO 的 **Comparator** 只檢查重點：解答證明的 *正是* 固定的挑戰陳述、只用標準公理（`propext`、`Quot.sound`、`Classical.choice`），並通過第二個獨立核心（nanoda），全部在沙盒中進行。",
+        "When a model writes thousands of lines of Lean, nobody wants to read them all. The Lean FRO's **Comparator** checks only what matters: the solution proves *exactly* the fixed challenge statement, uses only the standard axioms (`propext`, `Quot.sound`, `Classical.choice`), and replays it in Lean's kernel, optionally also in a second, independent one (nanoda), all inside a sandbox. Since Lean v4.35.0 it ships with Lean itself as `lake comparator`.",
+        "當模型寫出數千行 Lean，沒人想全部讀完。Lean FRO 的 **Comparator** 只檢查重點：解答證明的 *正是* 固定的挑戰陳述、只用標準公理（`propext`、`Quot.sound`、`Classical.choice`），並在 Lean 的核心中重新檢查，也可選擇再交給第二個獨立核心（nanoda），全部在沙盒中進行。從 Lean v4.35.0 起，它以 `lake comparator` 隨 Lean 一起提供。",
       ],
       [
         "This is how Formalizer grades every problem: the statement is the test, the kernel is the grader.",

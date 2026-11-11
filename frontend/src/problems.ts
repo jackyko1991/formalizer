@@ -4,6 +4,7 @@
  * Text is [English, Traditional Chinese].
  */
 import type { Localized } from "@learnkit/web";
+import type { LeanFile } from "./runner";
 import geometry from "../../problems/geometry.json" with { type: "json" };
 import linearAlgebra from "../../problems/linear-algebra.json" with { type: "json" };
 import collections from "../../problems/collections.json" with { type: "json" };
@@ -52,6 +53,8 @@ export interface Problem {
   hint: Localized;
   /** the reference solution, proved in CI */
   solution: string;
+  /** extra files checked before Proof.lean, left to right (e.g. a read-only library for a long proof) */
+  files?: LeanFile[];
 }
 
 /** One file per topic in problems/, all checked the same way by tests/test_problems.py. */

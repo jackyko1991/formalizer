@@ -12,7 +12,9 @@ import pytest
 from tests.test_runner import REPL, client  # noqa: F401 (the shared runner fixture)
 
 ROOT = Path(__file__).resolve().parents[1]
-FILES = {f.stem: json.loads(f.read_text()) for f in sorted((ROOT / "problems").glob("*.json")) if f.stem != "collections"}
+FILES = {
+    f.stem: json.loads(f.read_text()) for f in sorted((ROOT / "problems").glob("*.json")) if f.stem != "collections"
+}
 COLLECTIONS = json.loads((ROOT / "problems" / "collections.json").read_text())
 PROBLEMS = [p for problems in FILES.values() for p in problems]
 IDS = [p["id"] for p in PROBLEMS]

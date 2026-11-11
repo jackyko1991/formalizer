@@ -20,3 +20,14 @@ test("a chip replaces the first sorry, indents its lines and keeps a sorry after
   assert.equal(insertChip("  | succ n ih => sorry", "simp", true), "  | succ n ih => simp\n                 sorry");
   assert.equal(insertChip("done", "omega"), "done");
 });
+
+test("files are joined in order and every line maps back to its file", async () => {
+  const { joinFiles } = await import("../src/runner.ts");
+  const { code, where } = joinFiles([
+    { name: "Lemmas.lean", code: "theorem a : True := ⟨⟩\ntheorem b : True := ⟨⟩" },
+    { name: "Proof.lean", code: "theorem t : 1 = 1 := by\n  rfl\n" },
+  ]);
+  assert.equal(code, "theorem a : True := ⟨⟩\ntheorem b : True := ⟨⟩\ntheorem t : 1 = 1 := by\n  rfl\n");
+  assert.deepEqual(where(2), { file: "Lemmas.lean", line: 2 });
+  assert.deepEqual(where(4), { file: "Proof.lean", line: 2 });
+});

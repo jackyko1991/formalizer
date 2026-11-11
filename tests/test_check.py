@@ -78,7 +78,7 @@ def test_standard_axioms_are_fine_others_are_not():
 
 
 def test_a_renamed_theorem_is_an_error():
-    reply = {"messages": [{"severity": "error", "pos": {"line": 3, "column": 0}, "data": "unknown constant 'hello'"}]}
+    reply = {"messages": [{"severity": "error", "pos": {"line": 3, "column": 0}, "data": "Unknown constant `hello`"}]}
     r = summarize(reply, 2, ["hello"])
     assert r["verdict"] == "error" and "hello" in r["errors"][0]["message"]
 

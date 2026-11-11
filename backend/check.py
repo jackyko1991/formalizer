@@ -67,12 +67,12 @@ def summarize(reply: dict, code_lines: int, theorems: list[str]) -> dict:
             listed = found.group("list")
             axioms[found.group("name")] = [a.strip() for a in listed.split(",") if a.strip()] if listed else []
             continue
-        if line > code_lines and m.get("severity") == "error" and "unknown constant" in text:
+        if line > code_lines and m.get("severity") == "error" and "unknown constant" in text.lower():
             errors.append(
                 {
                     "line": 0,
                     "column": 0,
-                    "message": f"`{text.split('unknown constant')[-1].strip()}` was not found: keep the theorem's name",
+                    "message": f"`{re.split(r'(?i)unknown constant', text)[-1].strip().strip("`'")}` was not found: keep the theorem's name",
                 }
             )
             continue

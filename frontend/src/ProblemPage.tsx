@@ -10,7 +10,7 @@ import CodeMirror from "@uiw/react-codemirror";
 import { useEffect, useState } from "react";
 import ProblemLibrary, { LEVEL_STYLE } from "./ProblemLibrary";
 import { CATEGORIES, collectionsOf, PROBLEMS, type Problem } from "./problems";
-import { check, insertChip, RunnerError, type CheckResult, type Issue } from "./runner";
+import { check, insertChip, joinFiles, RunnerError, type CheckResult, type Issue, type LeanFile } from "./runner";
 import { runnerReady, useRunner, type RunnerState } from "./RunnerPanel";
 
 const VERDICT_STYLE: Record<CheckResult["verdict"], string> = {
@@ -19,6 +19,8 @@ const VERDICT_STYLE: Record<CheckResult["verdict"], string> = {
   error: "border-red-200 bg-red-50 text-red-800",
   "needs-runner": "border-gray-200 bg-gray-50 text-gray-700",
 };
+/** the file with the problem's statement, checked last */
+const MAIN = "Proof.lean";
 const PANEL_HEAD = "flex h-8 shrink-0 items-center justify-between gap-2 border-b border-gray-200 bg-gray-50 px-3 text-xs";
 const PANEL_TITLE = "font-semibold tracking-wide text-gray-500 uppercase";
 
@@ -92,7 +94,12 @@ export default function ProblemsPage({ id }: { id: string | null }) {
 function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: string) => void }) {
   const { t, pick } = useLang();
   const [code, setCode] = useState(problem.start);
+  // files checked before Proof.lean, left to right: the problem's own, then any the reader adds for lemmas
+  const [files, setFiles] = useState<LeanFile[]>(() => problem.files ?? []);
+  const [active, setActive] = useState(MAIN);
   const [result, setResult] = useState<CheckResult | null>(null);
+  // where each line of the last check came from: "Lemmas.lean, line 3"
+  const [where, setWhere] = useState<(line: number) => { file: string; line: number }>(() => (line: number) => ({ file: MAIN, line }));
   const [previous, setPrevious] = useState<CheckResult | null>(null);
   const [running, setRunning] = useState(false);
   const [problemText, setProblemText] = useState<string | null>(null);
@@ -108,11 +115,13 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
     setPrevious(null);
   }, [problem.id]);
 
-  async function run(source = code) {
+  async function run(source = code, extra = files) {
     setRunning(true);
     setProblemText(null);
     try {
-      const next = await check(source, problem.theorems, problem.statements);
+      const joined = joinFiles([...extra, { name: MAIN, code: source }]);
+      const next = await check(joined.code, problem.theorems, problem.statements);
+      setWhere(() => joined.where);
       setPrevious(result);
       setResult(next);
       setMobileTab((tab) => (tab === "problem" ? "result" : tab));
@@ -122,10 +131,25 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
       setRunning(false);
     }
   }
-  const reset = () => (setCode(problem.start), setResult(null), setPrevious(null));
+  const reset = () => (setCode(problem.start), setFiles(problem.files ?? []), setActive(MAIN), setResult(null), setPrevious(null));
+  const edited = code !== problem.start || JSON.stringify(files) !== JSON.stringify(problem.files ?? []);
+  const own = new Set((problem.files ?? []).map((f) => f.name));
+  const activeFile = files.find((f) => f.name === active);
+  const at = (line: number) => {
+    const w = where(line);
+    return { file: w.file, line: String(w.line) };
+  };
+  const addFile = () => {
+    const taken = new Set([MAIN, ...files.map((f) => f.name)]);
+    let n = 1;
+    while (taken.has(n === 1 ? "Lemmas.lean" : `Lemmas${n}.lean`)) n++;
+    const name = n === 1 ? "Lemmas.lean" : `Lemmas${n}.lean`;
+    setFiles((fs) => [...fs, { name, code: t("files.template") }]);
+    setActive(name);
+  };
   const level = LEVEL_STYLE[problem.level];
-  // the tutorial track teaches tactic by tactic; the other topics show their complete proof instead
-  const guided = problem.category === "tutorial";
+  // the complete proof stays hidden until the reader asks for it (the switch in the Tactics panel)
+  const [showProof, setShowProof] = useState(false);
   const category = CATEGORIES.find((c) => c.id === problem.category)!;
   // hypotheses that weren't there at the same goal last time: the step's effect
   const before = new Set(previous?.goals.flatMap((g) => g.hypotheses) ?? []);
@@ -212,15 +236,58 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
       <section className="flex min-w-0 flex-col xl:min-h-0 xl:w-[54%] xl:shrink-0">
         <div className={`flex flex-col overflow-hidden bg-white xl:min-h-0 xl:flex-[1.4] xl:flex-row ${onPhone("proof", "xl:flex")}`}>
           <div className="flex min-w-0 flex-1 flex-col">
-            <div className="flex shrink-0 items-end gap-1 border-b border-gray-200 bg-gray-50 px-2 pt-2">
-              <span className="rounded-t-md border border-b-0 border-gray-200 bg-white px-3 py-1.5 font-mono text-xs text-gray-900">
-                Proof.lean
-                {code !== problem.start && <span className="ml-1 text-amber-600">●</span>}
-              </span>
+            <div className="flex shrink-0 items-end gap-1 overflow-x-auto border-b border-gray-200 bg-gray-50 px-2 pt-2" role="tablist">
+              {[...files.map((f) => f.name), MAIN].map((name) => {
+                const dirty =
+                  name === MAIN
+                    ? code !== problem.start
+                    : files.find((f) => f.name === name)?.code !== problem.files?.find((f) => f.name === name)?.code;
+                return (
+                  <span
+                    key={name}
+                    className={`flex shrink-0 items-center rounded-t-md border border-b-0 font-mono text-xs ${
+                      active === name ? "border-gray-200 bg-white text-gray-900" : "border-transparent text-gray-500 hover:text-gray-800"
+                    }`}
+                  >
+                    <button
+                      role="tab"
+                      aria-selected={active === name}
+                      onClick={() => setActive(name)}
+                      className="py-1.5 pl-3 pr-2"
+                      data-testid="file-tab"
+                    >
+                      {name}
+                      {dirty && <span className="ml-1 text-amber-600">●</span>}
+                    </button>
+                    {name !== MAIN && !own.has(name) && (
+                      <button
+                        onClick={() => {
+                          setFiles((fs) => fs.filter((f) => f.name !== name));
+                          setActive(MAIN);
+                        }}
+                        title={t("files.remove")}
+                        className="pr-2 text-gray-400 hover:text-red-600"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </span>
+                );
+              })}
+              <button
+                onClick={addFile}
+                title={t("files.add")}
+                data-testid="add-file"
+                className="mb-1 shrink-0 rounded px-2 text-sm text-gray-500 hover:bg-gray-200 hover:text-gray-800"
+              >
+                +
+              </button>
             </div>
             <div className="flex h-7 shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-3 text-xs text-gray-500">
-              <span className="truncate">{t("proof.about")}</span>
-              {code !== problem.start && (
+              <span className="truncate">
+                {active === MAIN ? t("proof.about") : activeFile?.readonly ? t("files.readonly") : t("files.about")}
+              </span>
+              {edited && (
                 <button onClick={reset} className="shrink-0 text-(--lk-accent) hover:underline">
                   {t("run.reset")}
                 </button>
@@ -228,8 +295,12 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
             </div>
             <div className="max-h-[60vh] min-h-48 flex-1 overflow-auto xl:max-h-none xl:min-h-0">
               <CodeMirror
-                value={code}
-                onChange={setCode}
+                key={active}
+                value={active === MAIN ? code : (activeFile?.code ?? "")}
+                onChange={(next) =>
+                  active === MAIN ? setCode(next) : setFiles((fs) => fs.map((f) => (f.name === active ? { ...f, code: next } : f)))
+                }
+                editable={active === MAIN || !activeFile?.readonly}
                 basicSetup={{ foldGutter: false }}
                 className="font-mono text-sm"
                 aria-label={t("run.editor")}
@@ -238,32 +309,51 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
             </div>
           </div>
 
-          {/* like Tensorizer's Parameters panel: the tutorial offers tactics to try; the other topics show the whole proof */}
-          <aside
-            className={`flex w-full shrink-0 flex-col border-t border-gray-200 bg-white xl:border-t-0 xl:border-l ${guided ? "xl:w-60" : "xl:w-80"}`}
-          >
+          {/* like Tensorizer's Parameters panel: tactics to try step by step; the switch reveals the complete proof */}
+          <aside className="flex w-full shrink-0 flex-col border-t border-gray-200 bg-white xl:w-64 xl:border-t-0 xl:border-l">
             <div className={PANEL_HEAD}>
-              <span className={PANEL_TITLE}>{t(guided ? "panel.tactics" : "panel.proof")}</span>
+              <span className={PANEL_TITLE}>{t("panel.tactics")}</span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={showProof}
+                onClick={() => setShowProof((v) => !v)}
+                title={t("proof.switchHint")}
+                data-testid="proof-switch"
+                className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900"
+              >
+                {t("proof.switch")}
+                <span
+                  aria-hidden
+                  className={`relative h-4 w-7 shrink-0 rounded-full transition-colors ${showProof ? "bg-(--lk-accent)" : "bg-gray-300"}`}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform ${showProof ? "translate-x-3" : ""}`}
+                  />
+                </span>
+              </button>
             </div>
-            {!guided ? (
-              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3" data-testid="reference-proof">
+            {showProof && (
+              <div className="shrink-0 space-y-2 border-b border-gray-200 bg-gray-50/60 p-3" data-testid="reference-proof">
                 <p className="text-[11px] leading-snug text-gray-500">{t("proof.reference")}</p>
-                <pre className="overflow-x-auto rounded-md border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-xs leading-relaxed text-gray-800">
+                <pre className="max-h-48 overflow-auto rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-xs leading-relaxed text-gray-800">
                   {proofBody(problem)}
                 </pre>
                 <button
                   onClick={() => {
                     setCode(problem.solution);
+                    setActive(MAIN);
                     if (ready) void run(problem.solution);
                   }}
                   disabled={running}
                   data-testid="use-proof"
-                  className="w-full rounded-md border border-(--lk-accent) px-2.5 py-1.5 text-xs font-medium text-(--lk-accent) hover:bg-teal-50 disabled:opacity-40"
+                  className="w-full rounded-md border border-(--lk-accent) bg-white px-2.5 py-1.5 text-xs font-medium text-(--lk-accent) hover:bg-teal-50 disabled:opacity-40"
                 >
                   {t("proof.use")}
                 </button>
               </div>
-            ) : (
+            )}
+            {
               <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-3">
                 <p className="pb-1 text-[11px] leading-snug text-gray-500">{t("run.tryHint")}</p>
                 {problem.tactics.map((tactic) => {
@@ -276,6 +366,7 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
                       onClick={() => {
                         // after a finishing try there's no sorry left: start again from the problem's file
                         const next = insertChip(/\bsorry\b/.test(code) ? code : problem.start, tactic, problem.steps.includes(tactic));
+                        setActive(MAIN);
                         setCode(next);
                         if (ready) void run(next);
                       }}
@@ -294,7 +385,7 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
                   );
                 })}
               </div>
-            )}
+            }
             <div className="shrink-0 space-y-2 border-t border-gray-200 p-3">
               <RunnerHint runner={runner} onOpen={openRunner} />
               <button
@@ -323,7 +414,7 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
                 result.goals.map((g, i) => (
                   <div key={i} className="overflow-hidden rounded-lg border border-gray-200" data-testid="goal">
                     <p className="border-b border-gray-100 bg-gray-50 px-3 py-1 text-[11px] text-gray-500">
-                      {t("goal.at").replace("{line}", String(g.line))}
+                      {t("goal.at").replace("{file}", at(g.line).file).replace("{line}", at(g.line).line)}
                       {g.case && <span className="ml-2 rounded bg-gray-200 px-1.5 font-mono text-gray-700">case {g.case}</span>}
                     </p>
                     <div className="px-3 py-2 font-mono text-xs leading-relaxed">
@@ -364,12 +455,12 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
                   {result.errors.map((e, i) => (
                     <div key={i} className="rounded-lg border border-red-200 bg-white px-3 py-2" data-testid="lean-error">
                       <p className="text-xs font-medium text-red-700">
-                        {e.line ? t("error.at").replace("{line}", String(e.line)) : t("error.title")}
+                        {e.line ? t("error.at").replace("{file}", at(e.line).file).replace("{line}", at(e.line).line) : t("error.title")}
                       </p>
                       <pre className="mt-1 font-mono text-xs whitespace-pre-wrap text-gray-800">{e.message}</pre>
                     </div>
                   ))}
-                  <Notes items={[...(result.infos ?? []), ...result.warnings]} />
+                  <Notes items={[...(result.infos ?? []), ...result.warnings]} at={at} />
                   {Object.keys(result.axioms).length > 0 && (
                     <p className="text-xs text-gray-500" data-testid="axioms">
                       {t("axioms.label")}{" "}
@@ -454,7 +545,7 @@ function CollectionNav({ problemId, onSelect }: { problemId: string; onSelect: (
 }
 
 /** What Lean says besides errors: "Try this" suggestions (`exact?`, `simp?`) and warnings, by line. */
-function Notes({ items }: { items: Issue[] }) {
+function Notes({ items, at }: { items: Issue[]; at: (line: number) => { file: string; line: string } }) {
   const { t } = useLang();
   if (!items.length) return null;
   return (
@@ -464,7 +555,9 @@ function Notes({ items }: { items: Issue[] }) {
         .sort((a, b) => a.line - b.line)
         .map((n, i) => (
           <div key={i} className="mt-1">
-            <p className="text-[11px] text-gray-500">{t("notes.at").replace("{line}", String(n.line))}</p>
+            <p className="text-[11px] text-gray-500">
+              {t("notes.at").replace("{file}", at(n.line).file).replace("{line}", at(n.line).line)}
+            </p>
             <pre className="font-mono text-xs whitespace-pre-wrap text-gray-800">{n.message}</pre>
           </div>
         ))}
