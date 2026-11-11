@@ -36,6 +36,19 @@ npm run links     # every History source answers
 
 The shared layer `vendor/learnkit` is a **private** submodule: a clone without access to it can't build the site.
 
+## CI setup (once, by the owner)
+
+The Pages workflow fetches learnkit with a read-only deploy key:
+
+```sh
+ssh-keygen -t ed25519 -N "" -C "formalizer-ci (read-only)" -f /tmp/learnkit_deploy
+gh repo deploy-key add /tmp/learnkit_deploy.pub --repo jackyko1991/learnkit --title "formalizer-ci (read-only)"
+gh secret set LEARNKIT_DEPLOY_KEY --repo jackyko1991/formalizer < /tmp/learnkit_deploy
+rm /tmp/learnkit_deploy /tmp/learnkit_deploy.pub
+```
+
+Then Settings ▸ Pages ▸ Source: **GitHub Actions**, and re-run the workflow.
+
 ## Credits and licence
 
 Code: Apache-2.0 (see `LICENSE`). Problem statements come from

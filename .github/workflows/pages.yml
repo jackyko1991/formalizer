@@ -21,6 +21,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # learnkit is private: without its deploy key the submodule can't be fetched. Say so plainly.
+      - name: Check the learnkit deploy key
+        env:
+          KEY: ${{ secrets.LEARNKIT_DEPLOY_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::error title=Missing secret LEARNKIT_DEPLOY_KEY::learnkit (vendor/learnkit) is a private repository. Add a read-only deploy key to jackyko1991/learnkit and its private key as the secret LEARNKIT_DEPLOY_KEY in this repository (README: CI setup)."
+            exit 1
+          fi
       - uses: actions/checkout@v7.0.1
         with:
           submodules: true
