@@ -1,0 +1,79 @@
+"""The tutorial track (problems/tutorial.json): every problem is well formed, and with real Lean its starting file
+is incomplete, its reference solution is proved, and pressing its chips in order (as the page does) reaches a proof.
+The Lean part is skipped when the toolchain or the built REPL is missing; CI builds both."""
+
+import json
+import re
+from pathlib import Path
+
+import pytest
+
+from tests.test_runner import REPL, client  # noqa: F401 (the shared runner fixture)
+
+ROOT = Path(__file__).resolve().parents[1]
+PROBLEMS = json.loads((ROOT / "problems" / "tutorial.json").read_text())
+IDS = [p["id"] for p in PROBLEMS]
+SORRY = re.compile(r"\bsorry\b")
+
+
+def insert_chip(code: str, chip: str, step: bool) -> str:
+    """Mirror of `insertChip` in frontend/src/runner.ts: the chip replaces the first `sorry`; its further lines are
+    indented to that column; a step chip keeps a `sorry` after it for what is left."""
+    m = SORRY.search(code)
+    if not m:
+        return code
+    indent = " " * (m.start() - (code.rfind("\n", 0, m.start()) + 1))
+    text = chip.replace("\n", "\n" + indent) + (f"\n{indent}sorry" if step else "")
+    return code[: m.start()] + text + code[m.end() :]
+
+
+def test_problems_are_well_formed():
+    assert len(IDS) == len(set(IDS)) and len(PROBLEMS) >= 15
+    for p in PROBLEMS:
+        assert re.fullmatch(r"[a-z0-9-]+", p["id"]), p["id"]
+        assert p["level"] in ("L1", "L2", "L3") and p["runner"] == "lite"
+        for key in ("title", "summary", "hint"):
+            assert len(p[key]) == 2 and all(s.strip() for s in p[key]), f"{p['id']}: {key} needs en + zh-Hant"
+        assert SORRY.search(p["start"]) and not SORRY.search(p["solution"]), p["id"]
+        for s in p["statements"]:
+            assert s in p["start"] and s in p["solution"], f"{p['id']}: statement missing"
+        assert set(p["steps"]) <= set(p["tactics"]), p["id"]
+        assert "import" not in p["start"], f"{p['id']}: the Lite track is core Lean only"
+    levels = [p["level"] for p in PROBLEMS]
+    assert levels == sorted(levels), "problems are listed level by level"
+    for level in ("L1", "L2", "L3"):
+        assert levels.count(level) >= 3, level
+
+
+def check(client, p, code):  # noqa: F811
+    r = client.post("/api/check", json={"code": code, "theorems": p["theorems"], "statements": p["statements"]})
+    assert r.status_code == 200, r.text
+    return r.json()
+
+
+@pytest.mark.skipif(not REPL.exists(), reason="needs `pixi run lean-build`")
+@pytest.mark.parametrize("p", PROBLEMS, ids=IDS)
+def test_start_is_open_and_the_solution_is_proved(client, p):  # noqa: F811
+    start = check(client, p, p["start"])
+    assert start["verdict"] == "incomplete" and start["goals"], start
+    done = check(client, p, p["solution"])
+    assert done["verdict"] == "proved", done
+    assert all(set(a) <= {"propext", "Quot.sound", "Classical.choice"} for a in done["axioms"].values())
+
+
+@pytest.mark.skipif(not REPL.exists(), reason="needs `pixi run lean-build`")
+@pytest.mark.parametrize("p", PROBLEMS, ids=IDS)
+def test_the_chips_in_order_reach_a_proof(client, p):  # noqa: F811
+    """A learner pressing the chips left to right: a chip that Lean rejects is undone (some are there to show an
+    error), the others must keep the file compiling until one finishes the proof."""
+    code = p["start"]
+    for chip in p["tactics"]:
+        tried = insert_chip(code, chip, chip in p["steps"])
+        result = check(client, p, tried)
+        if result["verdict"] == "error":
+            assert chip not in p["steps"] and "sorry" not in chip, f"{chip!r}: {result['errors']}"
+            continue
+        code = tried
+        if result["verdict"] == "proved":
+            return
+    pytest.fail(f"the chips never finish the proof; last file:\n{code}")

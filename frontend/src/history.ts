@@ -12,7 +12,9 @@ export const ERAS: Era[] = [
       "The first idea: write a proof so precisely that a small, trusted program can check every step.",
       "最初的想法：把證明寫得足夠精確，讓一個小而可信的程式檢查每一步。",
     ],
-    colour: "bg-sky-600 text-sky-700",
+    colour: "sky",
+    label: ["Part I", "第一部"],
+    short: ["Proof checkers", "證明檢查器"],
   },
   {
     id: "landmarks",
@@ -21,7 +23,9 @@ export const ERAS: Era[] = [
       "Proofs too long or too computer-heavy for referees to trust were checked line by line.",
       "長到審稿人難以完全信任、或大量依賴電腦計算的證明，被逐行驗證。",
     ],
-    colour: "bg-violet-600 text-violet-700",
+    colour: "violet",
+    label: ["Part II", "第二部"],
+    short: ["Landmarks", "里程碑"],
   },
   {
     id: "lean",
@@ -30,7 +34,9 @@ export const ERAS: Era[] = [
       "A proof assistant and a community library grew into the place where working mathematicians formalize.",
       "一個證明輔助器與一個社群函式庫，逐漸成為數學家做形式化的主要地方。",
     ],
-    colour: "bg-teal-600 text-teal-700",
+    colour: "teal",
+    label: ["Part III", "第三部"],
+    short: ["Lean & Mathlib", "Lean 與 Mathlib"],
   },
   {
     id: "ai",
@@ -39,7 +45,9 @@ export const ERAS: Era[] = [
       "When a model writes the proof, Lean's kernel decides whether it is right.",
       "當證明由模型寫出，由 Lean 的核心（kernel）決定它對不對。",
     ],
-    colour: "bg-amber-600 text-amber-700",
+    colour: "amber",
+    label: ["Part IV", "第四部"],
+    short: ["AI & Lean", "AI 與 Lean"],
   },
 ];
 

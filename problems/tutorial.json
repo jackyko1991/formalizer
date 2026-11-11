@@ -1,0 +1,496 @@
+[
+  {
+    "id": "hello",
+    "level": "L1",
+    "runner": "lite",
+    "title": [
+      "Hello, Lean: 2 + 2 = 4",
+      "你好，Lean：2 + 2 = 4"
+    ],
+    "summary": [
+      "Your first proof. The statement `theorem hello : 2 + 2 = 4` is the test: it stays as it is. Your job is to replace `sorry` (\"I owe you a proof\") with something Lean accepts. Press **Run** first to see the goal Lean wants you to prove.",
+      "你的第一個證明。陳述 `theorem hello : 2 + 2 = 4` 就是測試，要保持原樣。你的任務是把 `sorry`（「先欠著一個證明」）換成 Lean 接受的內容。先按 **執行**，看看 Lean 要你證明的目標。"
+    ],
+    "statements": [
+      "theorem hello : 2 + 2 = 4"
+    ],
+    "theorems": [
+      "hello"
+    ],
+    "start": "theorem hello : 2 + 2 = 4 := by\n  sorry\n",
+    "tactics": [
+      "rfl",
+      "decide",
+      "norm_num"
+    ],
+    "steps": [],
+    "hint": [
+      "`rfl` says \"both sides compute to the same thing\": Lean works out `2 + 2` and gets `4`. `decide` asks Lean to check the claim by computation. (`norm_num` lives in Mathlib, so the Lite runner says it needs the Full runner.)",
+      "`rfl` 的意思是「兩邊算出來一樣」：Lean 會算出 `2 + 2` 等於 `4`。`decide` 則請 Lean 用計算檢查這個命題。（`norm_num` 屬於 Mathlib，所以 Lite 執行器會說需要 Full 執行器。）"
+    ],
+    "solution": "theorem hello : 2 + 2 = 4 := by\n  rfl\n"
+  },
+  {
+    "id": "add-comm",
+    "level": "L1",
+    "runner": "lite",
+    "title": [
+      "Order doesn't matter: a + b = b + a",
+      "順序不重要：a + b = b + a"
+    ],
+    "summary": [
+      "Now the statement is about **every** pair of natural numbers `a` and `b`, so Lean can't just compute it. Run it: the goal shows the two numbers as hypotheses (`a b : Nat`) above the line and what to prove below it.",
+      "這次的陳述是關於 **任意** 一對自然數 `a` 與 `b`，Lean 沒辦法直接算出來。執行看看：目標會把兩個數列為前提（`a b : Nat`），放在橫線上方，要證明的內容在下方。"
+    ],
+    "statements": [
+      "theorem add_swap (a b : Nat) : a + b = b + a"
+    ],
+    "theorems": [
+      "add_swap"
+    ],
+    "start": "theorem add_swap (a b : Nat) : a + b = b + a := by\n  sorry\n",
+    "tactics": [
+      "omega",
+      "exact Nat.add_comm a b",
+      "simp",
+      "rfl"
+    ],
+    "steps": [],
+    "hint": [
+      "This fact is already in Lean's library as `Nat.add_comm`: `exact Nat.add_comm a b` uses it. `omega` proves it on its own, because it decides linear arithmetic over the natural numbers. `rfl` fails here: try it to read the error.",
+      "這個事實已在 Lean 的函式庫裡，名叫 `Nat.add_comm`：`exact Nat.add_comm a b` 直接引用它。`omega` 也能自己證出來，因為它能判定自然數上的線性算術。`rfl` 在這裡會失敗：試試看，讀讀錯誤訊息。"
+    ],
+    "solution": "theorem add_swap (a b : Nat) : a + b = b + a := by\n  omega\n"
+  },
+  {
+    "id": "check-cases",
+    "level": "L1",
+    "runner": "lite",
+    "title": [
+      "Check every case: no square ends in 2",
+      "逐一檢查：沒有平方數的個位是 2"
+    ],
+    "summary": [
+      "`n * n % 10` is the last digit of `n × n` (`%` is the remainder after dividing). The statement says: for every `n` below 10, that last digit is not 2. Only ten cases, so Lean can simply check them all. (The last digit of a square depends only on the last digit of `n`, so this shows that **no** square number ends in 2.)",
+      "`n * n % 10` 是 `n × n` 的個位數（`%` 是除法的餘數）。這個陳述說：對每一個小於 10 的 `n`，這個個位數都不是 2。只有十種情形，Lean 可以全部檢查一遍。（平方數的個位只取決於 `n` 的個位，所以這說明了 **任何** 平方數的個位都不是 2。）"
+    ],
+    "statements": [
+      "theorem no_square_ends_in_two : ∀ n < 10, n * n % 10 ≠ 2"
+    ],
+    "theorems": [
+      "no_square_ends_in_two"
+    ],
+    "start": "theorem no_square_ends_in_two : ∀ n < 10, n * n % 10 ≠ 2 := by\n  sorry\n",
+    "tactics": [
+      "decide",
+      "omega",
+      "rfl"
+    ],
+    "steps": [],
+    "hint": [
+      "`decide` runs a checking procedure: here it tries `n = 0, 1, …, 9` and finds no counterexample. It works because the cases are finite and each one can be computed. `omega` can't help: it doesn't handle multiplying two unknowns (`n * n`).",
+      "`decide` 會執行一個檢查程序：這裡它試了 `n = 0, 1, …, 9`，找不到反例。之所以可行，是因為情形有限，而且每一種都能算出來。`omega` 幫不上忙：它不處理兩個未知數相乘（`n * n`）。"
+    ],
+    "solution": "theorem no_square_ends_in_two : ∀ n < 10, n * n % 10 ≠ 2 := by\n  decide\n"
+  },
+  {
+    "id": "squeeze",
+    "level": "L1",
+    "runner": "lite",
+    "title": [
+      "Squeezed: 3 < n < 5 means n = 4",
+      "夾擠：3 < n < 5 表示 n = 4"
+    ],
+    "summary": [
+      "Here the statement gives you two facts to use, named `h₁ : 3 < n` and `h₂ : n < 5`. Run it: they appear under **What you know**. The only whole number strictly between 3 and 5 is 4, and Lean should agree.",
+      "這個陳述給了你兩個可以用的事實，名叫 `h₁ : 3 < n` 和 `h₂ : n < 5`。執行看看：它們會出現在 **已知** 底下。嚴格介於 3 和 5 之間的整數只有 4，Lean 應該也同意。"
+    ],
+    "statements": [
+      "theorem squeeze (n : Nat) (h₁ : 3 < n) (h₂ : n < 5) : n = 4"
+    ],
+    "theorems": [
+      "squeeze"
+    ],
+    "start": "theorem squeeze (n : Nat) (h₁ : 3 < n) (h₂ : n < 5) : n = 4 := by\n  sorry\n",
+    "tactics": [
+      "omega",
+      "decide",
+      "simp"
+    ],
+    "steps": [],
+    "hint": [
+      "`omega` reads the hypotheses too: it combines `3 < n` and `n < 5` and finds that `n = 4` is forced. It solves any problem made of `+`, `-`, `<`, `≤`, `=` and multiplying by fixed numbers, over whole numbers. `decide` fails because `n` is not a specific number.",
+      "`omega` 也會讀前提：它結合 `3 < n` 與 `n < 5`，發現 `n` 只能是 `4`。凡是由 `+`、`-`、`<`、`≤`、`=` 以及乘上固定數字組成的整數問題，它都能解決。`decide` 會失敗，因為 `n` 不是一個具體的數。"
+    ],
+    "solution": "theorem squeeze (n : Nat) (h₁ : 3 < n) (h₂ : n < 5) : n = 4 := by\n  omega\n"
+  },
+  {
+    "id": "reverse-twice",
+    "level": "L1",
+    "runner": "lite",
+    "title": [
+      "Reverse a list twice",
+      "把串列反轉兩次"
+    ],
+    "summary": [
+      "`xs` is any list of numbers, like `[1, 2, 3]`. Reversing it gives `[3, 2, 1]`; reversing again gives back `[1, 2, 3]`. The statement says this holds for **every** list. Lean's library already knows this fact; `simp` finds such facts for you.",
+      "`xs` 是任意一個數字串列，例如 `[1, 2, 3]`。反轉後得到 `[3, 2, 1]`，再反轉一次又回到 `[1, 2, 3]`。這個陳述說：對 **每一個** 串列都成立。Lean 的函式庫已經知道這個事實；`simp` 會幫你找出這類事實。"
+    ],
+    "statements": [
+      "theorem reverse_twice (xs : List Nat) : xs.reverse.reverse = xs"
+    ],
+    "theorems": [
+      "reverse_twice"
+    ],
+    "start": "theorem reverse_twice (xs : List Nat) : xs.reverse.reverse = xs := by\n  sorry\n",
+    "tactics": [
+      "simp",
+      "simp?",
+      "rfl",
+      "omega"
+    ],
+    "steps": [],
+    "hint": [
+      "`simp` (simplify) rewrites the goal with hundreds of library facts marked as simplifications until it becomes trivially true. `simp?` does the same and then says **which** facts it used (`List.reverse_reverse`): a good way to learn the library's names.",
+      "`simp`（化簡）會用函式庫中數百條標記為化簡規則的事實改寫目標，直到它顯然成立。`simp?` 做同樣的事，並告訴你 **用了哪些** 事實（`List.reverse_reverse`）：這是認識函式庫名稱的好方法。"
+    ],
+    "solution": "theorem reverse_twice (xs : List Nat) : xs.reverse.reverse = xs := by\n  simp\n"
+  },
+  {
+    "id": "rewrite-chain",
+    "level": "L2",
+    "runner": "lite",
+    "title": [
+      "Rewriting: a = b and b = c give a = c",
+      "改寫：由 a = b 與 b = c 得到 a = c"
+    ],
+    "summary": [
+      "`rw [h₁]` (rewrite) uses the equation `h₁ : a = b` to replace `a` by `b` everywhere in the goal. Try it step by step: after each rewrite, Run shows how the goal changed.",
+      "`rw [h₁]`（改寫）用等式 `h₁ : a = b` 把目標裡所有的 `a` 換成 `b`。一步一步試：每次改寫之後，執行會顯示目標怎麼改變。"
+    ],
+    "statements": [
+      "theorem chain (a b c : Nat) (h₁ : a = b) (h₂ : b = c) : a = c"
+    ],
+    "theorems": [
+      "chain"
+    ],
+    "start": "theorem chain (a b c : Nat) (h₁ : a = b) (h₂ : b = c) : a = c := by\n  sorry\n",
+    "tactics": [
+      "rw [h₁]",
+      "rw [h₂]",
+      "exact h₂",
+      "rw [h₁, h₂]"
+    ],
+    "steps": [
+      "rw [h₁]"
+    ],
+    "hint": [
+      "After `rw [h₁]` the goal is `b = c`, which is exactly `h₂`: finish with `exact h₂`, or rewrite again with `rw [h₂]` (the goal becomes `c = c` and `rw` closes it by itself). `rw [h₁, h₂]` does both rewrites at once.",
+      "`rw [h₁]` 之後，目標變成 `b = c`，正好就是 `h₂`：用 `exact h₂` 收尾，或再用 `rw [h₂]` 改寫一次（目標變成 `c = c`，`rw` 會自動結束）。`rw [h₁, h₂]` 一次做完兩步改寫。"
+    ],
+    "solution": "theorem chain (a b c : Nat) (h₁ : a = b) (h₂ : b = c) : a = c := by\n  rw [h₁, h₂]\n"
+  },
+  {
+    "id": "regroup",
+    "level": "L2",
+    "runner": "lite",
+    "title": [
+      "Regroup a product with library lemmas",
+      "用函式庫引理重組乘積"
+    ],
+    "summary": [
+      "`a * b * c` means `(a * b) * c`. To reach `b * (a * c)`, swap `a` and `b`, then move the brackets. Lean's library names these facts: `Nat.mul_comm a b : a * b = b * a` and `Nat.mul_assoc x y z : x * y * z = x * (y * z)`. Rewrite with them, one at a time.",
+      "`a * b * c` 的意思是 `(a * b) * c`。要變成 `b * (a * c)`，先交換 `a` 和 `b`，再移動括號。Lean 的函式庫替這些事實取了名字：`Nat.mul_comm a b : a * b = b * a`，以及 `Nat.mul_assoc x y z : x * y * z = x * (y * z)`。一次用一條改寫。"
+    ],
+    "statements": [
+      "theorem regroup (a b c : Nat) : a * b * c = b * (a * c)"
+    ],
+    "theorems": [
+      "regroup"
+    ],
+    "start": "theorem regroup (a b c : Nat) : a * b * c = b * (a * c) := by\n  sorry\n",
+    "tactics": [
+      "rw [Nat.mul_comm a b]",
+      "rw [Nat.mul_assoc]",
+      "omega"
+    ],
+    "steps": [
+      "rw [Nat.mul_comm a b]"
+    ],
+    "hint": [
+      "Giving the arguments (`Nat.mul_comm a b`) tells `rw` which product to swap; plain `Nat.mul_comm` would swap the first product it finds, which may not be the one you want. `omega` fails here: products of unknowns are outside what it handles.",
+      "給出參數（`Nat.mul_comm a b`）是在告訴 `rw` 要交換哪一個乘積；單寫 `Nat.mul_comm` 會交換它找到的第一個乘積，未必是你要的。`omega` 在這裡會失敗：未知數相乘超出它能處理的範圍。"
+    ],
+    "solution": "theorem regroup (a b c : Nat) : a * b * c = b * (a * c) := by\n  rw [Nat.mul_comm a b, Nat.mul_assoc]\n"
+  },
+  {
+    "id": "le-chain",
+    "level": "L2",
+    "runner": "lite",
+    "title": [
+      "Working backwards with apply",
+      "用 apply 倒推"
+    ],
+    "summary": [
+      "The library fact `Nat.le_trans` says: if `a ≤ b` and `b ≤ c`, then `a ≤ c`. `apply` works backwards from the goal: `apply Nat.le_trans h₁` uses the fact with the first piece already supplied, so only `b ≤ c` is left to show.",
+      "函式庫的事實 `Nat.le_trans` 說：若 `a ≤ b` 且 `b ≤ c`，則 `a ≤ c`。`apply` 從目標往回推：`apply Nat.le_trans h₁` 使用這個事實，並先填好第一塊，所以只剩下 `b ≤ c` 要證明。"
+    ],
+    "statements": [
+      "theorem le_chain (a b c : Nat) (h₁ : a ≤ b) (h₂ : b ≤ c) : a ≤ c"
+    ],
+    "theorems": [
+      "le_chain"
+    ],
+    "start": "theorem le_chain (a b c : Nat) (h₁ : a ≤ b) (h₂ : b ≤ c) : a ≤ c := by\n  sorry\n",
+    "tactics": [
+      "apply Nat.le_trans h₁",
+      "exact h₂",
+      "exact Nat.le_trans h₁ h₂",
+      "omega"
+    ],
+    "steps": [
+      "apply Nat.le_trans h₁"
+    ],
+    "hint": [
+      "`exact Nat.le_trans h₁ h₂` gives all the pieces at once. `apply` is useful when the pieces still need their own proofs: each missing piece becomes a new goal. (`omega` also solves it directly.)",
+      "`exact Nat.le_trans h₁ h₂` 一次給出所有的塊。當某些塊還需要各自的證明時，`apply` 就很有用：每一塊缺少的部分都會變成新的目標。（`omega` 也能直接解決。）"
+    ],
+    "solution": "theorem le_chain (a b c : Nat) (h₁ : a ≤ b) (h₂ : b ≤ c) : a ≤ c := by\n  exact Nat.le_trans h₁ h₂\n"
+  },
+  {
+    "id": "search",
+    "level": "L2",
+    "runner": "lite",
+    "title": [
+      "Let Lean search the library: exact?",
+      "讓 Lean 搜尋函式庫：exact?"
+    ],
+    "summary": [
+      "`n + 1` is never zero, so `0 < n + 1`. The fact is surely in the library, but what is it called? `exact?` searches the library for a lemma that closes the goal and prints it as **Try this**.",
+      "`n + 1` 永遠不是零，所以 `0 < n + 1`。這個事實一定在函式庫裡，但它叫什麼名字？`exact?` 會在函式庫裡搜尋能結束目標的引理，並以 **Try this** 印出來。"
+    ],
+    "statements": [
+      "theorem succ_positive (n : Nat) : 0 < n + 1"
+    ],
+    "theorems": [
+      "succ_positive"
+    ],
+    "start": "theorem succ_positive (n : Nat) : 0 < n + 1 := by\n  sorry\n",
+    "tactics": [
+      "exact?",
+      "exact Nat.zero_lt_succ n",
+      "decide"
+    ],
+    "steps": [],
+    "hint": [
+      "Run `exact?`, then copy what it found (`exact Nat.zero_lt_succ n`) in place of `exact?`: the search runs again on every check, while the found line is instant. `decide` fails: `n` is unknown, so there is nothing to compute.",
+      "執行 `exact?`，然後把它找到的內容（`exact Nat.zero_lt_succ n`）貼上取代 `exact?`：搜尋在每次檢查都會重跑，而找到的那一行是即時的。`decide` 會失敗：`n` 是未知數，沒有東西可以計算。"
+    ],
+    "solution": "theorem succ_positive (n : Nat) : 0 < n + 1 := by\n  exact Nat.zero_lt_succ n\n"
+  },
+  {
+    "id": "length-swap",
+    "level": "L2",
+    "runner": "lite",
+    "title": [
+      "The length of two lists joined",
+      "兩個串列接起來的長度"
+    ],
+    "summary": [
+      "`xs ++ ys` joins two lists. Its length is the two lengths added, but the statement writes them in the other order: `ys.length + xs.length`. First rewrite with the library fact `List.length_append`, then deal with the order.",
+      "`xs ++ ys` 把兩個串列接起來。它的長度是兩個長度相加，但陳述把順序寫反了：`ys.length + xs.length`。先用函式庫事實 `List.length_append` 改寫，再處理順序。"
+    ],
+    "statements": [
+      "theorem length_swap (xs ys : List Nat) : (xs ++ ys).length = ys.length + xs.length"
+    ],
+    "theorems": [
+      "length_swap"
+    ],
+    "start": "theorem length_swap (xs ys : List Nat) : (xs ++ ys).length = ys.length + xs.length := by\n  sorry\n",
+    "tactics": [
+      "rw [List.length_append]",
+      "rw [Nat.add_comm]",
+      "omega",
+      "simp"
+    ],
+    "steps": [
+      "rw [List.length_append]"
+    ],
+    "hint": [
+      "After the first rewrite the goal is `xs.length + ys.length = ys.length + xs.length`: an `a + b = b + a` like the second L1 problem, with lengths as the numbers. `omega` treats `xs.length` and `ys.length` as two unknown numbers and finishes too.",
+      "第一次改寫之後，目標是 `xs.length + ys.length = ys.length + xs.length`：就像 L1 第二題的 `a + b = b + a`，只是數字換成了長度。`omega` 把 `xs.length` 與 `ys.length` 當作兩個未知數，也能收尾。"
+    ],
+    "solution": "theorem length_swap (xs ys : List Nat) : (xs ++ ys).length = ys.length + xs.length := by\n  rw [List.length_append, Nat.add_comm]\n"
+  },
+  {
+    "id": "even-sum",
+    "level": "L3",
+    "runner": "lite",
+    "title": [
+      "Even plus even is even: obtain",
+      "偶數加偶數是偶數：obtain"
+    ],
+    "summary": [
+      "\"`a` is even\" is written `∃ k, a = 2 * k`: there **exists** a `k` with `a = 2k`. To use it, `obtain ⟨x, hx⟩ := ha` unpacks it into a number `x` and the fact `hx : a = 2 * x`. To prove an \"exists\", you name the witness: here `x + y`.",
+      "「`a` 是偶數」寫成 `∃ k, a = 2 * k`：**存在** 一個 `k` 使 `a = 2k`。要使用它，`obtain ⟨x, hx⟩ := ha` 會把它拆成一個數 `x` 和事實 `hx : a = 2 * x`。要證明「存在」，就要說出那個見證：這裡是 `x + y`。"
+    ],
+    "statements": [
+      "theorem even_add (a b : Nat) (ha : ∃ k, a = 2 * k) (hb : ∃ k, b = 2 * k) : ∃ k, a + b = 2 * k"
+    ],
+    "theorems": [
+      "even_add"
+    ],
+    "start": "theorem even_add (a b : Nat) (ha : ∃ k, a = 2 * k) (hb : ∃ k, b = 2 * k) : ∃ k, a + b = 2 * k := by\n  sorry\n",
+    "tactics": [
+      "obtain ⟨x, hx⟩ := ha",
+      "obtain ⟨y, hy⟩ := hb",
+      "refine ⟨x + y, ?_⟩",
+      "omega"
+    ],
+    "steps": [
+      "obtain ⟨x, hx⟩ := ha",
+      "obtain ⟨y, hy⟩ := hb",
+      "refine ⟨x + y, ?_⟩"
+    ],
+    "hint": [
+      "Use the chips in order and watch **What you know** grow: `x`, `hx`, `y`, `hy` appear. `refine ⟨x + y, ?_⟩` says \"the witness is `x + y`\" and leaves `a + b = 2 * (x + y)`, which `omega` finishes. `omega` alone fails at the start: it can't choose a witness for `∃`.",
+      "依序使用這些按鈕，看 **已知** 越變越多：`x`、`hx`、`y`、`hy` 會出現。`refine ⟨x + y, ?_⟩` 的意思是「見證是 `x + y`」，剩下 `a + b = 2 * (x + y)`，交給 `omega` 收尾。一開始單用 `omega` 會失敗：它沒辦法替 `∃` 選出見證。"
+    ],
+    "solution": "theorem even_add (a b : Nat) (ha : ∃ k, a = 2 * k) (hb : ∃ k, b = 2 * k) : ∃ k, a + b = 2 * k := by\n  obtain ⟨x, hx⟩ := ha\n  obtain ⟨y, hy⟩ := hb\n  refine ⟨x + y, ?_⟩\n  omega\n"
+  },
+  {
+    "id": "cases-or",
+    "level": "L3",
+    "runner": "lite",
+    "title": [
+      "Either way: cases",
+      "兩種情形都成立：cases"
+    ],
+    "summary": [
+      "`p` and `q` are any two statements, and `h : p ∨ q` says at least one is true (`∨` is \"or\"). To use an \"or\", split into cases: `cases h` gives one goal where `p` holds and one where `q` holds. Prove `q ∨ p` in both.",
+      "`p` 和 `q` 是任意兩個命題，`h : p ∨ q` 表示至少有一個為真（`∨` 是「或」）。要使用「或」，就分情形：`cases h` 會產生一個 `p` 成立的目標，和一個 `q` 成立的目標。兩者都要證出 `q ∨ p`。"
+    ],
+    "statements": [
+      "theorem swap_or (p q : Prop) (h : p ∨ q) : q ∨ p"
+    ],
+    "theorems": [
+      "swap_or"
+    ],
+    "start": "theorem swap_or (p q : Prop) (h : p ∨ q) : q ∨ p := by\n  sorry\n",
+    "tactics": [
+      "cases h with\n| inl hp => sorry\n| inr hq => sorry",
+      "exact Or.inr hp",
+      "exact Or.inl hq"
+    ],
+    "steps": [],
+    "hint": [
+      "`inl` (\"in left\") is the case where the left side `p` holds, `inr` where `q` holds. To prove `q ∨ p` from `hp : p`, pick the right side: `Or.inr hp`. From `hq : q`, pick the left: `Or.inl hq`.",
+      "`inl`（「在左邊」）是左邊 `p` 成立的情形，`inr` 是 `q` 成立的情形。要從 `hp : p` 證出 `q ∨ p`，選右邊：`Or.inr hp`。從 `hq : q`，選左邊：`Or.inl hq`。"
+    ],
+    "solution": "theorem swap_or (p q : Prop) (h : p ∨ q) : q ∨ p := by\n  cases h with\n  | inl hp => exact Or.inr hp\n  | inr hq => exact Or.inl hq\n"
+  },
+  {
+    "id": "induction-double",
+    "level": "L3",
+    "runner": "lite",
+    "title": [
+      "Induction: doubling one step at a time",
+      "歸納法：一次加倍一步"
+    ],
+    "summary": [
+      "`double` is defined step by step: `double 0 = 0`, and each step adds 2. Claim: `double n = 2 * n` for every `n`. **Induction** proves it in two parts: the start (`n = 0`), and the step (if it holds for `n`, it holds for `n + 1`). The definition is part of the statement: keep it.",
+      "`double` 是一步一步定義的：`double 0 = 0`，每走一步加 2。主張：對每個 `n`，`double n = 2 * n`。**歸納法** 分兩部分證明：起點（`n = 0`），以及推進（若對 `n` 成立，則對 `n + 1` 也成立）。定義是陳述的一部分：請保留。"
+    ],
+    "statements": [
+      "def double : Nat → Nat\n  | 0 => 0\n  | n + 1 => double n + 2",
+      "theorem double_eq (n : Nat) : double n = 2 * n"
+    ],
+    "theorems": [
+      "double_eq"
+    ],
+    "start": "def double : Nat → Nat\n  | 0 => 0\n  | n + 1 => double n + 2\n\ntheorem double_eq (n : Nat) : double n = 2 * n := by\n  sorry\n",
+    "tactics": [
+      "induction n with\n| zero => sorry\n| succ n ih => sorry",
+      "rfl",
+      "simp only [double, ih]",
+      "omega"
+    ],
+    "steps": [
+      "simp only [double, ih]"
+    ],
+    "hint": [
+      "In the `succ` case you know `ih : double n = 2 * n` (the induction hypothesis). `simp only [double, ih]` unfolds one step of the definition and uses `ih`, leaving `2 * n + 2 = 2 * (n + 1)`, which `omega` finishes. The `zero` case is `rfl`: both sides compute to `0`.",
+      "在 `succ` 情形中，你知道 `ih : double n = 2 * n`（歸納假設）。`simp only [double, ih]` 展開定義的一步並使用 `ih`，剩下 `2 * n + 2 = 2 * (n + 1)`，交給 `omega` 收尾。`zero` 情形用 `rfl`：兩邊都算出 `0`。"
+    ],
+    "solution": "def double : Nat → Nat\n  | 0 => 0\n  | n + 1 => double n + 2\n\ntheorem double_eq (n : Nat) : double n = 2 * n := by\n  induction n with\n  | zero => rfl\n  | succ n ih =>\n    simp only [double, ih]\n    omega\n"
+  },
+  {
+    "id": "calc-chain",
+    "level": "L3",
+    "runner": "lite",
+    "title": [
+      "A chain of steps: calc",
+      "一連串的步驟：calc"
+    ],
+    "summary": [
+      "`calc` writes a proof the way you would on paper: `a < b`, then `b ≤ c`, then `c < c + 1`, so `a < c + 1`. Each line has its own small proof after `:=`. Lean joins `<` and `≤` steps into the conclusion for you.",
+      "`calc` 讓你像在紙上一樣寫證明：`a < b`，接著 `b ≤ c`，再來 `c < c + 1`，所以 `a < c + 1`。每一行在 `:=` 後面都有自己的小證明。Lean 會替你把 `<` 和 `≤` 的步驟接成結論。"
+    ],
+    "statements": [
+      "theorem lt_chain (a b c : Nat) (h₁ : a < b) (h₂ : b ≤ c) : a < c + 1"
+    ],
+    "theorems": [
+      "lt_chain"
+    ],
+    "start": "theorem lt_chain (a b c : Nat) (h₁ : a < b) (h₂ : b ≤ c) : a < c + 1 := by\n  sorry\n",
+    "tactics": [
+      "calc a < b := by sorry\n  _ ≤ c := by sorry\n  _ < c + 1 := by sorry",
+      "exact h₁",
+      "exact h₂",
+      "exact Nat.lt_succ_self c",
+      "omega"
+    ],
+    "steps": [],
+    "hint": [
+      "Fill the three `sorry`s in order: `exact h₁`, `exact h₂`, and `exact Nat.lt_succ_self c` (the library's \"`c < c + 1`\"). `omega` proves this whole problem in one go; `calc` matters when the steps are beyond `omega`, as in the next problem.",
+      "依序填入三個 `sorry`：`exact h₁`、`exact h₂`，以及 `exact Nat.lt_succ_self c`（函式庫中的「`c < c + 1`」）。`omega` 能一次證完整題；當步驟超出 `omega` 的能力時（例如下一題），`calc` 就很重要。"
+    ],
+    "solution": "theorem lt_chain (a b c : Nat) (h₁ : a < b) (h₂ : b ≤ c) : a < c + 1 := by\n  calc a < b := h₁\n    _ ≤ c := h₂\n    _ < c + 1 := Nat.lt_succ_self c\n"
+  },
+  {
+    "id": "gauss",
+    "level": "L3",
+    "runner": "lite",
+    "title": [
+      "Gauss's sum: 1 + 2 + … + n",
+      "高斯求和：1 + 2 + … + n"
+    ],
+    "summary": [
+      "The story goes that young Gauss added 1 to 100 in seconds: pair the numbers from both ends and you get `n(n + 1)/2`. Here `sumTo n` is `1 + 2 + … + n`, and the claim is `2 * sumTo n = n * (n + 1)`. Use induction; the step needs a `calc` chain, because `omega` can't multiply unknowns.",
+      "相傳年幼的高斯幾秒鐘就算出 1 加到 100：把頭尾的數配對，就得到 `n(n + 1)/2`。這裡 `sumTo n` 是 `1 + 2 + … + n`，主張是 `2 * sumTo n = n * (n + 1)`。用歸納法；推進的那一步需要一串 `calc`，因為 `omega` 無法處理未知數相乘。"
+    ],
+    "statements": [
+      "def sumTo : Nat → Nat\n  | 0 => 0\n  | n + 1 => sumTo n + (n + 1)",
+      "theorem gauss (n : Nat) : 2 * sumTo n = n * (n + 1)"
+    ],
+    "theorems": [
+      "gauss"
+    ],
+    "start": "def sumTo : Nat → Nat\n  | 0 => 0\n  | n + 1 => sumTo n + (n + 1)\n\ntheorem gauss (n : Nat) : 2 * sumTo n = n * (n + 1) := by\n  sorry\n",
+    "tactics": [
+      "induction n with\n| zero => sorry\n| succ n ih => sorry",
+      "rfl",
+      "calc 2 * sumTo (n + 1) = 2 * sumTo n + 2 * (n + 1) := by sorry\n  _ = n * (n + 1) + 2 * (n + 1) := by sorry\n  _ = (n + 2) * (n + 1) := by sorry\n  _ = (n + 1) * (n + 1 + 1) := by sorry",
+      "rw [sumTo, Nat.mul_add]",
+      "rw [ih]",
+      "rw [Nat.add_mul n 2 (n + 1)]",
+      "rw [Nat.mul_comm]"
+    ],
+    "steps": [],
+    "hint": [
+      "Each `calc` line is one small move: unfold `sumTo` and spread the `2 *` over the sum (`Nat.mul_add`); use the induction hypothesis `ih`; collect `n * (n + 1) + 2 * (n + 1)` into `(n + 2) * (n + 1)` (`Nat.add_mul`); swap the factors (`Nat.mul_comm`). With Mathlib, `ring` does all of the algebra in one tactic.",
+      "每一行 `calc` 都是一個小動作：展開 `sumTo`，把 `2 *` 分配到和上（`Nat.mul_add`）；使用歸納假設 `ih`；把 `n * (n + 1) + 2 * (n + 1)` 合併成 `(n + 2) * (n + 1)`（`Nat.add_mul`）；交換兩個因數（`Nat.mul_comm`）。有了 Mathlib，`ring` 一個戰術就能完成全部代數。"
+    ],
+    "solution": "def sumTo : Nat → Nat\n  | 0 => 0\n  | n + 1 => sumTo n + (n + 1)\n\ntheorem gauss (n : Nat) : 2 * sumTo n = n * (n + 1) := by\n  induction n with\n  | zero => rfl\n  | succ n ih =>\n    calc 2 * sumTo (n + 1) = 2 * sumTo n + 2 * (n + 1) := by rw [sumTo, Nat.mul_add]\n      _ = n * (n + 1) + 2 * (n + 1) := by rw [ih]\n      _ = (n + 2) * (n + 1) := by rw [Nat.add_mul n 2 (n + 1)]\n      _ = (n + 1) * (n + 1 + 1) := by rw [Nat.mul_comm]\n"
+  }
+]

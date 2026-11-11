@@ -5,6 +5,8 @@ Verdicts:
 - "proved": no errors, no `sorry`, and every checked theorem uses only the standard axioms;
 - "incomplete": it compiles, but some proof still has `sorry` (the work left);
 - "error": Lean rejected something.
+
+Info messages from the user's code (the "Try this" of `exact?` and `simp?`) are passed on as `infos`.
 """
 
 from __future__ import annotations
@@ -22,8 +24,10 @@ def split_goal(goal: str) -> dict:
     blocks = [b for b in re.split(r"\n\s*\n", goal.strip()) if b.strip()]
     goals = []
     for block in blocks or [goal]:
-        hyps, target = [], ""
+        hyps, target, case = [], "", None
         lines = block.split("\n")
+        if lines[0].startswith("case "):  # the branch's name after `induction` / `cases` (e.g. "case succ")
+            case, lines = lines[0][5:].strip(), lines[1:]
         for i, line in enumerate(lines):
             if line.startswith("⊢"):
                 target = "\n".join([line[1:].strip(), *[ln.strip() for ln in lines[i + 1 :]]]).strip()
@@ -32,8 +36,8 @@ def split_goal(goal: str) -> dict:
                 hyps[-1] += " " + line.strip()
             else:
                 hyps.append(line.strip())
-        goals.append({"hypotheses": [h for h in hyps if h], "target": target})
-    first = goals[0] if goals else {"hypotheses": [], "target": goal.strip()}
+        goals.append({"case": case, "hypotheses": [h for h in hyps if h], "target": target})
+    first = goals[0] if goals else {"case": None, "hypotheses": [], "target": goal.strip()}
     return {**first, "others": goals[1:]}
 
 
@@ -54,7 +58,7 @@ def axioms_request(theorems: list[str]) -> str:
 def summarize(reply: dict, code_lines: int, theorems: list[str]) -> dict:
     """The page's view of a check. `code_lines`: messages after this line come from the appended
     `#print axioms` commands, not from the user's code."""
-    errors, warnings, axioms = [], [], {}
+    errors, warnings, infos, axioms = [], [], [], {}
     for m in reply.get("messages", []):
         line = m.get("pos", {}).get("line", 0)
         text = str(m.get("data", ""))
@@ -82,6 +86,8 @@ def summarize(reply: dict, code_lines: int, theorems: list[str]) -> dict:
             errors.append(item)
         elif m.get("severity") == "warning" and "declaration uses `sorry`" not in text:
             warnings.append(item)
+        elif m.get("severity") == "info" and line <= code_lines:  # e.g. "Try this: …" from `exact?` / `simp?`
+            infos.append(item)
     goals = [
         {
             "line": s.get("pos", {}).get("line", 0),
@@ -104,4 +110,11 @@ def summarize(reply: dict, code_lines: int, theorems: list[str]) -> dict:
         errors.append({"line": 0, "column": 0, "message": f"uses non-standard axioms: {', '.join(nonstandard)}"})
     else:
         verdict = "proved"
-    return {"verdict": verdict, "errors": errors, "warnings": warnings, "goals": goals, "axioms": axioms}
+    return {
+        "verdict": verdict,
+        "errors": errors,
+        "warnings": warnings,
+        "infos": infos,
+        "goals": goals,
+        "axioms": axioms,
+    }

@@ -49,7 +49,9 @@ ERROR = {
 def test_sorry_is_incomplete_with_its_goal():
     r = summarize(SORRY, 1, ["hello"])
     assert r["verdict"] == "incomplete"
-    assert r["goals"] == [{"line": 1, "column": 32, "hypotheses": [], "target": "2 + 2 = 4", "others": []}]
+    assert r["goals"] == [
+        {"line": 1, "column": 32, "case": None, "hypotheses": [], "target": "2 + 2 = 4", "others": []}
+    ]
     assert r["axioms"] == {"hello": ["sorryAx"]} and r["warnings"] == []
 
 
@@ -83,9 +85,11 @@ def test_a_renamed_theorem_is_an_error():
 
 def test_goals_split_into_hypotheses_and_target():
     g = split_goal("a b : Nat\nh : a ≤ b\n⊢ a + b = b + a")
-    assert g == {"hypotheses": ["a b : Nat", "h : a ≤ b"], "target": "a + b = b + a", "others": []}
+    assert g == {"case": None, "hypotheses": ["a b : Nat", "h : a ≤ b"], "target": "a + b = b + a", "others": []}
     two = split_goal("x : Nat\n⊢ x = x\n\ny : Nat\n⊢ y + 0 = y")
-    assert two["target"] == "x = x" and two["others"] == [{"hypotheses": ["y : Nat"], "target": "y + 0 = y"}]
+    assert two["target"] == "x = x" and two["others"] == [
+        {"case": None, "hypotheses": ["y : Nat"], "target": "y + 0 = y"}
+    ]
     wrapped = split_goal("h : a very long hypothesis that\n  wraps here\n⊢ True")
     assert wrapped["hypotheses"] == ["h : a very long hypothesis that wraps here"]
 
@@ -95,3 +99,8 @@ def test_imports_are_found_and_blanked_keeping_line_numbers():
     assert imports(code) == ["Mathlib", "Mathlib.Tactic"]
     assert without_imports(code).split("\n")[3] == "theorem t : True := trivial"
     assert axioms_request(["a", "b"]) == "\n#print axioms a\n#print axioms b"
+
+
+def test_a_case_label_is_not_a_hypothesis():
+    g = split_goal("case succ\nn : Nat\nih : P n\n⊢ P (n + 1)")
+    assert g["case"] == "succ" and g["hypotheses"] == ["n : Nat", "ih : P n"] and g["target"] == "P (n + 1)"

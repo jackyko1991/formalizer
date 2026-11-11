@@ -25,6 +25,8 @@ export interface Health {
 export interface Goal {
   line: number;
   column: number;
+  /** the branch's name after `induction` / `cases`, e.g. "succ" */
+  case?: string | null;
   hypotheses: string[];
   target: string;
   others: { hypotheses: string[]; target: string }[];
@@ -38,6 +40,8 @@ export interface CheckResult {
   verdict: "proved" | "incomplete" | "error" | "needs-runner";
   errors: Issue[];
   warnings: Issue[];
+  /** info messages, e.g. the "Try this" of `exact?` and `simp?` */
+  infos: Issue[];
   goals: Goal[];
   axioms: Record<string, string[]>;
   ms: number;
@@ -72,6 +76,14 @@ export async function check(code: string, theorems: string[], statements: string
 }
 
 /** Replace the first `sorry` with a tactic (the help chips). */
-export function fillFirstSorry(code: string, tactic: string): string {
-  return code.replace(/\bsorry\b/, tactic);
+/**
+ * A chip replaces the first `sorry`. Its further lines (an `induction` or `calc` skeleton) are indented to that column;
+ * a step chip keeps a `sorry` after it for what is left. Mirrored by tests/test_tutorial.py `insert_chip`.
+ */
+export function insertChip(code: string, chip: string, step = false): string {
+  const m = /\bsorry\b/.exec(code);
+  if (!m) return code;
+  const indent = " ".repeat(m.index - (code.lastIndexOf("\n", m.index - 1) + 1));
+  const text = chip.replaceAll("\n", "\n" + indent) + (step ? `\n${indent}sorry` : "");
+  return code.slice(0, m.index) + text + code.slice(m.index + "sorry".length);
 }

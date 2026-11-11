@@ -16,5 +16,5 @@ export default defineConfig({
     // learnkit's files import react etc.; resolve them from this app's node_modules
     dedupe: ["react", "react-dom", "katex", "@uiw/react-codemirror", "@codemirror/view", "@codemirror/state"],
   },
-  server: { fs: { allow: [here, LEARNKIT] } },
+  server: { fs: { allow: [here, LEARNKIT, path.resolve(here, "../problems")] } },
 });

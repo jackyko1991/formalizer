@@ -1,7 +1,7 @@
 """Formalizer's local runner: checks Lean files for the site, on the user's own computer.
 
 GET  /api/health   runner kind (lite | full), Lean version, pool state (warming | ready | failed)
-POST /api/check    {code, theorems, statements} → {verdict, errors, warnings, goals, axioms, ms}
+POST /api/check    {code, theorems, statements} → {verdict, errors, warnings, infos, goals, axioms, ms}
 """
 
 from __future__ import annotations
@@ -108,6 +108,7 @@ async def check(req: CheckRequest) -> dict:
                 }
             ],
             "warnings": [],
+            "infos": [],
             "goals": [],
             "axioms": {},
             "ms": 0,
@@ -125,6 +126,7 @@ async def check(req: CheckRequest) -> dict:
                 }
             ],
             "warnings": [],
+            "infos": [],
             "goals": [],
             "axioms": {},
             "ms": 0,

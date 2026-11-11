@@ -1,8 +1,8 @@
-import { go, RichText, Shell, Timeline, useLang, useRoute, type ShellPage } from "@learnkit/web";
+import { go, RichText, routeHash, Shell, Timeline, useLang, useRoute, type ShellPage } from "@learnkit/web";
 import { ERAS, HISTORY } from "./history";
 import ProblemPage from "./ProblemPage";
 import { RunnerButton, RunnerProvider } from "./RunnerPanel";
-import { PROBLEMS } from "./problems";
+import { LEVELS, PROBLEMS } from "./problems";
 import { STRINGS } from "./strings";
 
 const REPO_URL = "https://github.com/jackyko1991/formalizer";
@@ -67,20 +67,22 @@ function HistoryPage({ section }: { section: string | null }) {
   const { t } = useLang();
   return (
     <div data-testid="history-page">
-      <header className="mx-auto max-w-6xl px-5 pt-8">
-        <div className="lg:pl-64">
-          <h1 className="text-3xl font-semibold tracking-tight text-gray-900">{t("history.title")}</h1>
-          <p className="mt-3 max-w-3xl text-gray-600">
-            <RichText text={t("history.intro")} />
-          </p>
-        </div>
-      </header>
       <Timeline
         eras={ERAS}
         cards={HISTORY}
         scrollRoot={SCROLL}
         focus={section}
-        labels={{ contents: STRINGS.contents, sources: STRINGS.sources }}
+        labels={{ contents: STRINGS.timeline, sources: STRINGS.sources, open: STRINGS["timeline.open"] }}
+        // keep the address shareable without a new history entry (no hashchange, so no re-render)
+        onPick={(id) => history.replaceState(null, "", routeHash("concept", "history", id))}
+        header={
+          <>
+            <h1 className="text-3xl font-semibold tracking-tight text-gray-900">{t("history.title")}</h1>
+            <p className="mt-3 text-gray-600">
+              <RichText text={t("history.intro")} />
+            </p>
+          </>
+        }
       />
     </div>
   );
@@ -112,22 +114,34 @@ function Problems({ id }: { id: string | null }) {
       <p className="mt-3 text-gray-600">
         <RichText text={t("problems.intro")} />
       </p>
-      <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-        {PROBLEMS.map((p) => (
-          <li key={p.id}>
-            <button
-              onClick={() => go("problems", p.id)}
-              className="w-full rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm hover:border-(--lk-accent)"
-            >
-              <p className="text-xs font-semibold text-(--lk-accent)">{p.level}</p>
-              <p className="mt-1 font-semibold text-gray-900">
-                <RichText text={pick(p.title)} />
-              </p>
-              <p className="mt-2 text-sm text-(--lk-accent)">{t("problems.open")} →</p>
-            </button>
-          </li>
-        ))}
-      </ul>
+      {LEVELS.map((level) => (
+        <section key={level} className="mt-8" data-testid={`level-${level}`}>
+          <h2 className="text-lg font-semibold text-gray-900">
+            {level} · {t(`level.${level}`)}
+          </h2>
+          <p className="mt-1 text-sm text-gray-600">
+            <RichText text={t(`level.${level}.intro`)} />
+          </p>
+          <ol className="mt-3 grid gap-3 sm:grid-cols-2">
+            {PROBLEMS.filter((p) => p.level === level).map((p) => (
+              <li key={p.id}>
+                <button
+                  onClick={() => go("problems", p.id)}
+                  className="h-full w-full rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm hover:border-(--lk-accent)"
+                >
+                  <p className="text-xs font-semibold text-(--lk-accent)">
+                    {p.level}.{PROBLEMS.filter((q) => q.level === level).indexOf(p) + 1}
+                  </p>
+                  <p className="mt-1 font-semibold text-gray-900">
+                    <RichText text={pick(p.title)} />
+                  </p>
+                  <p className="mt-2 text-sm text-(--lk-accent)">{t("problems.open")} →</p>
+                </button>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))}
     </div>
   );
 }

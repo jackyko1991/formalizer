@@ -1,8 +1,8 @@
-import { RichText, useLang } from "@learnkit/web";
+import { go, RichText, useLang } from "@learnkit/web";
 import CodeMirror from "@uiw/react-codemirror";
 import { useEffect, useState } from "react";
-import type { Problem } from "./problems";
-import { check, fillFirstSorry, RunnerError, type CheckResult } from "./runner";
+import { PROBLEMS, type Problem } from "./problems";
+import { check, insertChip, RunnerError, type CheckResult, type Issue } from "./runner";
 import { runnerReady, useRunner, type RunnerState } from "./RunnerPanel";
 
 const VERDICT_STYLE: Record<CheckResult["verdict"], string> = {
@@ -87,22 +87,27 @@ export default function ProblemPage({ problem }: { problem: Problem }) {
           >
             {running ? t("run.running") : `▶ ${t("run.run")}`}
           </button>
-          {problem.tactics.map((tactic) => (
-            <button
-              key={tactic}
-              onClick={() => {
-                // after a failed try there's no sorry left: start again from the problem's file
-                const next = fillFirstSorry(/\bsorry\b/.test(code) ? code : problem.start, tactic);
-                setCode(next);
-                if (ready) void run(next);
-              }}
-              disabled={running}
-              title={t("run.tryHint")}
-              className="rounded-full border border-gray-300 bg-white px-3 py-1 font-mono text-xs text-gray-700 hover:border-(--lk-accent) disabled:opacity-40"
-            >
-              {t("run.try")} {tactic}
-            </button>
-          ))}
+          {problem.tactics.map((tactic) => {
+            const step = problem.steps.includes(tactic);
+            const first = tactic.split("\n")[0];
+            const label = first.length > 26 || first !== tactic ? `${first.slice(0, 24).trimEnd()} …` : tactic;
+            return (
+              <button
+                key={tactic}
+                onClick={() => {
+                  // after a finishing try there's no sorry left: start again from the problem's file
+                  const next = insertChip(/\bsorry\b/.test(code) ? code : problem.start, tactic, step);
+                  setCode(next);
+                  if (ready) void run(next);
+                }}
+                disabled={running}
+                title={`${t(step ? "run.stepHint" : "run.tryHint")}\n\n${tactic}`}
+                className="rounded-full border border-gray-300 bg-white px-3 py-1 font-mono text-xs text-gray-700 hover:border-(--lk-accent) disabled:opacity-40"
+              >
+                {t(step || /\bsorry\b/.test(tactic) ? "run.step" : "run.try")} {label}
+              </button>
+            );
+          })}
         </div>
         <RunnerHint runner={runner} onOpen={openRunner} />
       </section>
@@ -122,6 +127,7 @@ export default function ProblemPage({ problem }: { problem: Problem }) {
               <div key={i} className="overflow-hidden rounded-lg border border-gray-200 bg-white" data-testid="goal">
                 <p className="border-b border-gray-100 bg-gray-50 px-3 py-1.5 text-xs text-gray-500">
                   {t("goal.at").replace("{line}", String(g.line))}
+                  {g.case && <span className="ml-2 rounded bg-gray-200 px-1.5 font-mono text-gray-700">case {g.case}</span>}
                 </p>
                 <div className="grid gap-0 sm:grid-cols-2">
                   <div className="border-b border-gray-100 p-3 sm:border-r sm:border-b-0">
@@ -156,6 +162,7 @@ export default function ProblemPage({ problem }: { problem: Problem }) {
                 <pre className="mt-1 font-mono text-xs whitespace-pre-wrap text-gray-800">{e.message}</pre>
               </div>
             ))}
+            <Notes items={[...(result.infos ?? []), ...result.warnings]} />
             {Object.keys(result.axioms).length > 0 && (
               <p className="text-xs text-gray-500" data-testid="axioms">
                 {t("axioms.label")}{" "}
@@ -169,10 +176,46 @@ export default function ProblemPage({ problem }: { problem: Problem }) {
                 <RichText text={pick(problem.hint)} />
               </p>
             )}
+            {result.verdict === "proved" && <NextProblem id={problem.id} />}
           </>
         )}
       </section>
     </div>
+  );
+}
+
+/** What Lean says besides errors: "Try this" suggestions (`exact?`, `simp?`) and warnings, by line. */
+function Notes({ items }: { items: Issue[] }) {
+  const { t } = useLang();
+  if (!items.length) return null;
+  return (
+    <div className="rounded-lg border border-sky-200 bg-white px-4 py-3" data-testid="lean-notes">
+      <p className="text-xs font-medium text-sky-800">{t("notes.title")}</p>
+      {[...items]
+        .sort((a, b) => a.line - b.line)
+        .map((n, i) => (
+          <div key={i} className="mt-1">
+            <p className="text-[11px] text-gray-500">{t("notes.at").replace("{line}", String(n.line))}</p>
+            <pre className="font-mono text-xs whitespace-pre-wrap text-gray-800">{n.message}</pre>
+          </div>
+        ))}
+    </div>
+  );
+}
+
+/** After a proof: on to the next problem in the track (or back to the list after the last one). */
+function NextProblem({ id }: { id: string }) {
+  const { t, pick } = useLang();
+  const next = PROBLEMS[PROBLEMS.findIndex((p) => p.id === id) + 1];
+  return (
+    <button
+      onClick={() => go("problems", next ? next.id : null)}
+      data-testid="next-problem"
+      className="w-full rounded-lg border border-green-200 bg-white px-4 py-3 text-left text-sm hover:border-green-400"
+    >
+      <span className="text-xs font-medium text-green-800">{next ? `${t("next.title")} · ${next.level}` : t("next.done")}</span>
+      <span className="mt-0.5 block font-medium text-gray-900">{next ? <RichText text={pick(next.title)} /> : t("next.list")} →</span>
+    </button>
   );
 }
 
