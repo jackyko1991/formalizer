@@ -15,6 +15,7 @@ import {
 import { ERAS, HISTORY } from "./history";
 import ProblemsPage from "./ProblemPage";
 import BooksReading from "./pages/reading/Books";
+import PapersReading from "./pages/reading/Papers";
 import FeynmanConcept from "./pages/concept/Feynman";
 import KernelConcept from "./pages/concept/Kernel";
 import LeanMathsConcept from "./pages/concept/LeanMaths";
@@ -36,7 +37,7 @@ const TABS_PX = 52;
 const CONCEPT_TABS = ["method", "feynman", "maths", "kernel", "limits", "history"] as const;
 const SKILLS_TABS = ["tactics", "search", "structure", "errors", "verify"] as const;
 /** Further reading: books & papers, then the learnkit series (Code labs, Explorables) */
-const READING = ["books", "labs", "explorables"] as const;
+const READING = ["books", "papers", "labs", "explorables"] as const;
 type PageView = (props: { section: string | null }) => React.ReactNode;
 const CONCEPT_PAGES: Record<string, PageView> = {
   method: MethodConcept,
@@ -77,7 +78,10 @@ export default function App() {
       id: "reading",
       label: t("page.reading"),
       // a menu under the header tab, like AI agent ▸ Skills / MCP: the reading list, then the sister sites
-      tabs: READING.map((id) => ({ id, label: seriesText(READING_TABS[id], lang) })),
+      tabs: READING.map((id) => ({
+        id,
+        label: id === "books" || id === "papers" ? t(`reading.${id}`) : seriesText(READING_TABS[id], lang),
+      })),
     },
   ];
   const concept = route.page === "concept";
@@ -144,6 +148,8 @@ export default function App() {
               lang={lang}
               onOther={() => go("reading", route.tab === "labs" ? "explorables" : "labs")}
             />
+          ) : route.tab === "papers" ? (
+            <PapersReading section={route.section} />
           ) : (
             <BooksReading section={route.tab === "books" ? route.section : null} />
           )

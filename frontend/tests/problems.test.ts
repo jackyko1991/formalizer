@@ -57,3 +57,9 @@ test("the graph reads left to right: theorem, lemmas, library, axioms last", asy
   assert.equal(x("propext"), x("sorryAx"));
   assert.ok(x("helper") < x("sorryAx") && x("Nat.add_comm") < x("propext"));
 });
+
+test("a graph box is wide enough for Chinese labels", async () => {
+  const { estimateWidth } = await import("../src/graphLayout.ts");
+  assert.ok(estimateWidth("rw · 1 條引理") > estimateWidth("rw · 1 lemma") - 10);
+  assert.equal(estimateWidth("條引理"), 2 * estimateWidth("abc"));
+});

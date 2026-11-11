@@ -13,6 +13,8 @@ export const STRINGS = {
   "page.skills": ["Coding Skills", "程式技巧"],
   "page.agents": ["AI agent", "AI 代理"],
   "page.reading": ["Further reading", "延伸閱讀"],
+  "reading.books": ["Books", "書籍"],
+  "reading.papers": ["Papers & projects", "論文與專案"],
   "tab.method": ["From statement to proof", "從陳述到證明"],
   "tab.feynman": ["The Feynman technique", "費曼學習法"],
   "tab.maths": ["Lean maths", "Lean 數學"],

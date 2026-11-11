@@ -5,13 +5,24 @@ export const H = 28;
 export const GAP_Y = 12;
 const GAP_X = 56;
 const PAD = 12;
-const CHAR = 6.8; // px per character at 11 px monospace
+const CHAR = 6.8; // px per Latin character at 11 px monospace; East Asian characters are about twice as wide
+
+/** An estimate of the text's width at 11 px monospace, used when the browser can't measure (tests). */
+export const estimateWidth = (text: string) =>
+  [...text].reduce(
+    (w, c) => w + (/[\u1100-\u11ff\u2e80-\ua4cf\uac00-\ud7af\uf900-\ufaff\ufe30-\ufe4f\uff00-\uffef]/.test(c) ? 2 * CHAR : CHAR),
+    0,
+  );
 
 /** `lemmas(n)`: "1 lemma" / "27 lemmas" in the page language */
 export const label = (n: GraphNode, lemmas: (n: number) => string) =>
   n.kind === "tactics" ? `${n.label} · ${lemmas(n.count ?? 0)}` : n.id;
 
-export function layout(graph: Graph, lemmas: (n: number) => string = (n) => `${n} lemmas`) {
+export function layout(
+  graph: Graph,
+  lemmas: (n: number) => string = (n) => `${n} lemmas`,
+  measure: (text: string) => number = estimateWidth,
+) {
   const ids = graph.nodes.map((n) => n.id);
   const out = new Map<string, string[]>(ids.map((i) => [i, []]));
   const into = new Map<string, string[]>(ids.map((i) => [i, []]));
@@ -42,7 +53,7 @@ export function layout(graph: Graph, lemmas: (n: number) => string = (n) => `${n
   for (const i of ids) (columns[col.get(i)!] ??= []).push(i);
   const row = new Map<string, number>();
   const nodeOf = new Map(graph.nodes.map((n) => [n.id, n]));
-  const width = (i: string) => Math.max(64, label(nodeOf.get(i)!, lemmas).length * CHAR + 20);
+  const width = (i: string) => Math.max(64, Math.ceil(measure(label(nodeOf.get(i)!, lemmas))) + 22);
   let x = PAD;
   const pos = new Map<string, { x: number; y: number; w: number }>();
   let height = 0;

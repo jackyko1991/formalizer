@@ -6,7 +6,7 @@
  */
 import { useLang } from "@learnkit/web";
 import { useMemo } from "react";
-import { H, layout, label } from "./graphLayout";
+import { estimateWidth, H, layout, label } from "./graphLayout";
 import type { Graph } from "./runner";
 
 const STANDARD = new Set(["propext", "Quot.sound", "Classical.choice"]);
@@ -20,10 +20,23 @@ const STYLE: Record<string, { box: string; text: string; dash?: boolean }> = {
 };
 const LEGEND = ["proved", "sorry", "def", "library", "tactics", "axiom"] as const;
 
+// the real width of a label in the graph's font (Chinese characters are wider than Latin ones)
+let canvas: CanvasRenderingContext2D | null | undefined;
+function measure(text: string): number {
+  try {
+    canvas ??= document.createElement("canvas").getContext("2d");
+    if (!canvas) return estimateWidth(text);
+    canvas.font = '11px "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, monospace';
+    return canvas.measureText(text).width;
+  } catch {
+    return estimateWidth(text);
+  }
+}
+
 export default function DepGraph({ graph }: { graph: Graph }) {
   const { t } = useLang();
   const lemmaWord = (n: number) => t(n === 1 ? "graph.lemma" : "graph.lemmas").replace("{n}", String(n));
-  const { pos, width, height, nodeOf } = useMemo(() => layout(graph, lemmaWord), [graph, t]);
+  const { pos, width, height, nodeOf } = useMemo(() => layout(graph, lemmaWord, measure), [graph, t]);
   const own = graph.nodes.filter((n) => n.kind === "theorem");
   const proved = own.filter((n) => n.status === "proved").length;
   const sorries = graph.nodes.filter((n) => n.status === "sorry" && n.kind !== "axiom").length;
