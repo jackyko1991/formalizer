@@ -19,7 +19,7 @@ export default function App() {
     {
       id: "concept",
       label: t("page.concept"),
-      tabs: CONCEPT_TABS.map((id) => ({ id, label: t(`tab.${id}`) })),
+      // no menu under the header tab: the sub-pages are the tab row on the page (SubTabs)
       defaultTab: "history",
     },
     { id: "skills", label: t("page.skills") },
@@ -35,7 +35,7 @@ export default function App() {
   ];
   const concept = route.page === "concept";
   const history = concept && (route.tab ?? "history") === "history";
-  const conceptTabs = pages.find((p) => p.id === "concept")!.tabs!;
+  const conceptTabs = CONCEPT_TABS.map((id) => ({ id, label: t(`tab.${id}`) }));
 
   return (
     <RunnerProvider>
