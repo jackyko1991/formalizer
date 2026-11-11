@@ -1,1 +1,209 @@
-[]
+[
+  {
+    "id": "geo-pythagoras",
+    "level": "L1",
+    "runner": "lite",
+    "title": [
+      "Pythagoras: 3² + 4² = 5²",
+      "畢氏定理：3² + 4² = 5²"
+    ],
+    "summary": [
+      "In a right triangle the two short sides $a$, $b$ and the long side $c$ satisfy $a^2 + b^2 = c^2$. The sides $3$, $4$, $5$ are the smallest whole-number example (builders used a rope with 12 knots to mark right angles). Check it: in Lean `3 ^ 2` means $3^2$.",
+      "直角三角形的兩條短邊 $a$、$b$ 與最長邊 $c$ 滿足 $a^2 + b^2 = c^2$。邊長 $3$、$4$、$5$ 是最小的整數例子（古代工匠用打了 12 個結的繩子來拉出直角）。來驗證它：在 Lean 裡 `3 ^ 2` 就是 $3^2$。"
+    ],
+    "statements": [
+      "theorem pythagoras_3_4_5 : 3 ^ 2 + 4 ^ 2 = 5 ^ 2"
+    ],
+    "theorems": [
+      "pythagoras_3_4_5"
+    ],
+    "start": "theorem pythagoras_3_4_5 : 3 ^ 2 + 4 ^ 2 = 5 ^ 2 := by\n  sorry\n",
+    "tactics": [
+      "decide",
+      "rfl"
+    ],
+    "steps": [],
+    "hint": [
+      "Both sides are plain numbers, so Lean can just compute: $9 + 16 = 25$. `decide` asks Lean to check the claim by computation; `rfl` (\"both sides are the same\") works too.",
+      "兩邊都是具體的數字，Lean 直接算就好：$9 + 16 = 25$。`decide` 請 Lean 用計算檢查這個命題；`rfl`（「兩邊一樣」）也行。"
+    ],
+    "solution": "theorem pythagoras_3_4_5 : 3 ^ 2 + 4 ^ 2 = 5 ^ 2 := by\n  decide\n"
+  },
+  {
+    "id": "geo-distance",
+    "level": "L1",
+    "runner": "lite",
+    "title": [
+      "Distance between two points",
+      "兩點之間的距離"
+    ],
+    "summary": [
+      "A `Point` has two whole-number coordinates `x` and `y`. By Pythagoras, the distance $d$ from $(x_1, y_1)$ to $(x_2, y_2)$ satisfies $d^2 = (x_1 - x_2)^2 + (y_1 - y_2)^2$; `dist2` is that **squared** distance (square roots are not whole numbers). Show the points $(1, 2)$ and $(4, 6)$ are $5$ apart, i.e. `dist2` is $25$. `⟨1, 2⟩` writes the point with `x = 1`, `y = 2`.",
+      "一個 `Point`（點）有兩個整數座標 `x` 與 `y`。由畢氏定理，從 $(x_1, y_1)$ 到 $(x_2, y_2)$ 的距離 $d$ 滿足 $d^2 = (x_1 - x_2)^2 + (y_1 - y_2)^2$；`dist2` 就是距離的 **平方**（平方根通常不是整數）。證明點 $(1, 2)$ 與 $(4, 6)$ 相距 $5$，也就是 `dist2` 等於 $25$。`⟨1, 2⟩` 表示 `x = 1`、`y = 2` 的點。"
+    ],
+    "statements": [
+      "structure Point where\n  x : Int\n  y : Int",
+      "def dist2 (p q : Point) : Int :=\n  (p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y)",
+      "theorem dist_1_2_to_4_6 : dist2 ⟨1, 2⟩ ⟨4, 6⟩ = 25"
+    ],
+    "theorems": [
+      "dist_1_2_to_4_6"
+    ],
+    "start": "structure Point where\n  x : Int\n  y : Int\n\ndef dist2 (p q : Point) : Int :=\n  (p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y)\n\ntheorem dist_1_2_to_4_6 : dist2 ⟨1, 2⟩ ⟨4, 6⟩ = 25 := by\n  sorry\n",
+    "tactics": [
+      "unfold dist2",
+      "decide"
+    ],
+    "steps": [
+      "unfold dist2"
+    ],
+    "hint": [
+      "`unfold dist2` replaces `dist2` by its definition so you can see the arithmetic: $(1-4)^2 + (2-6)^2 = 9 + 16$. Then `decide` computes it. (`decide` also works without unfolding, since `dist2` is a computable definition.)",
+      "`unfold dist2` 把 `dist2` 換成它的定義，讓你看到要算的式子：$(1-4)^2 + (2-6)^2 = 9 + 16$。接著用 `decide` 算出來。（不展開也可以直接 `decide`，因為 `dist2` 是可以計算的定義。）"
+    ],
+    "solution": "structure Point where\n  x : Int\n  y : Int\n\ndef dist2 (p q : Point) : Int :=\n  (p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y)\n\ntheorem dist_1_2_to_4_6 : dist2 ⟨1, 2⟩ ⟨4, 6⟩ = 25 := by\n  unfold dist2\n  decide\n"
+  },
+  {
+    "id": "geo-perpendicular",
+    "level": "L1",
+    "runner": "lite",
+    "title": [
+      "Perpendicular vectors",
+      "互相垂直的向量"
+    ],
+    "summary": [
+      "A vector is an arrow, given by how far it goes right (`x`) and up (`y`). The dot product of $u$ and $v$ is $u_x v_x + u_y v_y$, and two arrows are perpendicular (meet at a right angle) exactly when their dot product is $0$. Show that $(3, 4)$ and $(-4, 3)$ are perpendicular: the second is the first turned a quarter turn.",
+      "向量是一支箭頭，用它往右走多少（`x`）和往上走多少（`y`）來描述。$u$ 與 $v$ 的內積是 $u_x v_x + u_y v_y$，而兩支箭頭互相垂直（夾成直角）恰好在內積為 $0$ 的時候。證明 $(3, 4)$ 與 $(-4, 3)$ 互相垂直：後者就是前者轉了四分之一圈。"
+    ],
+    "statements": [
+      "structure Vec where\n  x : Int\n  y : Int",
+      "def dot (u v : Vec) : Int :=\n  u.x * v.x + u.y * v.y",
+      "theorem quarter_turn_perp : dot ⟨3, 4⟩ ⟨-4, 3⟩ = 0"
+    ],
+    "theorems": [
+      "quarter_turn_perp"
+    ],
+    "start": "structure Vec where\n  x : Int\n  y : Int\n\ndef dot (u v : Vec) : Int :=\n  u.x * v.x + u.y * v.y\n\ntheorem quarter_turn_perp : dot ⟨3, 4⟩ ⟨-4, 3⟩ = 0 := by\n  sorry\n",
+    "tactics": [
+      "unfold dot",
+      "decide"
+    ],
+    "steps": [
+      "unfold dot"
+    ],
+    "hint": [
+      "`unfold dot` shows the sum $3 \\cdot (-4) + 4 \\cdot 3$, and `decide` computes it: $-12 + 12 = 0$.",
+      "`unfold dot` 會顯示要算的和 $3 \\cdot (-4) + 4 \\cdot 3$，再用 `decide` 算出：$-12 + 12 = 0$。"
+    ],
+    "solution": "structure Vec where\n  x : Int\n  y : Int\n\ndef dot (u v : Vec) : Int :=\n  u.x * v.x + u.y * v.y\n\ntheorem quarter_turn_perp : dot ⟨3, 4⟩ ⟨-4, 3⟩ = 0 := by\n  unfold dot\n  decide\n"
+  },
+  {
+    "id": "geo-collinear",
+    "level": "L2",
+    "runner": "lite",
+    "title": [
+      "Three points on a line",
+      "三點共線"
+    ],
+    "summary": [
+      "Three points are collinear when one straight line passes through all of them. Test: the number $(q_x - p_x)(r_y - p_y) - (q_y - p_y)(r_x - p_x)$ is twice the (signed) area of the triangle $pqr$ (the shoelace formula), and it is $0$ exactly when the triangle is squashed flat. Show $(1, 1)$, $(2, 3)$, $(4, 7)$ lie on one line (the line $y = 2x - 1$). This time `collinear` is a **statement** (`Prop`), not a number.",
+      "三點共線是指有一條直線同時通過這三個點。檢驗方法：數值 $(q_x - p_x)(r_y - p_y) - (q_y - p_y)(r_x - p_x)$ 是三角形 $pqr$（帶正負號）面積的兩倍（鞋帶公式），它等於 $0$ 恰好在三角形被壓扁成一條線的時候。證明 $(1, 1)$、$(2, 3)$、$(4, 7)$ 在同一條直線上（直線 $y = 2x - 1$）。這次 `collinear` 是一個 **陳述**（`Prop`），不是一個數。"
+    ],
+    "statements": [
+      "structure Point where\n  x : Int\n  y : Int",
+      "def collinear (p q r : Point) : Prop :=\n  (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x) = 0",
+      "theorem on_line_y_eq_2x_sub_1 : collinear ⟨1, 1⟩ ⟨2, 3⟩ ⟨4, 7⟩"
+    ],
+    "theorems": [
+      "on_line_y_eq_2x_sub_1"
+    ],
+    "start": "structure Point where\n  x : Int\n  y : Int\n\ndef collinear (p q r : Point) : Prop :=\n  (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x) = 0\n\ntheorem on_line_y_eq_2x_sub_1 : collinear ⟨1, 1⟩ ⟨2, 3⟩ ⟨4, 7⟩ := by\n  sorry\n",
+    "tactics": [
+      "decide",
+      "unfold collinear",
+      "rfl"
+    ],
+    "steps": [
+      "unfold collinear"
+    ],
+    "hint": [
+      "Try `decide` first: it fails, because Lean doesn't know how to check a new `Prop` like `collinear` by computation. `unfold collinear` turns the goal into an equation between whole numbers, which `rfl` settles by computing $1 \\cdot 6 - 2 \\cdot 3 = 0$.",
+      "先試試 `decide`：它會失敗，因為 Lean 不知道怎麼用計算檢查 `collinear` 這種新定義的 `Prop`。`unfold collinear` 把目標變成整數之間的等式，再由 `rfl` 算出 $1 \\cdot 6 - 2 \\cdot 3 = 0$ 就完成了。"
+    ],
+    "solution": "structure Point where\n  x : Int\n  y : Int\n\ndef collinear (p q r : Point) : Prop :=\n  (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x) = 0\n\ntheorem on_line_y_eq_2x_sub_1 : collinear ⟨1, 1⟩ ⟨2, 3⟩ ⟨4, 7⟩ := by\n  unfold collinear\n  rfl\n"
+  },
+  {
+    "id": "geo-dist-symm",
+    "level": "L2",
+    "runner": "lite",
+    "title": [
+      "From p to q, or q to p",
+      "從 p 到 q，或從 q 到 p"
+    ],
+    "summary": [
+      "The distance from $p$ to $q$ is the same as from $q$ to $p$. Now `p` and `q` are **any** points, so Lean can't compute: it has to reason with letters. After unfolding, the two sides differ only in signs inside squares, $(a - b)^2 = (b - a)^2$.",
+      "從 $p$ 到 $q$ 的距離，和從 $q$ 到 $p$ 的距離一樣。現在 `p` 和 `q` 是 **任意** 點，Lean 沒辦法直接算，必須用代數推理。展開之後，兩邊只差在平方裡的正負號：$(a - b)^2 = (b - a)^2$。"
+    ],
+    "statements": [
+      "structure Point where\n  x : Int\n  y : Int",
+      "def dist2 (p q : Point) : Int :=\n  (p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y)",
+      "theorem dist2_symm (p q : Point) : dist2 p q = dist2 q p"
+    ],
+    "theorems": [
+      "dist2_symm"
+    ],
+    "start": "structure Point where\n  x : Int\n  y : Int\n\ndef dist2 (p q : Point) : Int :=\n  (p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y)\n\ntheorem dist2_symm (p q : Point) : dist2 p q = dist2 q p := by\n  sorry\n",
+    "tactics": [
+      "unfold dist2",
+      "omega",
+      "grind"
+    ],
+    "steps": [
+      "unfold dist2"
+    ],
+    "hint": [
+      "`unfold dist2` shows the algebra. `omega` fails: it only handles linear arithmetic (adding, and multiplying by fixed numbers), and here unknowns are multiplied together. `grind` can do this algebra: it expands both sides and compares them.",
+      "`unfold dist2` 顯示要處理的代數式。`omega` 會失敗：它只處理線性算術（加法，以及乘上固定的數），這裡卻是未知數彼此相乘。`grind` 能處理這種代數：它把兩邊展開後比較。"
+    ],
+    "solution": "structure Point where\n  x : Int\n  y : Int\n\ndef dist2 (p q : Point) : Int :=\n  (p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y)\n\ntheorem dist2_symm (p q : Point) : dist2 p q = dist2 q p := by\n  unfold dist2\n  grind\n"
+  },
+  {
+    "id": "geo-shift",
+    "level": "L3",
+    "runner": "lite",
+    "title": [
+      "Sliding keeps distances",
+      "平移不改變距離"
+    ],
+    "summary": [
+      "Slide every point by the same amount, $a$ to the right and $b$ up: `shift p a b`. The picture moves but doesn't stretch, so the distance between any two points stays the same. Prove it step by step: the differences of coordinates don't change, since $(p_x + a) - (q_x + a) = p_x - q_x$.",
+      "把每個點都移動同樣的量：往右 $a$、往上 $b$，也就是 `shift p a b`。圖形整個搬動但沒有被拉伸，所以任兩點之間的距離不變。一步一步證明：座標的差不會改變，因為 $(p_x + a) - (q_x + a) = p_x - q_x$。"
+    ],
+    "statements": [
+      "structure Point where\n  x : Int\n  y : Int",
+      "def dist2 (p q : Point) : Int :=\n  (p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y)",
+      "def shift (p : Point) (a b : Int) : Point :=\n  ⟨p.x + a, p.y + b⟩",
+      "theorem dist2_shift (p q : Point) (a b : Int) :\n    dist2 (shift p a b) (shift q a b) = dist2 p q"
+    ],
+    "theorems": [
+      "dist2_shift"
+    ],
+    "start": "structure Point where\n  x : Int\n  y : Int\n\ndef dist2 (p q : Point) : Int :=\n  (p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y)\n\ndef shift (p : Point) (a b : Int) : Point :=\n  ⟨p.x + a, p.y + b⟩\n\ntheorem dist2_shift (p q : Point) (a b : Int) :\n    dist2 (shift p a b) (shift q a b) = dist2 p q := by\n  sorry\n",
+    "tactics": [
+      "unfold dist2 shift",
+      "have hx : p.x + a - (q.x + a) = p.x - q.x := by omega",
+      "have hy : p.y + b - (q.y + b) = p.y - q.y := by omega",
+      "rw [hx, hy]"
+    ],
+    "steps": [
+      "unfold dist2 shift",
+      "have hx : p.x + a - (q.x + a) = p.x - q.x := by omega",
+      "have hy : p.y + b - (q.y + b) = p.y - q.y := by omega"
+    ],
+    "hint": [
+      "`unfold dist2 shift` writes everything out. Each `have` proves one small fact with `omega` (only adding and subtracting, so `omega` can do it). `rw [hx, hy]` replaces the shifted differences by the plain ones, and then both sides are identical. In one move, `grind` would also close the goal after unfolding.",
+      "`unfold dist2 shift` 把所有定義展開。每個 `have` 用 `omega` 證明一個小事實（只有加減，`omega` 做得到）。`rw [hx, hy]` 把平移後的差換成原本的差，兩邊就一模一樣了。展開之後，用 `grind` 一步也能完成。"
+    ],
+    "solution": "structure Point where\n  x : Int\n  y : Int\n\ndef dist2 (p q : Point) : Int :=\n  (p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y)\n\ndef shift (p : Point) (a b : Int) : Point :=\n  ⟨p.x + a, p.y + b⟩\n\ntheorem dist2_shift (p q : Point) (a b : Int) :\n    dist2 (shift p a b) (shift q a b) = dist2 p q := by\n  unfold dist2 shift\n  have hx : p.x + a - (q.x + a) = p.x - q.x := by omega\n  have hy : p.y + b - (q.y + b) = p.y - q.y := by omega\n  rw [hx, hy]\n"
+  }
+]

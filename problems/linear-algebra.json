@@ -1,1 +1,216 @@
-[]
+[
+  {
+    "id": "la-det-identity",
+    "level": "L1",
+    "runner": "lite",
+    "title": [
+      "The determinant of the identity matrix is 1",
+      "單位矩陣的行列式是 1"
+    ],
+    "summary": [
+      "A $2\\times 2$ matrix $\\begin{pmatrix}a&b\\\\c&d\\end{pmatrix}$ is four numbers in a square. Here it is a `structure` `Mat2` with four `Int` fields. Its **determinant** is the single number $ad - bc$: it says how much the matrix stretches areas. The **identity matrix** $I = \\begin{pmatrix}1&0\\\\0&1\\end{pmatrix}$ changes nothing, so it should stretch areas by exactly $1$. Prove $\\det I = 1$. The definitions are part of the statement: keep them.",
+      "$2\\times 2$ 矩陣 $\\begin{pmatrix}a&b\\\\c&d\\end{pmatrix}$ 就是排成正方形的四個數。這裡用一個有四個 `Int` 欄位的 `structure` `Mat2` 表示。它的 **行列式** 是一個數 $ad - bc$：代表這個矩陣把面積放大多少倍。**單位矩陣** $I = \\begin{pmatrix}1&0\\\\0&1\\end{pmatrix}$ 什麼都不改變，所以面積應該剛好放大 $1$ 倍。請證明 $\\det I = 1$。定義是陳述的一部分：請保留。"
+    ],
+    "statements": [
+      "structure Mat2 where\n  a : Int\n  b : Int\n  c : Int\n  d : Int",
+      "def Mat2.det (A : Mat2) : Int := A.a * A.d - A.b * A.c",
+      "def Mat2.identity : Mat2 := ⟨1, 0, 0, 1⟩",
+      "theorem det_identity : Mat2.identity.det = 1"
+    ],
+    "theorems": [
+      "det_identity"
+    ],
+    "start": "structure Mat2 where\n  a : Int\n  b : Int\n  c : Int\n  d : Int\n\ndef Mat2.det (A : Mat2) : Int := A.a * A.d - A.b * A.c\n\ndef Mat2.identity : Mat2 := ⟨1, 0, 0, 1⟩\n\ntheorem det_identity : Mat2.identity.det = 1 := by\n  sorry\n",
+    "tactics": [
+      "rfl",
+      "decide"
+    ],
+    "steps": [],
+    "hint": [
+      "There are no variables here, only concrete numbers: $1 \\cdot 1 - 0 \\cdot 0 = 1$. `rfl` lets Lean unfold the definitions and compute both sides; `decide` asks Lean to check the claim by computation. Either one works.",
+      "這裡沒有變數，只有具體的數：$1 \\cdot 1 - 0 \\cdot 0 = 1$。`rfl` 讓 Lean 展開定義、把兩邊算出來；`decide` 則請 Lean 用計算檢查這個命題。兩個都可以。"
+    ],
+    "solution": "structure Mat2 where\n  a : Int\n  b : Int\n  c : Int\n  d : Int\n\ndef Mat2.det (A : Mat2) : Int := A.a * A.d - A.b * A.c\n\ndef Mat2.identity : Mat2 := ⟨1, 0, 0, 1⟩\n\ntheorem det_identity : Mat2.identity.det = 1 := by\n  rfl\n"
+  },
+  {
+    "id": "la-vec-add-comm",
+    "level": "L1",
+    "runner": "lite",
+    "title": [
+      "Adding vectors in either order",
+      "向量相加，順序不重要"
+    ],
+    "summary": [
+      "A **vector** in the plane is a pair of numbers $(x, y)$, here the `structure` `Vec2`. Vectors add **componentwise**: $(u_x, u_y) + (v_x, v_y) = (u_x + v_x,\\ u_y + v_y)$. Because each component is an ordinary sum of integers, the order should not matter: prove $u + v = v + u$. First unfold `Vec2.add` to see the two components, then swap each sum.",
+      "平面上的 **向量** 是一對數 $(x, y)$，這裡用 `structure` `Vec2` 表示。向量相加是 **逐分量** 相加：$(u_x, u_y) + (v_x, v_y) = (u_x + v_x,\\ u_y + v_y)$。每個分量都只是普通的整數加法，所以順序應該無所謂：請證明 $u + v = v + u$。先展開 `Vec2.add` 看到兩個分量，再把每個和交換順序。"
+    ],
+    "statements": [
+      "structure Vec2 where\n  x : Int\n  y : Int",
+      "def Vec2.add (u v : Vec2) : Vec2 := ⟨u.x + v.x, u.y + v.y⟩",
+      "theorem vec_add_comm (u v : Vec2) : u.add v = v.add u"
+    ],
+    "theorems": [
+      "vec_add_comm"
+    ],
+    "start": "structure Vec2 where\n  x : Int\n  y : Int\n\ndef Vec2.add (u v : Vec2) : Vec2 := ⟨u.x + v.x, u.y + v.y⟩\n\ntheorem vec_add_comm (u v : Vec2) : u.add v = v.add u := by\n  sorry\n",
+    "tactics": [
+      "simp only [Vec2.add]",
+      "rw [Int.add_comm u.x v.x]",
+      "rw [Int.add_comm u.y v.y]"
+    ],
+    "steps": [
+      "simp only [Vec2.add]",
+      "rw [Int.add_comm u.x v.x]"
+    ],
+    "hint": [
+      "`simp only [Vec2.add]` replaces `Vec2.add` by its definition, so the goal shows both components `{ x := u.x + v.x, y := u.y + v.y }`. The library lemma `Int.add_comm` says $a + b = b + a$ for integers; `rw [Int.add_comm u.x v.x]` swaps the $x$ sum, and `rw [Int.add_comm u.y v.y]` swaps the $y$ sum. Then both sides are identical and `rw` closes the goal by itself.",
+      "`simp only [Vec2.add]` 把 `Vec2.add` 換成它的定義，目標就會顯示兩個分量 `{ x := u.x + v.x, y := u.y + v.y }`。函式庫的引理 `Int.add_comm` 說整數滿足 $a + b = b + a$；`rw [Int.add_comm u.x v.x]` 交換 $x$ 分量的和，`rw [Int.add_comm u.y v.y]` 交換 $y$ 分量的和。兩邊變得一模一樣後，`rw` 會自己把目標關掉。"
+    ],
+    "solution": "structure Vec2 where\n  x : Int\n  y : Int\n\ndef Vec2.add (u v : Vec2) : Vec2 := ⟨u.x + v.x, u.y + v.y⟩\n\ntheorem vec_add_comm (u v : Vec2) : u.add v = v.add u := by\n  simp only [Vec2.add]\n  rw [Int.add_comm u.x v.x]\n  rw [Int.add_comm u.y v.y]\n"
+  },
+  {
+    "id": "la-smul-distrib",
+    "level": "L2",
+    "runner": "lite",
+    "title": [
+      "Scaling distributes over addition",
+      "純量乘法對加法的分配律"
+    ],
+    "summary": [
+      "Multiplying a vector by a **scalar** (a plain number) $k$ scales each component: $k(v_x, v_y) = (k v_x,\\ k v_y)$. Being **linear** means scaling and adding get along: scaling a sum is the sum of the scaled vectors, $k(u + v) = ku + kv$. Componentwise this is the familiar rule $k(a + b) = ka + kb$, used twice.",
+      "把向量乘上一個 **純量**（普通的數）$k$，就是每個分量都乘 $k$：$k(v_x, v_y) = (k v_x,\\ k v_y)$。**線性** 的意思是縮放和相加彼此配合：和的縮放等於縮放後的和，$k(u + v) = ku + kv$。逐分量來看，這就是熟悉的 $k(a + b) = ka + kb$，用兩次。"
+    ],
+    "statements": [
+      "structure Vec2 where\n  x : Int\n  y : Int",
+      "def Vec2.add (u v : Vec2) : Vec2 := ⟨u.x + v.x, u.y + v.y⟩",
+      "def Vec2.smul (k : Int) (v : Vec2) : Vec2 := ⟨k * v.x, k * v.y⟩",
+      "theorem smul_add_distrib (k : Int) (u v : Vec2) :\n    Vec2.smul k (u.add v) = (Vec2.smul k u).add (Vec2.smul k v)"
+    ],
+    "theorems": [
+      "smul_add_distrib"
+    ],
+    "start": "structure Vec2 where\n  x : Int\n  y : Int\n\ndef Vec2.add (u v : Vec2) : Vec2 := ⟨u.x + v.x, u.y + v.y⟩\n\ndef Vec2.smul (k : Int) (v : Vec2) : Vec2 := ⟨k * v.x, k * v.y⟩\n\ntheorem smul_add_distrib (k : Int) (u v : Vec2) :\n    Vec2.smul k (u.add v) = (Vec2.smul k u).add (Vec2.smul k v) := by\n  sorry\n",
+    "tactics": [
+      "simp only [Vec2.smul, Vec2.add]",
+      "omega",
+      "rw [Int.mul_add, Int.mul_add]"
+    ],
+    "steps": [
+      "simp only [Vec2.smul, Vec2.add]"
+    ],
+    "hint": [
+      "After `simp only [Vec2.smul, Vec2.add]` each side is written out component by component, e.g. `k * (u.x + v.x)` on the left and `k * u.x + k * v.x` on the right. `omega` gives up: it only handles sums and multiplication by fixed numbers, and cannot look inside a vector. The lemma `Int.mul_add` is exactly $k(a + b) = ka + kb$; `rw [Int.mul_add, Int.mul_add]` uses it once for each component.",
+      "`simp only [Vec2.smul, Vec2.add]` 之後，兩邊都逐分量寫開，例如左邊是 `k * (u.x + v.x)`，右邊是 `k * u.x + k * v.x`。`omega` 會放棄：它只處理加法和乘上固定的數，也看不進向量裡面。引理 `Int.mul_add` 正是 $k(a + b) = ka + kb$；`rw [Int.mul_add, Int.mul_add]` 對每個分量各用一次。"
+    ],
+    "solution": "structure Vec2 where\n  x : Int\n  y : Int\n\ndef Vec2.add (u v : Vec2) : Vec2 := ⟨u.x + v.x, u.y + v.y⟩\n\ndef Vec2.smul (k : Int) (v : Vec2) : Vec2 := ⟨k * v.x, k * v.y⟩\n\ntheorem smul_add_distrib (k : Int) (u v : Vec2) :\n    Vec2.smul k (u.add v) = (Vec2.smul k u).add (Vec2.smul k v) := by\n  simp only [Vec2.smul, Vec2.add]\n  rw [Int.mul_add, Int.mul_add]\n"
+  },
+  {
+    "id": "la-mul-identity",
+    "level": "L2",
+    "runner": "lite",
+    "title": [
+      "Multiplying by the identity changes nothing",
+      "乘上單位矩陣，什麼都不變"
+    ],
+    "summary": [
+      "Two matrices multiply **row by column**: each entry of $AB$ combines a row of $A$ with a column of $B$, as `Mat2.mul` spells out. The identity matrix $I = \\begin{pmatrix}1&0\\\\0&1\\end{pmatrix}$ plays the role of the number $1$: prove $AI = A$ for **every** matrix $A$. Unfold the definitions first and look at what is left: lots of $\\cdot 1$ and $\\cdot 0$.",
+      "兩個矩陣相乘是 **列乘行**：$AB$ 的每個元素由 $A$ 的一列和 $B$ 的一行組合而成，`Mat2.mul` 把它逐項寫出。單位矩陣 $I = \\begin{pmatrix}1&0\\\\0&1\\end{pmatrix}$ 扮演數字 $1$ 的角色：請證明對 **任意** 矩陣 $A$，$AI = A$。先展開定義，看看剩下什麼：一堆 $\\cdot 1$ 和 $\\cdot 0$。"
+    ],
+    "statements": [
+      "structure Mat2 where\n  a : Int\n  b : Int\n  c : Int\n  d : Int",
+      "def Mat2.identity : Mat2 := ⟨1, 0, 0, 1⟩",
+      "def Mat2.mul (A B : Mat2) : Mat2 :=\n  ⟨A.a * B.a + A.b * B.c, A.a * B.b + A.b * B.d,\n   A.c * B.a + A.d * B.c, A.c * B.b + A.d * B.d⟩",
+      "theorem mul_identity (A : Mat2) : A.mul Mat2.identity = A"
+    ],
+    "theorems": [
+      "mul_identity"
+    ],
+    "start": "structure Mat2 where\n  a : Int\n  b : Int\n  c : Int\n  d : Int\n\ndef Mat2.identity : Mat2 := ⟨1, 0, 0, 1⟩\n\ndef Mat2.mul (A B : Mat2) : Mat2 :=\n  ⟨A.a * B.a + A.b * B.c, A.a * B.b + A.b * B.d,\n   A.c * B.a + A.d * B.c, A.c * B.b + A.d * B.d⟩\n\ntheorem mul_identity (A : Mat2) : A.mul Mat2.identity = A := by\n  sorry\n",
+    "tactics": [
+      "rfl",
+      "simp only [Mat2.mul, Mat2.identity]",
+      "simp"
+    ],
+    "steps": [
+      "simp only [Mat2.mul, Mat2.identity]"
+    ],
+    "hint": [
+      "`rfl` fails: $A$ is unknown, so Lean cannot compute `A.a * 1 + A.b * 0` down to `A.a`. `simp only [Mat2.mul, Mat2.identity]` unfolds the two definitions. Plain `simp` then uses its built-in rules $x \\cdot 1 = x$, $x \\cdot 0 = 0$ and $x + 0 = x$ on every entry, and recognises that a matrix rebuilt from `A.a`, `A.b`, `A.c`, `A.d` is `A` itself.",
+      "`rfl` 會失敗：$A$ 是未知的，Lean 無法把 `A.a * 1 + A.b * 0` 算成 `A.a`。`simp only [Mat2.mul, Mat2.identity]` 展開這兩個定義。接著單純的 `simp` 對每個元素套用內建規則 $x \\cdot 1 = x$、$x \\cdot 0 = 0$、$x + 0 = x$，並認出由 `A.a`、`A.b`、`A.c`、`A.d` 重新組成的矩陣就是 `A` 本身。"
+    ],
+    "solution": "structure Mat2 where\n  a : Int\n  b : Int\n  c : Int\n  d : Int\n\ndef Mat2.identity : Mat2 := ⟨1, 0, 0, 1⟩\n\ndef Mat2.mul (A B : Mat2) : Mat2 :=\n  ⟨A.a * B.a + A.b * B.c, A.a * B.b + A.b * B.d,\n   A.c * B.a + A.d * B.c, A.c * B.b + A.d * B.d⟩\n\ntheorem mul_identity (A : Mat2) : A.mul Mat2.identity = A := by\n  simp only [Mat2.mul, Mat2.identity]\n  simp\n"
+  },
+  {
+    "id": "la-equal-rows-det",
+    "level": "L2",
+    "runner": "lite",
+    "title": [
+      "Two equal rows: determinant 0",
+      "兩列相同，行列式為 0"
+    ],
+    "summary": [
+      "If both rows of a matrix are the same, $\\begin{pmatrix}a&b\\\\a&b\\end{pmatrix}$, the matrix squashes the whole plane onto a single line, so areas become $0$. The determinant sees this: $ab - ba = 0$. On paper that is obvious, but Lean writes `a * b` and `b * a` differently, so you have to swap one product first.",
+      "如果矩陣的兩列相同，$\\begin{pmatrix}a&b\\\\a&b\\end{pmatrix}$，這個矩陣會把整個平面壓扁到一條直線上，面積變成 $0$。行列式反映了這點：$ab - ba = 0$。在紙上這很明顯，但對 Lean 來說 `a * b` 和 `b * a` 寫法不同，所以要先把其中一個乘積交換順序。"
+    ],
+    "statements": [
+      "structure Mat2 where\n  a : Int\n  b : Int\n  c : Int\n  d : Int",
+      "def Mat2.det (A : Mat2) : Int := A.a * A.d - A.b * A.c",
+      "theorem det_equal_rows (a b : Int) : (Mat2.mk a b a b).det = 0"
+    ],
+    "theorems": [
+      "det_equal_rows"
+    ],
+    "start": "structure Mat2 where\n  a : Int\n  b : Int\n  c : Int\n  d : Int\n\ndef Mat2.det (A : Mat2) : Int := A.a * A.d - A.b * A.c\n\ntheorem det_equal_rows (a b : Int) : (Mat2.mk a b a b).det = 0 := by\n  sorry\n",
+    "tactics": [
+      "simp only [Mat2.det]",
+      "omega",
+      "rw [Int.mul_comm a b]",
+      "exact Int.sub_self (b * a)"
+    ],
+    "steps": [
+      "simp only [Mat2.det]",
+      "rw [Int.mul_comm a b]"
+    ],
+    "hint": [
+      "After `simp only [Mat2.det]` the goal is `a * b - b * a = 0`. `omega` fails, and its message shows why: it treats `a * b` and `b * a` as two unrelated unknowns. `rw [Int.mul_comm a b]` turns `a * b` into `b * a`, leaving `b * a - b * a = 0`, which is the lemma `Int.sub_self` ($x - x = 0$).",
+      "`simp only [Mat2.det]` 之後，目標是 `a * b - b * a = 0`。`omega` 會失敗，錯誤訊息說明了原因：它把 `a * b` 和 `b * a` 當成兩個無關的未知數。`rw [Int.mul_comm a b]` 把 `a * b` 換成 `b * a`，剩下 `b * a - b * a = 0`，這正是引理 `Int.sub_self`（$x - x = 0$）。"
+    ],
+    "solution": "structure Mat2 where\n  a : Int\n  b : Int\n  c : Int\n  d : Int\n\ndef Mat2.det (A : Mat2) : Int := A.a * A.d - A.b * A.c\n\ntheorem det_equal_rows (a b : Int) : (Mat2.mk a b a b).det = 0 := by\n  simp only [Mat2.det]\n  rw [Int.mul_comm a b]\n  exact Int.sub_self (b * a)\n"
+  },
+  {
+    "id": "la-det-mul",
+    "level": "L3",
+    "runner": "lite",
+    "title": [
+      "The determinant of a product",
+      "乘積的行列式"
+    ],
+    "summary": [
+      "A famous rule: $\\det(AB) = \\det A \\cdot \\det B$. In words, doing $A$ after $B$ stretches areas by the product of the two stretch factors. For $2\\times 2$ matrices it is a polynomial identity in eight unknowns: unfolding gives $(a e + b g)(c f + d h) - (a f + b h)(c e + d g)$ on the left, and expanding all the brackets by hand is long and error-prone. Let Lean do the algebra.",
+      "一條有名的規則：$\\det(AB) = \\det A \\cdot \\det B$。換句話說，先做 $B$ 再做 $A$，面積放大的倍數就是兩個倍數相乘。對 $2\\times 2$ 矩陣來說，這是八個未知數的多項式恆等式：展開後左邊是 $(a e + b g)(c f + d h) - (a f + b h)(c e + d g)$，用手把所有括號乘開又長又容易出錯。讓 Lean 來做代數吧。"
+    ],
+    "statements": [
+      "structure Mat2 where\n  a : Int\n  b : Int\n  c : Int\n  d : Int",
+      "def Mat2.det (A : Mat2) : Int := A.a * A.d - A.b * A.c",
+      "def Mat2.mul (A B : Mat2) : Mat2 :=\n  ⟨A.a * B.a + A.b * B.c, A.a * B.b + A.b * B.d,\n   A.c * B.a + A.d * B.c, A.c * B.b + A.d * B.d⟩",
+      "theorem det_mul (A B : Mat2) : (A.mul B).det = A.det * B.det"
+    ],
+    "theorems": [
+      "det_mul"
+    ],
+    "start": "structure Mat2 where\n  a : Int\n  b : Int\n  c : Int\n  d : Int\n\ndef Mat2.det (A : Mat2) : Int := A.a * A.d - A.b * A.c\n\ndef Mat2.mul (A B : Mat2) : Mat2 :=\n  ⟨A.a * B.a + A.b * B.c, A.a * B.b + A.b * B.d,\n   A.c * B.a + A.d * B.c, A.c * B.b + A.d * B.d⟩\n\ntheorem det_mul (A B : Mat2) : (A.mul B).det = A.det * B.det := by\n  sorry\n",
+    "tactics": [
+      "simp only [Mat2.mul, Mat2.det]",
+      "omega",
+      "grind"
+    ],
+    "steps": [
+      "simp only [Mat2.mul, Mat2.det]"
+    ],
+    "hint": [
+      "`simp only [Mat2.mul, Mat2.det]` writes both sides out in the eight entries. `omega` cannot help: products of unknowns are beyond it. `grind` can: among its tools is a solver for commutative rings that multiplies out every bracket on both sides, collects like terms, and checks that they match.",
+      "`simp only [Mat2.mul, Mat2.det]` 把兩邊用八個元素寫開。`omega` 幫不上忙：未知數相乘超出它的能力。`grind` 可以：它的工具裡有一個交換環的求解器，會把兩邊的括號全部乘開、合併同類項，再檢查是否相等。"
+    ],
+    "solution": "structure Mat2 where\n  a : Int\n  b : Int\n  c : Int\n  d : Int\n\ndef Mat2.det (A : Mat2) : Int := A.a * A.d - A.b * A.c\n\ndef Mat2.mul (A B : Mat2) : Mat2 :=\n  ⟨A.a * B.a + A.b * B.c, A.a * B.b + A.b * B.d,\n   A.c * B.a + A.d * B.c, A.c * B.b + A.d * B.d⟩\n\ntheorem det_mul (A B : Mat2) : (A.mul B).det = A.det * B.det := by\n  simp only [Mat2.mul, Mat2.det]\n  grind\n"
+  }
+]
