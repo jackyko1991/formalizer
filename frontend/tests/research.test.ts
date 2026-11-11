@@ -63,6 +63,7 @@ test("replacing the saved version warns about lemmas it would lose", () => {
   assert.deepEqual(saved.proved, ["a", "b"]);
   assert.deepEqual(lostSince(saved, decls), ["b"]);
   assert.deepEqual(lostSince(undefined, decls), []);
+  assert.deepEqual(lostSince({}, decls), []); // a version saved without a summary
 });
 
 test("an export zip reads back", () => {

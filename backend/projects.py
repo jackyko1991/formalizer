@@ -6,7 +6,7 @@ saved version lives in <project>/.saved/ next to it; restoring swaps the two, so
     GET  /api/projects/{id}             {id, files: [{name, code}], meta, saved: {label, at, summary} | null}
     PUT  /api/projects/{id}             {files, meta}           write the working copy
     POST /api/projects/{id}/save        {label, summary}        working copy → the saved version (replaces it)
-    POST /api/projects/{id}/restore                             swap the saved version and the working copy
+    POST /api/projects/{id}/restore     {summary}?              swap the saved version and the working copy
     GET  /api/projects/{id}/saved       the saved version's files and meta (to compare before replacing it)
 
 Everything stays on this computer. Requests from web pages of other sites are refused (Origin check); file names are
@@ -177,7 +177,7 @@ def make_router(origins: list[str]) -> APIRouter:
         return info
 
     @router.post("/api/projects/{pid}/restore")
-    def restore(pid: str, request: Request) -> dict:
+    def restore(pid: str, request: Request, body: SaveVersion | None = None) -> dict:
         """Swap: the saved version becomes the working copy, and the working copy becomes the saved version."""
         guard(request)
         path = folder(pid)
@@ -190,7 +190,7 @@ def make_router(origins: list[str]) -> APIRouter:
         old = path / ".swap.tmp"
         shutil.rmtree(old, ignore_errors=True)
         write(old, Project(files=[LeanFile(**f) for f in current["files"]], meta=current["meta"]))
-        now = {"label": "before restore", "summary": {}, "at": time.time()}
+        now = {"label": "before restore", "summary": body.summary if body else {}, "at": time.time()}
         (old / "saved.json").write_text(json.dumps(now, ensure_ascii=False), encoding="utf-8")
         shutil.rmtree(path / SAVED, ignore_errors=True)
         old.rename(path / SAVED)

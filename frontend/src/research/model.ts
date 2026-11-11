@@ -85,10 +85,9 @@ export function summarize(decls: Decl[]): Summary {
 }
 
 /** Lemmas proved in the saved version that the current copy no longer proves: what replacing it would lose. */
-export function lostSince(saved: Summary | undefined, now: Decl[]): string[] {
-  if (!saved) return [];
+export function lostSince(saved: Partial<Summary> | undefined, now: Decl[]): string[] {
   const proved = new Set(summarize(now).proved);
-  return saved.proved.filter((n) => !proved.has(n));
+  return (saved?.proved ?? []).filter((n) => !proved.has(n));
 }
 
 /** Theorem names declared in a file, in order (to place a new file's lemmas before they are checked). */

@@ -11,6 +11,7 @@ export const STRINGS = {
   "page.problems": ["Problems", "題庫"],
   "page.concept": ["Concept", "概念"],
   "page.skills": ["Coding Skills", "程式技巧"],
+  "page.research": ["Research", "研究"],
   "page.agents": ["AI agent", "AI 代理"],
   "page.reading": ["Further reading", "延伸閱讀"],
   "reading.books": ["Books", "書籍"],

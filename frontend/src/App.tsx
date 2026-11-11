@@ -27,6 +27,7 @@ import TacticsSkill from "./pages/skills/Tactics";
 import VerifySkill from "./pages/skills/Verify";
 import ProversAgent from "./pages/agents/Provers";
 import { McpAgent, SkillsAgent } from "./pages/agents/Setup";
+import ResearchPage from "./research/ResearchPage";
 import { RunnerButton, RunnerProvider } from "./RunnerPanel";
 import { STRINGS } from "./strings";
 
@@ -58,6 +59,7 @@ export default function App() {
   const route = useRoute("concept");
   const pages: ShellPage[] = [
     { id: "problems", label: t("page.problems") },
+    { id: "research", label: t("page.research") },
     {
       id: "concept",
       label: t("page.concept"),
@@ -164,6 +166,8 @@ export default function App() {
           ) : (
             <ProversAgent section={route.section} />
           )
+        ) : route.page === "research" ? (
+          <ResearchPage id={route.tab} />
         ) : route.page === "problems" ? (
           <ProblemsPage id={route.tab} />
         ) : (
