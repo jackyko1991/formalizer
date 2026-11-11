@@ -25,6 +25,7 @@ import SearchSkill from "./pages/skills/Search";
 import StructureSkill from "./pages/skills/Structure";
 import TacticsSkill from "./pages/skills/Tactics";
 import VerifySkill from "./pages/skills/Verify";
+import ProversAgent from "./pages/agents/Provers";
 import { RunnerButton, RunnerProvider } from "./RunnerPanel";
 import { STRINGS } from "./strings";
 
@@ -73,9 +74,11 @@ export default function App() {
       id: "agents",
       label: t("page.agents"),
       tabs: [
+        { id: "provers", label: t("tab.provers") },
         { id: "skills", label: t("tab.skills") },
         { id: "mcp", label: t("tab.mcp") },
       ],
+      defaultTab: "provers",
     },
     {
       id: "reading",
@@ -152,6 +155,8 @@ export default function App() {
           ) : (
             <BooksReading section={route.tab === "books" ? route.section : null} />
           )
+        ) : route.page === "agents" && (route.tab ?? "provers") === "provers" ? (
+          <ProversAgent section={route.section} />
         ) : route.page === "problems" ? (
           <ProblemsPage id={route.tab} />
         ) : (

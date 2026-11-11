@@ -395,6 +395,15 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
                     </button>
                   );
                 })}
+                {/* Formalizer Pro (pending): live suggestions from Lean's search, a local prover, or the visitor's agent */}
+                <button
+                  onClick={() => go("agents", "provers", "pro")}
+                  data-testid="pro-pending"
+                  className="mt-2 flex w-full items-center justify-between gap-2 rounded-md border border-dashed border-gray-300 px-2.5 py-1.5 text-left text-xs text-gray-500 hover:border-(--lk-accent) hover:text-gray-800"
+                >
+                  <span>✨ {t("pro.suggest")}</span>
+                  <span className="rounded bg-amber-50 px-1 text-[10px] font-medium text-amber-800">{t("pro.pending")}</span>
+                </button>
               </div>
             }
             <div className="shrink-0 space-y-2 border-t border-gray-200 p-3">
