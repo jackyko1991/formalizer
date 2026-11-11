@@ -9,8 +9,25 @@ import data from "../../problems/tutorial.json" with { type: "json" };
 export type Level = "L1" | "L2" | "L3";
 export const LEVELS: Level[] = ["L1", "L2", "L3"];
 
+export type Category = "tutorial" | "research";
+
+/** Topics of the library, in order. The research showcase fills in with the Full runner (Mathlib). */
+export const CATEGORIES: { id: Category; icon: string; title: Localized; empty?: Localized }[] = [
+  { id: "tutorial", icon: "⊢", title: ["Tutorial track", "教學路線"] },
+  {
+    id: "research",
+    icon: "∑",
+    title: ["Research showcase", "研究展示"],
+    empty: [
+      "Coming: 30 research results from openai/math and the Navier–Stokes challenge (needs the Full runner, with Mathlib).",
+      "即將推出：30 個來自 openai/math 的研究成果，以及 Navier–Stokes 挑戰（需要含 Mathlib 的 Full 執行器）。",
+    ],
+  },
+];
+
 export interface Problem {
   id: string;
+  category: Category;
   level: Level;
   runner: "lite" | "full";
   title: Localized;
@@ -32,4 +49,4 @@ export interface Problem {
   solution: string;
 }
 
-export const PROBLEMS = data as Problem[];
+export const PROBLEMS: Problem[] = (data as Omit<Problem, "category">[]).map((p) => ({ category: "tutorial", ...p }));
