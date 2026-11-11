@@ -157,4 +157,33 @@ syntax (name := depGraph) "#dep_graph" (ppSpace ident)+ : command
       ("hidden", toJson hidden), ("more", toJson more)]
   logInfo m!"formalizer-depgraph {graph.compress}"
 
+/-- `#decl_status` prints (as one info message starting with `formalizer-decls `) every declaration written in this
+file, for the research workspace's blueprint: its kind, the line it starts on, whether its own proof uses `sorry`,
+every axiom it rests on (through the other declarations too), and the local declarations it uses. -/
+syntax (name := declStatus) "#decl_status" : command
+
+@[command_elab declStatus] def elabDeclStatus : CommandElab := fun _ => do
+  let env ← getEnv
+  let names := env.constants.foldStage2 (fun acc n _ => if owner n == n && !n.isInternal then acc.push n else acc) #[]
+  let mut out : Array (Nat × Json) := #[]
+  for n in names do
+    let some ci := env.find? n | continue
+    let kind := match ci with
+      | .thmInfo _ => "theorem"
+      | .defnInfo _ | .opaqueInfo _ => "def"
+      | .axiomInfo _ => "axiom"
+      | .inductInfo _ => "inductive"
+      | _ => ""
+    if kind.isEmpty then continue
+    -- generated declarations (projections, instances Lean derives) have no range in the source: skip them
+    let some ranges ← findDeclarationRanges? n | continue
+    let d := depsOf env n
+    let axioms ← collectAxioms n
+    out := out.push (ranges.range.pos.line, Json.mkObj
+      [("name", toJson (toString n)), ("kind", toJson kind), ("line", toJson ranges.range.pos.line),
+        ("endLine", toJson ranges.range.endPos.line), ("sorry", toJson (d.axioms.contains ``sorryAx)),
+        ("axioms", toJson (axioms.map toString)), ("uses", toJson (d.locals.map toString))])
+  let sorted := out.qsort (fun a b => a.1 < b.1) |>.map (·.2)
+  logInfo m!"formalizer-decls {(Json.arr sorted).compress}"
+
 end Formalizer.DepGraph

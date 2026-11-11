@@ -2,6 +2,7 @@
 
 GET  /api/health   runner kind (lite | full), Lean version, pool state (warming | ready | failed)
 POST /api/check    {code, theorems, statements} → {verdict, errors, warnings, infos, goals, axioms, ms}
+GET|PUT|POST /api/projects…  research projects in ~/Formalizer (see projects.py)
 POST /mcp          the same checks for an AI agent on this computer (MCP; see mcp.py)
 """
 
@@ -20,9 +21,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
 
-from .check import axioms_request, depgraph_request, imports, summarize, without_imports
+from .check import axioms_request, decls_request, depgraph_request, imports, summarize, without_imports
 from .lean_pool import LeanCrash, LeanPool, LeanTimeout, WorkerConfig
 from .mcp import Mcp, local_origin
+from .projects import make_router
 
 ROOT = Path(__file__).resolve().parents[1]
 LEAN_DIR = Path(os.environ.get("FORMALIZER_LEAN_DIR", ROOT / "lean"))
@@ -71,6 +73,7 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="Formalizer runner", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=ORIGINS, allow_methods=["*"], allow_headers=["*"])
+app.include_router(make_router(ORIGINS))
 VERSION = lean_version()
 
 
@@ -85,6 +88,8 @@ class CheckRequest(BaseModel):
     theorems: list[str] = Field(default_factory=list, max_length=20)
     # statements that must appear in the code unchanged (the test may not be edited)
     statements: list[str] = Field(default_factory=list, max_length=20)
+    # also list every declaration with its status (the research workspace's blueprint)
+    decls: bool = False
 
 
 _SPACE = re.compile(r"\s+")
@@ -139,7 +144,10 @@ async def check(req: CheckRequest) -> dict:
     body = without_imports(req.code)
     started = time.monotonic()
     try:
-        reply = await pool.check(body + axioms_request(req.theorems) + depgraph_request(req.theorems), CHECK_TIMEOUT_S)
+        reply = await pool.check(
+            body + axioms_request(req.theorems) + depgraph_request(req.theorems) + decls_request(req.decls),
+            CHECK_TIMEOUT_S,
+        )
     except LeanTimeout as e:
         raise HTTPException(408, str(e)) from None
     except LeanCrash as e:

@@ -56,6 +56,36 @@ def axioms_request(theorems: list[str]) -> str:
     return "".join(f"\n#print axioms {name}" for name in theorems)
 
 
+def decls_request(on: bool) -> str:
+    """`#decl_status` (DepGraph.lean) lists every declaration of the code, for the research workspace's blueprint."""
+    return "\n#decl_status" if on else ""
+
+
+_DECLS = "formalizer-decls "
+
+
+def decl_statuses(decls: list[dict], errors: list[dict]) -> list[dict]:
+    """Each declaration's status for the blueprint, from `#decl_status` and the errors:
+    error (Lean rejects it) · sorry (its own proof has `sorry`) · depends (proved, but on a `sorry` or a non-standard
+    axiom further down) · proved (standard axioms only) · def (a definition or type)."""
+    out = []
+    for d in decls:
+        lo, hi = d["line"], max(d["endLine"], d["line"])
+        failed = any(lo <= e["line"] <= hi for e in errors if e["line"])
+        if failed:
+            status = "error"
+        elif d["sorry"]:
+            status = "sorry"
+        elif any(a not in STANDARD_AXIOMS for a in d["axioms"]):
+            status = "depends"
+        elif d["kind"] == "theorem":
+            status = "proved"
+        else:
+            status = "def"
+        out.append({**d, "status": status})
+    return out
+
+
 def depgraph_request(theorems: list[str]) -> str:
     """`#dep_graph` (lean/Formalizer/DepGraph.lean, imported by every worker) prints the proof's dependency graph."""
     return f"\n#dep_graph {' '.join(theorems)}" if theorems else ""
@@ -113,10 +143,16 @@ def prune_graph(graph: dict, code: str) -> dict:
 def summarize(reply: dict, code_lines: int, theorems: list[str], code: str = "") -> dict:
     """The page's view of a check. `code_lines`: messages after this line come from the appended
     `#print axioms` commands, not from the user's code."""
-    errors, warnings, infos, axioms, graph = [], [], [], {}, None
+    errors, warnings, infos, axioms, graph, decls = [], [], [], {}, None, None
     for m in reply.get("messages", []):
         line = m.get("pos", {}).get("line", 0)
         text = str(m.get("data", ""))
+        if line > code_lines and text.startswith(_DECLS):
+            try:
+                decls = json.loads(text[len(_DECLS) :])
+            except ValueError:
+                decls = None
+            continue
         if line > code_lines and text.startswith(_DEPGRAPH):
             try:
                 graph = prune_graph(json.loads(text[len(_DEPGRAPH) :]), code)
@@ -179,4 +215,5 @@ def summarize(reply: dict, code_lines: int, theorems: list[str], code: str = "")
         "goals": goals,
         "axioms": axioms,
         "graph": graph,
+        **({"decls": decl_statuses(decls, errors)} if decls is not None else {}),
     }
