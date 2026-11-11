@@ -9,7 +9,7 @@
  * runner) or that is meant to fail is written inline with `<Lean code=… runner="mathlib" | fails>` instead.
  */
 import { CodeBlock, go, PageToc, plainText, RichText, useLang } from "@learnkit/web";
-import { useEffect, type ReactNode } from "react";
+import { isValidElement, useEffect, type ReactElement, type ReactNode } from "react";
 import { PROBLEMS } from "../problems";
 import { parseSnippets } from "./snippets";
 
@@ -207,8 +207,8 @@ export function Figure({ caption, children }: { caption: L; children: ReactNode 
   );
 }
 
-/** A two-column table (e.g. paper ↔ Lean, tactic ↔ what it does). Cells are RichText. */
-export function Table({ head, rows }: { head: readonly [L, L] | readonly [L, L, L]; rows: (readonly [L, L] | readonly [L, L, L])[] }) {
+/** A table (e.g. paper ↔ Lean, tactic ↔ what it does). Cells are RichText, or an element (e.g. a coloured mark). */
+export function Table({ head, rows }: { head: readonly L[]; rows: (readonly (L | ReactElement)[])[] }) {
   const { pick } = useLang();
   return (
     <div className="overflow-x-auto rounded-lg border border-gray-200">
@@ -227,7 +227,7 @@ export function Table({ head, rows }: { head: readonly [L, L] | readonly [L, L, 
             <tr key={i}>
               {r.map((c, j) => (
                 <td key={j} className="px-3 py-2 align-top">
-                  <RichText text={pick(c)} />
+                  {isValidElement(c) ? c : <RichText text={pick(c as L)} />}
                 </td>
               ))}
             </tr>

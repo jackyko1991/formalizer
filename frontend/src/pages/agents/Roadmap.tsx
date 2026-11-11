@@ -8,6 +8,17 @@ import { Callout, List, P, Page, Section, SiteLink, Table, type SectionInfo } fr
 
 const PAGE = "roadmap";
 
+const Yes = () => (
+  <span className="font-semibold text-emerald-600" aria-label="yes">
+    ✓
+  </span>
+);
+const No = () => (
+  <span className="text-gray-400" aria-label="not yet">
+    –
+  </span>
+);
+
 const SECTIONS: SectionInfo[] = [
   { id: "free", title: ["Free: on your computer, or your own account", "免費：在你的電腦上，或用你自己的帳號"] },
   { id: "pro", title: ["Pro: the same suggestions, nothing to set up (pending)", "Pro：同樣的建議，什麼都不用設定（籌備中）"] },
@@ -29,12 +40,7 @@ export default function RoadmapAgent({ section }: { section: string | null }) {
     >
       <Section page={PAGE} id="free" n={1} title={SECTIONS[0].title}>
         <Callout kind="warn" title={["Mostly pending", "大多仍在籌備中"]}>
-          <P
-            t={[
-              "Marked *works now* below is what you can use today. The rest is the plan.",
-              "下面標著 *現在就能用* 的，今天就能用；其餘是計畫。",
-            ]}
-          />
+          <P t={["Everything ticked ✓ is free today. The rest is the plan.", "打了 ✓ 的，今天就能免費使用；其餘是計畫。"]} />
         </Callout>
         <P
           t={[
@@ -47,31 +53,35 @@ export default function RoadmapAgent({ section }: { section: string | null }) {
             ["Free", "免費"],
             ["What you get", "你得到什麼"],
             ["Needs", "需要"],
+            ["Available now", "現在可用"],
           ]}
           rows={[
             [
-              ["Problems and checking (works now)", "題目與檢查（現在就能用）"],
+              ["Problems and checking", "題目與檢查"],
               [
                 "every problem, the goal view, the dependency graph, checked by Lean on your computer",
                 "所有題目、目標檢視、依賴圖，由你電腦上的 Lean 檢查",
               ],
               ["the runner", "執行器"],
+              <Yes />,
             ],
             [
-              ["Research workspace (works now)", "研究工作區（現在就能用）"],
+              ["Research workspace", "研究工作區"],
               [
                 "a blueprint of lemmas, notes in words beside the Lean, an autosaved working copy, **one saved version**, and unlimited exports to plain .lean files",
                 "引理藍圖、Lean 旁的文字筆記、自動儲存的工作副本、**一個已存版本**，以及不限次數匯出成一般的 .lean 檔",
               ],
               ["the runner (projects in ~/Formalizer), or this browser", "執行器（專案存在 ~/Formalizer），或這個瀏覽器"],
+              <Yes />,
             ],
             [
-              ["Your agent (works now)", "你的代理（現在就能用）"],
+              ["Your agent", "你的代理"],
               [
                 "your own AI coding agent works on problems through Formalizer's skill and MCP server",
                 "你自己的 AI 程式代理透過 Formalizer 的 skill 與 MCP 伺服器來做題",
               ],
               ["an agent such as Claude Code", "一個代理，例如 Claude Code"],
+              <Yes />,
             ],
             [
               ["Ask Lean", "問 Lean"],
@@ -80,6 +90,7 @@ export default function RoadmapAgent({ section }: { section: string | null }) {
                 "在你點選的 `sorry` 上執行 `exact?`、`apply?`、`rw?`、`simp?`",
               ],
               ["the runner", "執行器"],
+              <No />,
             ],
             [
               ["Your model", "你的模型"],
@@ -91,6 +102,7 @@ export default function RoadmapAgent({ section }: { section: string | null }) {
                 "Ollama and a model download (several GB, enough memory), or an API key. With a key, your proof goes to that provider: your choice.",
                 "Ollama 與模型下載（數 GB，記憶體要夠），或一把 API 金鑰。用金鑰時，你的證明會送到那家服務商：由你決定。",
               ],
+              <No />,
             ],
           ]}
         />
