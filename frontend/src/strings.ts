@@ -110,7 +110,7 @@ export const STRINGS = {
   ],
   "proof.use": ["Use this proof", "使用這個證明"],
   "pro.suggest": ["AI suggestions", "AI 建議"],
-  "pro.pending": ["Pro · pending", "Pro · 籌備中"],
+  "pro.pending": ["pending", "籌備中"],
   "panel.goals": ["Goals", "目標"],
   "panel.result": ["Result", "結果"],
   "goals.none": ["Press Run: the goals Lean still wants appear here.", "按執行：Lean 還要你證明的目標會出現在這裡。"],
