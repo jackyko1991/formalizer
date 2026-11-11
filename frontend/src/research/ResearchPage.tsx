@@ -10,6 +10,7 @@ import { go, RichText, useLang } from "@learnkit/web";
 import CodeMirror from "@uiw/react-codemirror";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { H, layout } from "../graphLayout";
+import { cancelJob, followJob, listJobs, startJob, type JobInfo } from "../jobs";
 import { check, joinFiles, RunnerError, type CheckResult, type Decl, type LeanFile } from "../runner";
 import { runnerReady, useRunner } from "../RunnerPanel";
 import { blueprintGraph, counts, declAt, exportZip, lostSince, place, readZip, summarize, workable, type Meta, type Placed } from "./model";
@@ -328,24 +329,116 @@ function Workspace({ id }: { id: string }) {
     return () => clearInterval(t);
   }, []);
 
-  // --- check with Lean on a pause in typing
+  const [job, setJob] = useState<{ info: JobInfo; position: number | null } | null>(null);
+  const [slow, setSlow] = useState(false);
+  const [jobCode, setJobCode] = useState<string | null>(null); // what the last background result checked
+  // --- check with Lean on a pause in typing (quick checks; a long proof goes to a background job below)
   const joined = useMemo(() => joinFiles(files), [files]);
+  const main = meta?.main ?? "";
+  const statements = useMemo(() => meta?.statements ?? [], [meta?.statements]);
   useEffect(() => {
-    if (!ready || !meta || !files.length) return;
+    if (!ready || !files.length || meta === null) return;
+    if (jobCode === joined.code) return; // a background check already has the result for exactly this code
     const t = setTimeout(async () => {
       setChecking(true);
       try {
-        const r = await check(joined.code, meta.main ? [meta.main] : [], meta.statements, true);
+        const r = await check(joined.code, main ? [main] : [], statements, true);
         setResult({ ...r, where: joined.where });
         setRunError(null);
+        setSlow(false);
       } catch (e) {
-        setRunError(e instanceof RunnerError ? e.message : String(e));
+        if (e instanceof RunnerError && e.status === 408)
+          setSlow(true); // past the quick limit: offer a background run
+        else setRunError(e instanceof RunnerError ? e.message : String(e));
       } finally {
         setChecking(false);
       }
     }, 800);
     return () => clearTimeout(t);
-  }, [joined, ready, meta?.main, meta?.statements, meta, files.length]);
+    // notes and the next-step note don't change what Lean checks
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [joined, ready, main, statements, meta === null, jobCode]);
+
+  // --- background checks (jobs): keep running when the page closes; after a reload the page attaches again.
+  // The files as they were when the job started are kept in this browser, to place its results on the right lines.
+  const watching = useRef<AbortController | null>(null);
+  const jobKey = `formalizer.research.job.${id}`;
+  const attach = useCallback(
+    (info: JobInfo, snapshot: LeanFile[]) => {
+      watching.current?.abort();
+      const ctl = new AbortController();
+      watching.current = ctl;
+      setJob({ info, position: info.position });
+      void followJob(
+        info.id,
+        (e) => {
+          if (e.type === "queued") setJob((j) => j && { ...j, position: (e.position as number) ?? null });
+          if (e.type === "running")
+            setJob((j) => j && { info: { ...j.info, status: "running", started: j.info.started ?? Date.now() / 1000 }, position: null });
+          if (e.type === "result") {
+            setResult({ ...(e.result as CheckResult), where: joinFiles(snapshot).where });
+            setJobCode(joinFiles(snapshot).code);
+            setRunError(null);
+            setSlow(false);
+          }
+          if (e.type === "error") setRunError(String(e.message));
+        },
+        ctl.signal,
+      )
+        .then((last) => {
+          setJob((j) => j && { info: { ...j.info, status: last.type === "result" ? "done" : "failed" }, position: null });
+          try {
+            localStorage.setItem(`${jobKey}.seen`, info.id);
+          } catch {
+            /* storage blocked: the result may show again after a reload */
+          }
+        })
+        .catch(() => {});
+    },
+    [jobKey],
+  );
+  useEffect(() => () => watching.current?.abort(), []);
+  // after a reload: this project's latest job, if it is still running or its result hasn't been shown yet
+  useEffect(() => {
+    if (!ready || !store) return;
+    let saved: { id: string; files: LeanFile[] } | null = null;
+    let seen: string | null = null;
+    try {
+      saved = JSON.parse(localStorage.getItem(jobKey) ?? "null");
+      seen = localStorage.getItem(`${jobKey}.seen`);
+    } catch {
+      return;
+    }
+    if (!saved) return;
+    void listJobs()
+      .then((jobs) => {
+        const info = jobs.find((j) => j.id === saved!.id);
+        const same = joinFiles(saved!.files).code === joinFiles(latest.current.files).code; // its result still holds
+        if (info && (["queued", "running"].includes(info.status) || seen !== info.id || same)) attach(info, saved!.files);
+      })
+      .catch(() => {});
+  }, [ready, store, jobKey, attach]);
+  async function runInBackground() {
+    const snapshot = files.map((f) => ({ ...f }));
+    try {
+      const info = await startJob({
+        code: joinFiles(snapshot).code,
+        theorems: main ? [main] : [],
+        statements,
+        decls: true,
+        label: `research:${id}`,
+      });
+      try {
+        localStorage.setItem(jobKey, JSON.stringify({ id: info.id, files: snapshot }));
+      } catch {
+        /* storage blocked: the job still runs; this page follows it until it closes */
+      }
+      attach(info, snapshot);
+    } catch (e) {
+      setRunError(e instanceof RunnerError ? e.message : String(e));
+    }
+  }
+  const jobActive = job && ["queued", "running"].includes(job.info.status);
 
   const placed: Placed[] = useMemo(() => (result?.decls ? place(result.decls, result.where) : []), [result]);
   const byName = useMemo(() => new Map(placed.map((d) => [d.name, d])), [placed]);
@@ -453,6 +546,37 @@ function Workspace({ id }: { id: string }) {
             : pick(["No saved version yet", "還沒有存版本"])}
         </span>
         {/* always shown, in a fixed order: a button never moves under the cursor */}
+        <span className="flex items-center gap-1.5" data-testid="background">
+          {jobActive ? (
+            <>
+              <span className="rounded-full bg-sky-50 px-2 py-0.5 text-sky-800 ring-1 ring-sky-200">
+                ⏱{" "}
+                {job.info.status === "queued"
+                  ? pick([`Background check: waiting (#${job.position ?? 1})`, `背景檢查：排隊中（第 ${job.position ?? 1} 位）`])
+                  : pick([
+                      `Background check: running ${ago(job.info.started ? job.info.started * 1000 : undefined, pick).replace(/ ago|前$/, "")}`,
+                      `背景檢查：已執行 ${ago(job.info.started ? job.info.started * 1000 : undefined, pick).replace(/ ago|前$/, "")}`,
+                    ])}
+              </span>
+              <button onClick={() => void cancelJob(job.info.id)} className="text-red-700 hover:underline" data-testid="stop-job">
+                {pick(["Stop", "停止"])}
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => void runInBackground()}
+              disabled={!ready}
+              title={pick([
+                "Check the whole project with no time limit. It keeps running if you close or reload the page; come back later for the result.",
+                "不設時間上限地檢查整個專案。關掉或重新整理頁面也會繼續執行；之後回來看結果。",
+              ])}
+              className="rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-50 disabled:opacity-40"
+              data-testid="run-background"
+            >
+              ⏱ {pick(["Run in background", "背景執行"])}
+            </button>
+          )}
+        </span>
         <button
           onClick={() => void restore()}
           disabled={!saved}
@@ -711,6 +835,17 @@ function Workspace({ id }: { id: string }) {
             </p>
           )}
           {runError && <p className="text-xs text-red-700">{runError}</p>}
+          {slow && !jobActive && jobCode !== joined.code && (
+            <div className="rounded-md bg-sky-50 px-3 py-2 text-xs text-sky-900" data-testid="slow">
+              {pick([
+                "This project takes Lean longer than a quick check allows. Run it in the background: it keeps going if you close the page, and the result appears here when you come back.",
+                "Lean 檢查這個專案所需的時間超過快速檢查的上限。改在背景執行：關掉頁面也會繼續，回來時結果就會出現在這裡。",
+              ])}{" "}
+              <button onClick={() => void runInBackground()} className="font-medium text-(--lk-accent) hover:underline">
+                ⏱ {pick(["Run in background", "背景執行"])}
+              </button>
+            </div>
+          )}
           {goals.length === 0 && decl?.status !== "sorry" && (
             <p className="text-xs text-gray-500">{pick(["No open goal here.", "這裡沒有未完成的目標。"])}</p>
           )}

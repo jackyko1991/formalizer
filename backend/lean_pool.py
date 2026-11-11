@@ -160,7 +160,8 @@ class LeanPool:
         worker = await self._free.get()
         try:
             reply = await worker.check(code, timeout_s)
-        except (LeanTimeout, LeanCrash):
+        except (LeanTimeout, LeanCrash, asyncio.CancelledError):
+            # cancelled too (a stopped job): the worker is mid-request, so it can't go back to the pool
             await worker.kill()
             self._replace_later()
             raise

@@ -87,7 +87,14 @@ export interface Graph {
   more: number;
 }
 
-export class RunnerError extends Error {}
+export class RunnerError extends Error {
+  /** the HTTP status (408: the check ran past its time limit), 0 when the runner is unreachable */
+  status: number;
+  constructor(message: string, status = 0) {
+    super(message);
+    this.status = status;
+  }
+}
 
 /** null when no runner answers on this computer. */
 export async function health(signal?: AbortSignal): Promise<Health | null> {
@@ -111,7 +118,7 @@ export async function check(code: string, theorems: string[], statements: string
     throw new RunnerError("offline");
   }
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new RunnerError(typeof body.detail === "string" ? body.detail : `HTTP ${res.status}`);
+  if (!res.ok) throw new RunnerError(typeof body.detail === "string" ? body.detail : `HTTP ${res.status}`, res.status);
   return body;
 }
 
