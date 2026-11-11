@@ -5,6 +5,7 @@ const PAGE = "tactics";
 
 const SECTIONS: SectionInfo[] = [
   { id: "goal", title: ["What a tactic is", "戰術是什麼"] },
+  { id: "history", title: ["Where tactics come from: LCF to Lean", "戰術從哪裡來：從 LCF 到 Lean"] },
   { id: "rfl", title: ["`rfl`: both sides compute to the same thing", "`rfl`：兩邊算出來一樣"] },
   { id: "decide", title: ["`decide`: let Lean check it by computation", "`decide`：讓 Lean 用計算檢查"] },
   { id: "simp", title: ["`simp`: simplify with known rules", "`simp`：用已知規則化簡"] },
@@ -61,7 +62,95 @@ export default function TacticsSkill({ section }: { section: string | null }) {
         </Callout>
       </Section>
 
-      <Section page={PAGE} id="rfl" n={2} title={SECTIONS[1].title}>
+      <Section page={PAGE} id="history" n={2} title={SECTIONS[1].title}>
+        <P
+          t={[
+            'Tactics were invented by **Robin Milner** for **LCF**, a proof checker he began at Stanford in 1972 and rebuilt at Edinburgh (*Edinburgh LCF*, 1979). To write tactics safely he designed a programming language for them, **ML** (the "meta language" of LCF), the ancestor of Standard ML and OCaml. Milner received the Turing Award in 1991, for LCF, ML and his work on concurrency.',
+            "戰術是 **Robin Milner** 為 **LCF** 發明的。LCF 是他 1972 年在史丹佛開始做的證明檢查器，後來在愛丁堡重建（*Edinburgh LCF*，1979）。為了安全地撰寫戰術，他替戰術設計了一個程式語言 **ML**（LCF 的「後設語言」），它是 Standard ML 與 OCaml 的祖先。Milner 在 1991 年獲得圖靈獎，表彰他在 LCF、ML 與並行計算上的工作。",
+          ]}
+        />
+        <P
+          t={[
+            "In LCF a tactic is a function $\\text{tactic} : \\text{goal} \\to \\text{goal list} \\times (\\text{thm list} \\to \\text{thm})$. It splits a goal into smaller subgoals and hands back a *validation*: once you have proved the subgoals, it rebuilds the theorem from them. Why a buggy tactic can't fool LCF: theorems have their own type `thm`, and only the rules of the logic can create a value of that type. LCF never builds a proof term; the type system is the guard.",
+            "在 LCF 裡，戰術是一個函數 $\\text{tactic} : \\text{goal} \\to \\text{goal list} \\times (\\text{thm list} \\to \\text{thm})$。它把一個目標拆成較小的子目標，並交回一個 *驗證函數*：等子目標都證完，再用它們重建出定理。為什麼有錯的戰術騙不了 LCF：定理有自己的型別 `thm`，而只有邏輯的推論規則能產生這個型別的值。LCF 從不建出證明項；把關的是型別系統。",
+          ]}
+        />
+        <P
+          t={[
+            "HOL, Isabelle, Coq (now Rocq) and Lean all inherited tactics. Lean 4 changes two things. First, a goal is a **hole** in a proof term that is being built: `constructor` on `p ∧ q` fills the hole with `⟨?_, ?_⟩`, and the two new holes `?_` become your next goals; when no hole is left, the term is finished. Second, the finished term is **checked again by the kernel**, so you trust the small kernel rather than the tactics (the de Bruijn criterion, see How Lean checks).",
+            "HOL、Isabelle、Coq（現名 Rocq）與 Lean 都繼承了戰術。Lean 4 改了兩件事。第一，目標是一個正在建構中的證明項裡的 **洞**：對 `p ∧ q` 用 `constructor`，會把洞填成 `⟨?_, ?_⟩`，而兩個新的洞 `?_` 就成為你接下來的目標；當沒有洞剩下，證明項就完成了。第二，完成的證明項會 **再交給核心檢查一次**，所以你信任的是小小的核心，而不是戰術（de Bruijn 準則，見「Lean 如何檢查」）。",
+          ]}
+        />
+        <Lean
+          code={snippet("Tactics", "holes")}
+          note={[
+            "`show_term` prints the term a tactic wrote: the `?_` are the holes left for the next steps.",
+            "`show_term` 印出戰術寫下的證明項：`?_` 就是留給下一步的洞。",
+          ]}
+        />
+        <Table
+          head={[
+            ["", ""],
+            ["LCF (1979)", "LCF（1979）"],
+            ["Lean 4", "Lean 4"],
+          ]}
+          rows={[
+            [
+              ["A tactic is", "戰術是"],
+              ["an ML function: goal → subgoals + validation", "一個 ML 函數：目標 → 子目標 + 驗證函數"],
+              ["a Lean program that fills holes in a proof term", "一個填補證明項裡的洞的 Lean 程式"],
+            ],
+            [
+              ["It builds", "它建出"],
+              ["the theorem itself (no proof term)", "定理本身（沒有證明項）"],
+              ["a proof term", "一個證明項"],
+            ],
+            [
+              ["You trust", "你信任的是"],
+              ["the type `thm`: only the logic's rules make theorems", "型別 `thm`：只有邏輯規則能產生定理"],
+              ["the kernel, which re-checks the term", "核心，它會重新檢查證明項"],
+            ],
+            [
+              ["Tactics are written in", "戰術用什麼寫"],
+              ["ML", "ML"],
+              ["Lean itself", "Lean 本身"],
+            ],
+          ]}
+        />
+        <P
+          t={[
+            "Because Lean's tactics are Lean programs, you can make your own from existing ones. This one tries the one-step tactics of this page in turn:",
+            "因為 Lean 的戰術就是 Lean 程式，你可以用現有的戰術組出自己的戰術。下面這個會依序嘗試本頁的一步戰術：",
+          ]}
+        />
+        <Lean code={snippet("Tactics", "one-step")} />
+        <Callout kind="note" title={["Is a tactic AI?", "戰術是 AI 嗎？"]}>
+          <P
+            t={[
+              "No. A tactic is an ordinary, deterministic program: the same goal gives the same result. AI provers (History, part IV) decide *which* tactics to try; whatever they choose, the kernel still checks the finished term.",
+              "不是。戰術是普通、確定性的程式：同樣的目標得到同樣的結果。AI 證明器（歷史頁第四部）決定 *要試哪些* 戰術；不論它們選了什麼，完成的證明項仍由核心檢查。",
+            ]}
+          />
+        </Callout>
+        <TryIn ids={["even-sum", "cases-or"]} />
+        <SiteLink to={["concept", "kernel"]} label={["Concept ▸ How Lean checks", "概念 ▸ Lean 如何檢查"]} />
+        <Sources
+          items={[
+            {
+              label: "Mike Gordon, From LCF to HOL: a short history (2000)",
+              url: "https://www.cl.cam.ac.uk/archive/mjcg/papers/HolHistory.pdf",
+            },
+            { label: "Gordon, Milner, Wadsworth, Edinburgh LCF (LNCS 78, 1979)", url: "https://doi.org/10.1007/3-540-09724-4" },
+            { label: "Robin Milner (Wikipedia)", url: "https://en.wikipedia.org/wiki/Robin_Milner" },
+            {
+              label: "Metaprogramming in Lean 4: Tactics",
+              url: "https://leanprover-community.github.io/lean4-metaprogramming-book/main/09_tactics.html",
+            },
+          ]}
+        />
+      </Section>
+
+      <Section page={PAGE} id="rfl" n={3} title={SECTIONS[2].title}>
         <P
           t={[
             "**What it does:** proves `a = b` when Lean, by unfolding definitions and computing, gets the same thing on both sides.",
@@ -91,7 +180,7 @@ export default function TacticsSkill({ section }: { section: string | null }) {
         <TryIn ids={["hello", "induction-double", "gauss"]} />
       </Section>
 
-      <Section page={PAGE} id="decide" n={3} title={SECTIONS[2].title}>
+      <Section page={PAGE} id="decide" n={4} title={SECTIONS[3].title}>
         <P
           t={[
             "**What it does:** proves a statement about concrete, finite things (numbers, `∧`, `∨`, `¬`, `∀ n < 10`) by running a checking program and looking at the answer `true`.",
@@ -120,7 +209,7 @@ export default function TacticsSkill({ section }: { section: string | null }) {
         <TryIn ids={["hello", "check-cases"]} />
       </Section>
 
-      <Section page={PAGE} id="simp" n={4} title={SECTIONS[3].title}>
+      <Section page={PAGE} id="simp" n={5} title={SECTIONS[4].title}>
         <P
           t={[
             "**What it does:** rewrites the goal again and again with a large list of library facts marked as simplification rules (`xs.reverse.reverse = xs`, `a + 0 = a`, `xs ++ [] = xs`, …) until nothing changes; if the goal becomes `True`, it is proved.",
@@ -156,7 +245,7 @@ export default function TacticsSkill({ section }: { section: string | null }) {
         <TryIn ids={["reverse-twice", "induction-double"]} />
       </Section>
 
-      <Section page={PAGE} id="omega" n={5} title={SECTIONS[4].title}>
+      <Section page={PAGE} id="omega" n={6} title={SECTIONS[5].title}>
         <P
           t={[
             "**What it does:** proves goals about natural numbers and integers built from `+`, `-`, multiplication by a fixed number (`2 * n`), `/` and `%` by a fixed number, `=`, `<`, `≤`, using the hypotheses of that kind. It decides such statements completely: if `omega` fails, the claim does not follow from those facts alone.",
@@ -196,7 +285,7 @@ export default function TacticsSkill({ section }: { section: string | null }) {
         <TryIn ids={["add-comm", "squeeze", "even-sum"]} />
       </Section>
 
-      <Section page={PAGE} id="exact" n={6} title={SECTIONS[5].title}>
+      <Section page={PAGE} id="exact" n={7} title={SECTIONS[6].title}>
         <P
           t={[
             "**What it does:** closes the goal with a term whose type is exactly the goal: a hypothesis, or a library lemma applied to the right arguments.",
@@ -236,7 +325,7 @@ export default function TacticsSkill({ section }: { section: string | null }) {
         <TryIn ids={["add-comm", "le-chain", "search", "cases-or"]} />
       </Section>
 
-      <Section page={PAGE} id="intro" n={7} title={SECTIONS[6].title}>
+      <Section page={PAGE} id="intro" n={8} title={SECTIONS[7].title}>
         <P
           t={[
             '**What it does:** when the goal is "for every `n`, …" (`∀ n, …`) or "if `p` then …" (`p → …`), `intro` names the `n` (or the assumption `p`) and moves it above the line, leaving the rest as the goal. It is the Lean version of "let `n` be any number" or "assume `p`".',
@@ -265,7 +354,7 @@ export default function TacticsSkill({ section }: { section: string | null }) {
         />
       </Section>
 
-      <Section page={PAGE} id="constructor" n={8} title={SECTIONS[7].title}>
+      <Section page={PAGE} id="constructor" n={9} title={SECTIONS[8].title}>
         <P
           t={[
             "**What it does:** splits a goal `P ∧ Q` (*and*) into two goals `P` and `Q`, and a goal `P ↔ Q` (*if and only if*) into the two directions `P → Q` and `Q → P`. The `·` (type `\\.`) starts the proof of each goal in turn.",
@@ -297,7 +386,7 @@ export default function TacticsSkill({ section }: { section: string | null }) {
         <SiteLink to={["skills", "structure"]} label={["Structuring a proof", "組織證明"]} />
       </Section>
 
-      <Section page={PAGE} id="mathlib" n={9} title={SECTIONS[8].title}>
+      <Section page={PAGE} id="mathlib" n={10} title={SECTIONS[9].title}>
         <Callout kind="warn" title={["These need Mathlib", "這些需要 Mathlib"]}>
           <P
             t={[
@@ -372,7 +461,7 @@ example (x : ℝ) : 0 < x ^ 2 + 1 := by positivity`}
         <TryIn ids={["hello"]} />
       </Section>
 
-      <Section page={PAGE} id="table" n={10} title={SECTIONS[9].title}>
+      <Section page={PAGE} id="table" n={11} title={SECTIONS[10].title}>
         <P
           t={[
             "Look at the goal after `⊢` and pick the first tactic to try. If it fails, the error tells you which row you are really in.",

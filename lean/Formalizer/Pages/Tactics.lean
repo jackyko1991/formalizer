@@ -79,4 +79,19 @@ example : ∃ n : Nat, n * n = 49 := by
 
 -- end
 
+-- snippet: holes
+example (p q : Prop) (hp : p) (hq : q) : p ∧ q := by
+  show_term constructor -- Lean prints: Try this: refine ⟨?_, ?_⟩
+  · exact hp
+  · exact hq
+
+-- snippet: one-step
+/-- A tactic made of tactics: try each one-step tactic in turn. -/
+macro "one_step" : tactic => `(tactic| first | rfl | decide | omega | simp)
+
+example : 2 + 2 = 4 := by one_step
+example (a b : Nat) : a + b = b + a := by one_step
+example (xs : List Nat) : xs.reverse.reverse = xs := by one_step
+-- end
+
 end Formalizer.Pages.Tactics
