@@ -97,3 +97,37 @@ def test_the_chips_in_order_reach_a_proof(client, p):  # noqa: F811
         if result["verdict"] == "proved":
             return
     pytest.fail(f"the chips never finish the proof; last file:\n{code}")
+
+
+# --- the dependency graph (lean/Formalizer/DepGraph.lean, pruned by backend/check.py) ---
+
+
+def by_id(problem_id):
+    return next(p for p in PROBLEMS if p["id"] == problem_id)
+
+
+@pytest.mark.skipif(not REPL.exists(), reason="needs `pixi run lean-build`")
+def test_gauss_has_a_clear_dependency_graph(client):  # noqa: F811
+    """The guaranteed example: Gauss's sum (L3, induction) → its definition and the library lemmas it cites → axioms."""
+    p = by_id("gauss")
+    graph = check(client, p, p["solution"])["graph"]
+    nodes = {n["id"]: n for n in graph["nodes"]}
+    edges = {(e["from"], e["to"]) for e in graph["edges"]}
+    assert graph["roots"] == ["gauss"] and nodes["gauss"]["status"] == "proved"
+    assert nodes["sumTo"]["kind"] == "def" and ("gauss", "sumTo") in edges
+    for lemma in ("Nat.mul_add", "Nat.add_mul", "Nat.mul_comm"):  # named in the proof
+        assert nodes[lemma]["kind"] == "library" and ("gauss", lemma) in edges
+    assert {n["id"] for n in graph["nodes"] if n["kind"] == "axiom"} == {"propext"}
+    assert len(nodes) <= 8, sorted(nodes)
+    unfinished = check(client, p, p["start"])["graph"]
+    assert {n["id"]: n["status"] for n in unfinished["nodes"]}["gauss"] == "sorry"
+    assert "sorryAx" in {n["id"] for n in unfinished["nodes"]}
+
+
+@pytest.mark.skipif(not REPL.exists(), reason="needs `pixi run lean-build`")
+@pytest.mark.parametrize("p", FILES["tutorial"], ids=[p["id"] for p in FILES["tutorial"]])
+def test_every_tutorial_graph_is_small_and_standard(client, p):  # noqa: F811
+    graph = check(client, p, p["solution"])["graph"]
+    ids = {n["id"] for n in graph["nodes"]}
+    assert set(p["theorems"]) <= ids and len(ids) <= 12, sorted(ids)
+    assert {n["id"] for n in graph["nodes"] if n["kind"] == "axiom"} <= {"propext", "Quot.sound", "Classical.choice"}

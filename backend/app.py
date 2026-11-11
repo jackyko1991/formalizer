@@ -18,7 +18,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from .check import axioms_request, imports, summarize, without_imports
+from .check import axioms_request, depgraph_request, imports, summarize, without_imports
 from .lean_pool import LeanCrash, LeanPool, LeanTimeout, WorkerConfig
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -51,7 +51,7 @@ pool = LeanPool(
     WorkerConfig(
         command=["lake", "env", REPL],
         cwd=LEAN_DIR,
-        header="import Mathlib" if RUNNER == "full" else "def _formalizer_ready := 0",
+        header="import Mathlib\nimport Formalizer.DepGraph" if RUNNER == "full" else "import Formalizer.DepGraph",
     ),
     size=POOL_SIZE,
     max_uses=MAX_USES,
@@ -110,6 +110,7 @@ async def check(req: CheckRequest) -> dict:
             "warnings": [],
             "infos": [],
             "goals": [],
+            "graph": None,
             "axioms": {},
             "ms": 0,
         }
@@ -128,16 +129,17 @@ async def check(req: CheckRequest) -> dict:
             "warnings": [],
             "infos": [],
             "goals": [],
+            "graph": None,
             "axioms": {},
             "ms": 0,
         }
     body = without_imports(req.code)
     started = time.monotonic()
     try:
-        reply = await pool.check(body + axioms_request(req.theorems), CHECK_TIMEOUT_S)
+        reply = await pool.check(body + axioms_request(req.theorems) + depgraph_request(req.theorems), CHECK_TIMEOUT_S)
     except LeanTimeout as e:
         raise HTTPException(408, str(e)) from None
     except LeanCrash as e:
         raise HTTPException(503, str(e)) from None
-    result = summarize(reply, len(body.split("\n")), req.theorems)
+    result = summarize(reply, len(body.split("\n")), req.theorems, body)
     return {**result, "ms": round((time.monotonic() - started) * 1000)}

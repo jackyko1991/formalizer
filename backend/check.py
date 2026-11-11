@@ -11,6 +11,7 @@ Info messages from the user's code (the "Try this" of `exact?` and `simp?`) are 
 
 from __future__ import annotations
 
+import json
 import re
 
 STANDARD_AXIOMS = {"propext", "Quot.sound", "Classical.choice"}
@@ -55,13 +56,73 @@ def axioms_request(theorems: list[str]) -> str:
     return "".join(f"\n#print axioms {name}" for name in theorems)
 
 
-def summarize(reply: dict, code_lines: int, theorems: list[str]) -> dict:
+def depgraph_request(theorems: list[str]) -> str:
+    """`#dep_graph` (lean/Formalizer/DepGraph.lean, imported by every worker) prints the proof's dependency graph."""
+    return f"\n#dep_graph {' '.join(theorems)}" if theorems else ""
+
+
+_DEPGRAPH = "formalizer-depgraph "
+_TOKEN = re.compile(r"[A-Za-z_][\w.'₀-₉!?]*")
+# tactics that bring in library lemmas the reader never names (shown as one folded node)
+AUTOMATION = [
+    "omega",
+    "simp",
+    "simp_all",
+    "decide",
+    "grind",
+    "rw",
+    "norm_num",
+    "ring",
+    "linarith",
+    "positivity",
+    "exact?",
+]
+
+
+def prune_graph(graph: dict, code: str) -> dict:
+    """Keep the library lemmas the reader's code names (`Nat.mul_comm`, or `mul_comm` after `open Nat`); fold the
+    rest, which tactics like `omega` or `rw` used behind the scenes, into one node labelled with those tactics, and
+    route their axioms through it so the leaves stay right."""
+    tokens = set(_TOKEN.findall(code))
+    nodes = {n["id"]: n for n in graph.get("nodes", [])}
+
+    def cited(name: str) -> bool:
+        return name in tokens or name.rsplit(".", 1)[-1] in tokens
+
+    hidden = {i for i, n in nodes.items() if n["kind"] == "library" and not cited(i)}
+    edges, folded = [], set()
+    for e in graph.get("edges", []):
+        src, dst = e["from"], e["to"]
+        if src in hidden and dst in hidden:
+            continue
+        if dst in hidden:
+            folded.add((src, "tactics"))
+        elif src in hidden:
+            folded.add(("tactics", dst))
+        else:
+            edges.append(e)
+    kept = [n for i, n in nodes.items() if i not in hidden]
+    if hidden:
+        used = [t for t in AUTOMATION if t in tokens]
+        label = " · ".join(used) if used else "Lean"
+        kept.append({"id": "tactics", "kind": "tactics", "status": "tactics", "label": label, "count": len(hidden)})
+        edges += [{"from": a, "to": b} for a, b in sorted(folded)]
+    return {**graph, "nodes": kept, "edges": edges}
+
+
+def summarize(reply: dict, code_lines: int, theorems: list[str], code: str = "") -> dict:
     """The page's view of a check. `code_lines`: messages after this line come from the appended
     `#print axioms` commands, not from the user's code."""
-    errors, warnings, infos, axioms = [], [], [], {}
+    errors, warnings, infos, axioms, graph = [], [], [], {}, None
     for m in reply.get("messages", []):
         line = m.get("pos", {}).get("line", 0)
         text = str(m.get("data", ""))
+        if line > code_lines and text.startswith(_DEPGRAPH):
+            try:
+                graph = prune_graph(json.loads(text[len(_DEPGRAPH) :]), code)
+            except ValueError:
+                graph = None
+            continue
         found = _AXIOMS.match(text)
         if found and line > code_lines:
             listed = found.group("list")
@@ -117,4 +178,5 @@ def summarize(reply: dict, code_lines: int, theorems: list[str]) -> dict:
         "infos": infos,
         "goals": goals,
         "axioms": axioms,
+        "graph": graph,
     }

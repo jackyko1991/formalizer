@@ -44,7 +44,27 @@ export interface CheckResult {
   infos: Issue[];
   goals: Goal[];
   axioms: Record<string, string[]>;
+  /** what the theorems depend on (null when the runner couldn't draw it) */
+  graph?: Graph | null;
   ms: number;
+}
+
+export interface GraphNode {
+  id: string;
+  /** theorem / def: the reader's own; library: a lemma the code cites; tactics: lemmas tactics used, folded; axiom */
+  kind: "theorem" | "def" | "library" | "tactics" | "axiom";
+  status: "proved" | "sorry" | "def" | "library" | "tactics" | "axiom";
+  /** tactics node: which tactics, and how many lemmas are folded into it */
+  label?: string;
+  count?: number;
+}
+export interface Graph {
+  roots: string[];
+  nodes: GraphNode[];
+  edges: { from: string; to: string }[];
+  /** library definitions, types and instances not drawn */
+  hidden: number;
+  more: number;
 }
 
 export class RunnerError extends Error {}

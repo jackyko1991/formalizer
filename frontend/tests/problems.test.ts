@@ -31,3 +31,29 @@ test("files are joined in order and every line maps back to its file", async () 
   assert.deepEqual(where(2), { file: "Lemmas.lean", line: 2 });
   assert.deepEqual(where(4), { file: "Proof.lean", line: 2 });
 });
+
+test("the graph reads left to right: theorem, lemmas, library, axioms last", async () => {
+  const { layout } = await import("../src/graphLayout.ts");
+  const { pos } = layout({
+    roots: ["main"],
+    nodes: [
+      { id: "main", kind: "theorem", status: "proved" },
+      { id: "helper", kind: "theorem", status: "sorry" },
+      { id: "Nat.add_comm", kind: "library", status: "library" },
+      { id: "propext", kind: "axiom", status: "axiom" },
+      { id: "sorryAx", kind: "axiom", status: "sorry" },
+    ],
+    edges: [
+      { from: "main", to: "helper" },
+      { from: "main", to: "Nat.add_comm" },
+      { from: "helper", to: "sorryAx" },
+      { from: "Nat.add_comm", to: "propext" },
+    ],
+    hidden: 0,
+    more: 0,
+  });
+  const x = (id: string) => pos.get(id)!.x;
+  assert.ok(x("main") < x("helper") && x("main") < x("Nat.add_comm"));
+  assert.equal(x("propext"), x("sorryAx"));
+  assert.ok(x("helper") < x("sorryAx") && x("Nat.add_comm") < x("propext"));
+});

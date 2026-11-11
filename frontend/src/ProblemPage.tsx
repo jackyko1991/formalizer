@@ -8,6 +8,7 @@
 import { go, plainText, RichText, useLang } from "@learnkit/web";
 import CodeMirror from "@uiw/react-codemirror";
 import { useEffect, useState } from "react";
+import DepGraph from "./DepGraph";
 import ProblemLibrary, { LEVEL_STYLE } from "./ProblemLibrary";
 import { CATEGORIES, collectionsOf, PROBLEMS, type Problem } from "./problems";
 import { check, insertChip, joinFiles, RunnerError, type CheckResult, type Issue, type LeanFile } from "./runner";
@@ -103,7 +104,7 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
   const [previous, setPrevious] = useState<CheckResult | null>(null);
   const [running, setRunning] = useState(false);
   const [problemText, setProblemText] = useState<string | null>(null);
-  const [lowerTab, setLowerTab] = useState<"statement" | "hint">("statement");
+  const [lowerTab, setLowerTab] = useState<"statement" | "hint" | "graph">("statement");
   const [mobileTab, setMobileTab] = useState<MobileTab>("problem");
   const onPhone = (tab: MobileTab, display = "xl:block") => (mobileTab === tab ? "" : `hidden ${display}`);
   const { runner, open: openRunner } = useRunner();
@@ -198,7 +199,7 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
 
         <div className="space-y-4 bg-gray-50/60 p-5 xl:min-h-0 xl:flex-1 xl:overflow-y-auto">
           <div role="tablist" className="flex gap-1">
-            {(["statement", "hint"] as const).map((tab) => (
+            {(["statement", "hint", "graph"] as const).map((tab) => (
               <button
                 key={tab}
                 role="tab"
@@ -224,6 +225,14 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
                 {t("statement.checked")} <span className="font-mono text-gray-700">{problem.theorems.join(", ")}</span>
               </p>
             </div>
+          ) : lowerTab === "graph" ? (
+            result?.graph ? (
+              <DepGraph graph={result.graph} />
+            ) : (
+              <p className="rounded-lg border border-dashed border-gray-300 px-4 py-6 text-sm text-gray-500" data-testid="graph-empty">
+                {t(result ? "graph.unavailable" : "graph.none")}
+              </p>
+            )
           ) : (
             <p className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm leading-relaxed text-gray-700" data-testid="hint">
               <RichText text={pick(problem.hint)} />
@@ -472,6 +481,14 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
                   {result.verdict === "error" && (
                     <button onClick={() => setLowerTab("hint")} className="text-xs text-(--lk-accent) hover:underline">
                       {t("hint.show")}
+                    </button>
+                  )}
+                  {result.graph && (
+                    <button
+                      onClick={() => (setLowerTab("graph"), setMobileTab("problem"))}
+                      className="block text-xs text-(--lk-accent) hover:underline"
+                    >
+                      {t("graph.open")} →
                     </button>
                   )}
                   {result.verdict === "proved" && <NextProblem id={problem.id} onSelect={onSelect} />}

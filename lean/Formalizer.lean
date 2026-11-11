@@ -1,4 +1,5 @@
 import Formalizer.Hello
+import Formalizer.DepGraph
 import Formalizer.Pages.Method
 import Formalizer.Pages.Feynman
 import Formalizer.Pages.LeanMaths
