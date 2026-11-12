@@ -5,6 +5,7 @@ POST /api/check    {code, theorems, statements} → {verdict, errors, warnings, 
 GET|PUT|POST /api/projects…  research projects in ~/Formalizer (see projects.py)
 POST /api/jobs     the same check as a detached job (long proofs): GET /api/jobs[/{id}[/events?from=N]], cancel
 POST /mcp          the same checks for an AI agent on this computer (MCP; see mcp.py)
+/api/agents/…      the in-page agent: detached chat turns on a scratch copy (see routes_agents.py, agent.py)
 """
 
 from __future__ import annotations
@@ -23,11 +24,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
+from . import agent
 from .check import axioms_request, decls_request, depgraph_request, imports, summarize, without_imports
 from .jobs import JobLimit, JobManager, visitor_hash
 from .lean_pool import LeanCrash, LeanPool, LeanTimeout, WorkerConfig
 from .mcp import Mcp, local_origin
 from .projects import make_router
+from .routes_agents import TURNS
+from .routes_agents import make_router as agents_router
 
 ROOT = Path(__file__).resolve().parents[1]
 LEAN_DIR = Path(os.environ.get("FORMALIZER_LEAN_DIR", ROOT / "lean"))
@@ -36,6 +40,8 @@ POOL_SIZE = int(os.environ.get("FORMALIZER_WORKERS", "2"))
 MAX_USES = int(os.environ.get("FORMALIZER_MAX_USES", "30"))
 CHECK_TIMEOUT_S = float(os.environ.get("FORMALIZER_CHECK_TIMEOUT_S", "10"))
 # a job may run for days (a long proof); 0 or less = no limit
+# the in-page agent's checks share the site's pool, with a longer limit than a quick check
+AGENT_CHECK_TIMEOUT_S = float(os.environ.get("FORMALIZER_AGENT_CHECK_TIMEOUT_S", "60"))
 JOB_TIMEOUT_S = float(os.environ.get("FORMALIZER_JOB_TIMEOUT_S", str(7 * 86400))) or 10**9
 REPL = os.environ.get("FORMALIZER_REPL", ".lake/packages/REPL/.lake/build/bin/repl")
 # What each runner can import. Lite has only Lean's own libraries.
@@ -76,9 +82,9 @@ async def lifespan(_app: FastAPI):
     task = asyncio.get_running_loop().create_task(pool.start())  # health answers "warming" meanwhile
     yield
     task.cancel()
-    for job in list(JOBS.jobs.values()):
-        if job.task is not None and not job.task.done():
-            job.task.cancel()
+    for item in [*JOBS.jobs.values(), *TURNS.turns.values()]:
+        if item.task is not None and not item.task.done():
+            item.task.cancel()
     await pool.close()
     await job_pool.close()
 
@@ -87,6 +93,7 @@ app = FastAPI(title="Formalizer runner", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=ORIGINS, allow_methods=["*"], allow_headers=["*"])
 app.include_router(make_router(ORIGINS))
 VERSION = lean_version()
+app.include_router(agents_router(ORIGINS, VERSION))
 
 
 @app.get("/api/health")
@@ -172,6 +179,21 @@ async def run_check(req: CheckRequest, lean: LeanPool, timeout_s: float) -> dict
     result = summarize(reply, len(body.split("\n")), req.theorems, body)
     return {**result, "ms": round((time.monotonic() - started) * 1000)}
 
+
+async def agent_check(code: str, theorems: list[str], statements: list[str], decls: bool) -> dict:
+    """check_proof for the in-page agent (agent.CHECK): TimeoutError past AGENT_CHECK_TIMEOUT_S."""
+    try:
+        req = CheckRequest(code=code, theorems=theorems, statements=statements, decls=decls)
+        return await run_check(req, pool, AGENT_CHECK_TIMEOUT_S)
+    except HTTPException as e:
+        if e.status_code == 408:
+            raise TimeoutError(str(e.detail)) from None
+        raise RuntimeError(str(e.detail)) from None
+    except ValueError as e:  # pydantic: the files are too large
+        raise RuntimeError(str(e)[:300]) from None
+
+
+agent.CHECK, agent.CHECK_TIMEOUT_S = agent_check, AGENT_CHECK_TIMEOUT_S
 
 mcp = Mcp(check=lambda body: check(CheckRequest(**body)), health=health, version="0.1")
 

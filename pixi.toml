@@ -17,3 +17,7 @@ lean-build = { cmd = "lake build && lake build repl", cwd = "lean" }
 runner = "python -m backend.serve"
 test = "pytest -q tests"
 lint = "ruff check backend tests && ruff format --check backend tests"
+
+[pypi-dependencies]
+# the in-page agent's Claude Code adapter (backend/agents/claude_code.py); the other agents are CLIs found on PATH
+claude-agent-sdk = ">=0.2.176, <0.3"
