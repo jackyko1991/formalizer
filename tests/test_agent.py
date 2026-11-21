@@ -294,7 +294,7 @@ def test_chat_mcp_needs_a_live_token_and_checks_the_chats_files(client, work):
     call = lambda name, **args: rpc("tools/call", {"name": name, "arguments": args}, token).json()["result"]
     assert call("list_files")["content"][0]["text"] == "Proof.lean"
     assert call("read_file", path="../../etc/passwd").get("isError") is True
-    assert call("write_file", path="Other.lean", content="x").get("isError") is True  # a problem has one file
+    assert call("write_file", path="sub/x.txt", content="x").get("isError") is True
     assert call("write_file", path="Proof.lean", content="theorem hello : 2 + 2 = 4 := by\n  decide\n")["content"]
     assert "Verdict: proved" in call("check_proof")["content"][0]["text"]
     assert client.post(f"/mcp/{token}", json={}, headers={"Origin": "https://evil.example"}).status_code == 403
@@ -381,3 +381,17 @@ def test_scan_returns_booleans_and_versions_only(monkeypatch, tmp_path):
     assert "secret-dir" not in json.dumps(result)
     by_id = {a["id"]: a for a in result}
     assert by_id["codex"]["version"] == "0.98.1" and not by_id["claude-code"]["installed"]
+
+
+def test_a_problems_extra_files_are_checked_before_proof_lean(work):
+    s = agent._session(None, "problem/hello")
+    files = [
+        {"name": "Proof.lean", "code": "theorem hello : 2 + 2 = 4 := by\n  sorry\n"},
+        {"name": "Lemmas.lean", "code": "-- mine\n"},
+    ]
+    agent._with_context(s, "hi", {"files": files, "statements": ["ignored"]})
+    assert agent._lean_files(s) == ["Lemmas.lean", "Proof.lean"] and s.statements == ["theorem hello : 2 + 2 = 4"]
+    (s.workspace / "More.lean").write_text("-- the agent's\n")
+    assert agent._lean_files(s) == ["Lemmas.lean", "More.lean", "Proof.lean"]
+    agent._with_context(s, "hi", {"files": [{"name": "Lemmas.lean", "code": ""}]})  # no Proof.lean: left as it was
+    assert (s.workspace / "Proof.lean").is_file() and (s.workspace / "More.lean").is_file()

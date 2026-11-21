@@ -7,6 +7,9 @@ import type { LeanFile } from "../runner";
 import { runnerUrl } from "../runner";
 import type { Meta, Summary } from "./model";
 
+/** The free tier keeps this many research projects (more come with Pro, pending: see the Product roadmap). */
+export const FREE_PROJECTS = 1;
+
 export interface SavedInfo {
   label: string;
   at: number;
@@ -34,6 +37,24 @@ export interface Store {
   loadSaved(id: string): Promise<{ files: LeanFile[]; meta: Meta } | null>;
   /** `summary`: what the working copy proves now (recorded for the copy that becomes the saved version) */
   restore(id: string, summary?: Summary): Promise<void>;
+  /** out of the list (on disk: moved to ~/Formalizer/.deleted/, not erased) */
+  remove(id: string): Promise<void>;
+}
+
+/** A new title for a project (its id and folder stay). */
+export async function rename(store: Store, id: string, title: string): Promise<void> {
+  const got = await store.load(id);
+  if (!got) throw new Error("no project");
+  await store.put(id, got.files, { ...got.meta, title });
+}
+
+/** A copy of the working copy under a new id (the saved version is not copied); returns the new id. */
+export async function fork(store: Store, id: string, title: string): Promise<string> {
+  const got = await store.load(id);
+  if (!got) throw new Error("no project");
+  const copy = newId(title);
+  await store.put(copy, got.files, { ...got.meta, title, lastVisit: Date.now() });
+  return copy;
 }
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
@@ -70,6 +91,9 @@ export const diskStore: Store = {
   },
   async restore(id, summary) {
     await call(`/api/projects/${id}/restore`, { method: "POST", body: JSON.stringify({ label: "", summary: summary ?? {} }) });
+  },
+  async remove(id) {
+    await call(`/api/projects/${id}`, { method: "DELETE" });
   },
 };
 
@@ -127,6 +151,13 @@ export const browserStore: Store = {
     set(id, { ...saved, updated: Date.now() });
     set(`${id}.saved`, now);
     set(`${id}.info`, { label: "before restore", summary: summary ?? {}, at: Date.now() });
+  },
+  async remove(id) {
+    for (const k of [id, `${id}.saved`, `${id}.info`]) set(k, null);
+    set(
+      "index",
+      (get<string[]>("index") ?? []).filter((x) => x !== id),
+    );
   },
 };
 

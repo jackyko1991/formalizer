@@ -23,6 +23,7 @@ const SECTIONS: SectionInfo[] = [
   { id: "free", title: ["Free: on your computer, or your own account", "免費：在你的電腦上，或用你自己的帳號"] },
   { id: "pro", title: ["Pro: the same suggestions, nothing to set up (pending)", "Pro：同樣的建議，什麼都不用設定（籌備中）"] },
   { id: "campus", title: ["Campus: a licence for a class (pending)", "校園版：給整個班級的授權（籌備中）"] },
+  { id: "research", title: ["Research demos: planned (pending)", "研究範例：規劃中（籌備中）"] },
   { id: "principles", title: ["What every tier keeps", "每一層都不變的原則"] },
 ];
 
@@ -68,8 +69,8 @@ export default function RoadmapAgent({ section }: { section: string | null }) {
             [
               ["Research workspace", "研究工作區"],
               [
-                "a blueprint of lemmas, notes in words beside the Lean, an autosaved working copy, **one saved version**, and unlimited exports to plain .lean files",
-                "引理藍圖、Lean 旁的文字筆記、自動儲存的工作副本、**一個已存版本**，以及不限次數匯出成一般的 .lean 檔",
+                "**one project**: a blueprint of lemmas, notes in words beside the Lean, an autosaved working copy, **one saved version**, unlimited exports to plain .lean files, and three demos to start from",
+                "**一個專案**：引理藍圖、Lean 旁的文字筆記、自動儲存的工作副本、**一個已存版本**、不限次數匯出成一般的 .lean 檔，以及三個可以直接開始的範例",
               ],
               ["the runner (projects in ~/Formalizer), or this browser", "執行器（專案存在 ~/Formalizer），或這個瀏覽器"],
               <Yes />,
@@ -126,6 +127,12 @@ export default function RoadmapAgent({ section }: { section: string | null }) {
             "這是你的證明唯一會離開你電腦的地方，而且只在你按下按鈕時。第一次之前，會有一則說明列出到底送出什麼。",
           ]}
         />
+        <P
+          t={[
+            "Pro also lifts the free tier's limits on research: more than one project, and more than one saved version of each.",
+            "Pro 也放寬免費版在研究上的限制：可以有多個專案，每個專案也能存多個版本。",
+          ]}
+        />
       </Section>
 
       <Section page={PAGE} id="campus" n={3} title={SECTIONS[2].title}>
@@ -149,7 +156,57 @@ export default function RoadmapAgent({ section }: { section: string | null }) {
         />
       </Section>
 
-      <Section page={PAGE} id="principles" n={4} title={SECTIONS[3].title}>
+      <Section page={PAGE} id="research" n={4} title={SECTIONS[3].title}>
+        <P
+          t={[
+            "The three demos today (odd numbers and squares, Nicomachus's cubes, Fibonacci numbers and the gcd) run on the Lite runner. These larger ones are planned; most need Mathlib, so the Full runner.",
+            "目前的三個範例（奇數與平方數、尼科馬庫斯的立方和、費波那契數與最大公因數）都能在 Lite 執行器上跑。下面這些較大的範例在規劃中；大多需要 Mathlib，也就是 Full 執行器。",
+          ]}
+        />
+        <Table
+          head={[
+            ["Demo", "範例"],
+            ["What you would do", "你會做什麼"],
+            ["Available now", "現在可用"],
+          ]}
+          rows={[
+            [
+              ["Infinitely many primes (Euclid)", "質數有無限多個（歐幾里得）"],
+              ["a classic blueprint: $n! + 1$ has a prime factor larger than $n$", "經典的藍圖：$n! + 1$ 有一個大於 $n$ 的質因數"],
+              <No />,
+            ],
+            [
+              ["$\\sqrt 2$ is irrational", "$\\sqrt 2$ 是無理數"],
+              ["parity lemmas leading to a contradiction", "用奇偶性引理推出矛盾"],
+              <No />,
+            ],
+            [
+              ["The Riemann hypothesis: read the statement", "黎曼猜想：讀懂陳述"],
+              [
+                "Mathlib's `RiemannHypothesis` unfolded line by line, and how a posted proof would be checked against it (a claim from November 2026 is under review)",
+                "逐行展開 Mathlib 的 `RiemannHypothesis`，以及一個公開的證明要怎麼對照它來檢查（2026 年 11 月的一個宣稱仍在審查中）",
+              ],
+              <No />,
+            ],
+            [
+              ["Navier–Stokes and Euler certificates", "Navier–Stokes 與 Euler 證書"],
+              ["read OpenAI's certified statements and run the checker yourself", "讀懂 OpenAI 認證的陳述，親手執行檢查"],
+              <No />,
+            ],
+            [
+              ["Open problems from Formal Conjectures", "Formal Conjectures 裡的未解問題"],
+              [
+                "statements only: formalized open problems to read, split into lemmas and try",
+                "只有陳述：讀懂已形式化的未解問題，拆成引理來嘗試",
+              ],
+              <No />,
+            ],
+          ]}
+        />
+        <SiteLink to={["research"]} label={["Research workspace: the three demos", "研究工作區：三個範例"]} />
+      </Section>
+
+      <Section page={PAGE} id="principles" n={5} title={SECTIONS[4].title}>
         <List
           items={[
             [

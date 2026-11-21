@@ -101,9 +101,8 @@ class ChatMcp(Mcp):
             return "\n".join(agent._lean_files(s)) or "(no files)", False
         if name in ("read_file", "write_file"):
             path = str(args.get("path") or "").split("/")[-1]
-            if not agent.FILE.fullmatch(path) or (s.kind == "problem" and path != agent.PROBLEM_FILE):
-                allowed = agent.PROBLEM_FILE if s.kind == "problem" else "a plain name ending in .lean"
-                return f"give a file name of this folder: {allowed}", True
+            if not agent.FILE.fullmatch(path):
+                return "give a plain file name of this folder ending in .lean, e.g. Lemmas.lean", True
             target = s.workspace / path
             if name == "read_file":
                 if not target.is_file():

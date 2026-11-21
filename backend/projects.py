@@ -8,6 +8,7 @@ saved version lives in <project>/.saved/ next to it; restoring swaps the two, so
     POST /api/projects/{id}/save        {label, summary}        working copy → the saved version (replaces it)
     POST /api/projects/{id}/restore     {summary}?              swap the saved version and the working copy
     GET  /api/projects/{id}/saved       the saved version's files and meta (to compare before replacing it)
+    DELETE /api/projects/{id}           move the project to ~/Formalizer/.deleted/ (not erased)
 
 Everything stays on this computer. Requests from web pages of other sites are refused (Origin check); file names are
 plain `Name.lean`, so nothing is written outside the project folder.
@@ -28,6 +29,7 @@ from pydantic import BaseModel, Field
 ID = re.compile(r"[a-z0-9][a-z0-9-]{0,63}")
 FILE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_-]{0,63}\.lean")
 META = "formalizer.json"
+DELETED = ".deleted"  # deleted projects, kept until the user empties it
 SAVED = ".saved"
 MAX_BYTES = 2_000_000
 
@@ -195,5 +197,19 @@ def make_router(origins: list[str]) -> APIRouter:
         shutil.rmtree(path / SAVED, ignore_errors=True)
         old.rename(path / SAVED)
         return {"restored": info, "saved": now}
+
+    @router.delete("/api/projects/{pid}")
+    def delete(pid: str, request: Request) -> dict:
+        """Move the project (working copy and saved version) to ~/Formalizer/.deleted/<id>-<time>: out of the list,
+        still on disk until the user empties that folder."""
+        guard(request)
+        path = folder(pid)
+        if read(path) is None:
+            raise HTTPException(404, f"no project {pid}")
+        bin_ = root() / DELETED
+        bin_.mkdir(parents=True, exist_ok=True)
+        target = bin_ / f"{pid}-{time.strftime('%Y%m%d-%H%M%S')}"
+        path.rename(target)
+        return {"deleted": pid, "moved_to": str(target)}
 
     return router

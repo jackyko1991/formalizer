@@ -8,6 +8,7 @@
 import { go, plainText, RichText, useLang } from "@learnkit/web";
 import CodeMirror from "@uiw/react-codemirror";
 import { useEffect, useState } from "react";
+import { mergeFiles, onAgentFiles, setAgentContext, type AgentContext } from "./agent/bus";
 import DepGraph from "./DepGraph";
 import ProblemLibrary, { LEVEL_STYLE } from "./ProblemLibrary";
 import { CATEGORIES, collectionsOf, PROBLEMS, type Problem } from "./problems";
@@ -150,6 +151,43 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
     const w = where(line);
     return { file: w.file, line: String(w.line) };
   };
+  // the AI assistant (agent/AgentPanel.tsx): what is on screen, and the agent's edits back into the editor
+  const [sel, setSel] = useState<{ cursor: AgentContext["cursor"]; selection?: AgentContext["selection"] }>({ cursor: undefined });
+  const { lang } = useLang();
+  useEffect(() => {
+    const allFiles = [...files, { name: MAIN, code }];
+    setAgentContext({
+      target: `problem/${problem.id}`,
+      title: pick(problem.title),
+      files: allFiles.map((f) => ({ name: f.name, code: f.code })),
+      readonly: files.filter((f) => f.readonly).map((f) => f.name),
+      main: problem.theorems[0],
+      statements: problem.statements,
+      verdict: result?.verdict,
+      goals: result?.goals.map((g) => [...g.hypotheses, `⊢ ${g.target}`].join("\n")),
+      errors: result?.errors.map((e) => ({ ...where(e.line), message: e.message })),
+      cursor: sel.cursor,
+      selection: sel.selection,
+      lang,
+    });
+  }, [problem, files, code, result, where, sel, lang, pick]);
+  useEffect(() => () => setAgentContext(null), []);
+  useEffect(
+    () =>
+      onAgentFiles((e) => {
+        if (e.target !== `problem/${problem.id}`) return false;
+        if (MAIN in e.files) setCode(e.files[MAIN]);
+        const rest = {
+          ...e,
+          files: Object.fromEntries(Object.entries(e.files).filter(([n]) => n !== MAIN)),
+          order: e.order.filter((n) => n !== MAIN),
+        };
+        setFiles((fs) => mergeFiles(fs, rest, new Set(fs.filter((f) => f.readonly).map((f) => f.name))));
+        return true;
+      }),
+    [problem.id],
+  );
+
   const addFile = () => {
     const taken = new Set([MAIN, ...files.map((f) => f.name)]);
     let n = 1;
@@ -312,6 +350,18 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
                   active === MAIN ? setCode(next) : setFiles((fs) => fs.map((f) => (f.name === active ? { ...f, code: next } : f)))
                 }
                 editable={active === MAIN || !activeFile?.readonly}
+                onUpdate={(u) => {
+                  if (!u.selectionSet) return;
+                  const r = u.state.selection.main;
+                  const line = (pos: number) => u.state.doc.lineAt(pos).number;
+                  const text = u.state.sliceDoc(r.from, r.to);
+                  setSel({
+                    cursor: { file: active, line: line(r.head) },
+                    selection: text.trim()
+                      ? { file: active, from_line: line(r.from), to_line: line(r.to), text: text.slice(0, 4000) }
+                      : undefined,
+                  });
+                }}
                 basicSetup={{ foldGutter: false }}
                 className="font-mono text-sm"
                 aria-label={t("run.editor")}

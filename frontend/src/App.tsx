@@ -12,6 +12,7 @@ import {
   type ShellPage,
 } from "@learnkit/web";
 import { ERAS, HISTORY } from "./history";
+import AgentPanel from "./agent/AgentPanel";
 import ProblemsPage from "./ProblemPage";
 import BooksReading from "./pages/reading/Books";
 import PapersReading from "./pages/reading/Papers";
@@ -182,6 +183,8 @@ export default function App() {
           <Coming />
         )}
       </Shell>
+      {/* Ask AI: only the Problems and Research pages publish a context, so the mascot appears only there */}
+      {(route.page === "problems" || route.page === "research") && <AgentPanel />}
     </RunnerProvider>
   );
 }

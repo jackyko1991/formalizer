@@ -1,7 +1,8 @@
 /**
- * Starting points for a research project. The demo is small enough for the Lite runner and shows the whole loop:
- * a definition, two lemmas left as `sorry`, and a main theorem already assembled from them (so it shows as
- * "depends" until the lemmas are proved). Real research problems (openai/math, Navier–Stokes) come later.
+ * Starting points for a research project: three demos and an empty project. Each demo is small enough for the Lite
+ * runner (core Lean, no Mathlib) and shows the whole loop: definitions, lemmas left as `sorry`, and a main theorem
+ * already assembled from them (so it shows as "depends" until the lemmas are proved). Every lemma was checked to be
+ * provable on the Lite runner (tests/test_templates.py). Larger research problems are planned (Product roadmap).
  */
 import type { L } from "../pages/kit";
 import type { LeanFile } from "../runner";
@@ -56,6 +57,85 @@ export const TEMPLATES: Template[] = [
       odd_sum_eq_square: [
         "**Main theorem.** By induction on $n$: for $n = 0$ both sides are $0$; from $n$ to $n+1$, add $2n+1$ to both sides and use the two lemmas.",
         "**主定理。** 對 $n$ 做歸納：$n = 0$ 時兩邊都是 $0$；從 $n$ 到 $n+1$，兩邊各加 $2n+1$，再用上兩條引理。",
+      ],
+    },
+  },
+  {
+    id: "nicomachus",
+    title: ["Cubes add up to a square (Nicomachus)", "立方數加起來是平方數（尼科馬庫斯）"],
+    about: [
+      "$1^3 + 2^3 + \\dots + n^3 = (1 + 2 + \\dots + n)^2$. Two lemmas: Gauss's formula for $1 + \\dots + n$, and how the square of a triangular number grows by a cube.",
+      "$1^3 + 2^3 + \\dots + n^3 = (1 + 2 + \\dots + n)^2$。兩條引理：$1 + \\dots + n$ 的高斯公式，以及三角形數的平方每一步恰好多一個立方。",
+    ],
+    main: "nicomachus",
+    statements: ["theorem nicomachus (n : Nat) : cubeSum n = triangle n * triangle n"],
+    files: [
+      {
+        name: "Defs.lean",
+        code: "/-- `triangle n` = 1 + 2 + … + n -/\ndef triangle : Nat → Nat\n  | 0 => 0\n  | n + 1 => triangle n + (n + 1)\n\n/-- `cubeSum n` = 1³ + 2³ + … + n³ -/\ndef cubeSum : Nat → Nat\n  | 0 => 0\n  | n + 1 => cubeSum n + (n + 1) * (n + 1) * (n + 1)\n",
+      },
+      {
+        name: "Lemmas.lean",
+        code: "theorem two_triangle (n : Nat) : 2 * triangle n = n * (n + 1) := by\n  sorry\n\ntheorem triangle_sq_succ (n : Nat) :\n    triangle (n + 1) * triangle (n + 1) = triangle n * triangle n + (n + 1) * (n + 1) * (n + 1) := by\n  sorry\n",
+      },
+      {
+        name: "Main.lean",
+        code: "theorem nicomachus (n : Nat) : cubeSum n = triangle n * triangle n := by\n  induction n with\n  | zero => rfl\n  | succ k ih => rw [cubeSum, ih, triangle_sq_succ]\n",
+      },
+    ],
+    notes: {
+      triangle: ["The triangular numbers $T_n = 1 + 2 + \\dots + n$.", "三角形數 $T_n = 1 + 2 + \\dots + n$。"],
+      cubeSum: ["The sum of the first $n$ cubes.", "前 $n$ 個立方數的和。"],
+      two_triangle: [
+        "Gauss: $2T_n = n(n+1)$. Induction on $n$; in the step, expand the products and the rest is linear arithmetic (`simp only [Nat.mul_add, Nat.add_mul, …]`, then `omega`).",
+        "高斯：$2T_n = n(n+1)$。對 $n$ 歸納；在遞推步驟中把乘積展開，剩下的就是線性算術（先 `simp only [Nat.mul_add, Nat.add_mul, …]`，再 `omega`）。",
+      ],
+      triangle_sq_succ: [
+        "$T_{n+1}^2 = (T_n + (n+1))^2 = T_n^2 + 2T_n(n+1) + (n+1)^2$, and $2T_n = n(n+1)$ turns the middle term into $n(n+1)^2$: together $(n+1)^3$. The heart of the proof.",
+        "$T_{n+1}^2 = (T_n + (n+1))^2 = T_n^2 + 2T_n(n+1) + (n+1)^2$，再用 $2T_n = n(n+1)$ 把中間項變成 $n(n+1)^2$：合起來就是 $(n+1)^3$。這是證明的核心。",
+      ],
+      nicomachus: [
+        "**Main theorem.** Induction on $n$: each step adds $(n+1)^3$ to the left side, and `triangle_sq_succ` says the right side grows by exactly that.",
+        "**主定理。** 對 $n$ 歸納：每一步左邊加上 $(n+1)^3$，而 `triangle_sq_succ` 說右邊恰好也多了這麼多。",
+      ],
+    },
+  },
+  {
+    id: "fib-coprime",
+    title: ["Neighbouring Fibonacci numbers are coprime", "相鄰的費波那契數互質"],
+    about: [
+      "$\\gcd(F_n, F_{n+1}) = 1$ for every $n$. The idea is Euclid's: subtracting one number from another doesn't change their gcd, so one lemma carries the gcd down the sequence to $\\gcd(0, 1) = 1$.",
+      "對每個 $n$，$\\gcd(F_n, F_{n+1}) = 1$。想法來自歐幾里得：從一個數減去另一個數，最大公因數不變；所以一條引理就能把最大公因數一路往下帶到 $\\gcd(0, 1) = 1$。",
+    ],
+    main: "fib_coprime",
+    statements: ["theorem fib_coprime (n : Nat) : Nat.gcd (fib n) (fib (n + 1)) = 1"],
+    files: [
+      {
+        name: "Defs.lean",
+        code: "/-- the Fibonacci numbers 0, 1, 1, 2, 3, 5, 8, … -/\ndef fib : Nat → Nat\n  | 0 => 0\n  | 1 => 1\n  | n + 2 => fib n + fib (n + 1)\n",
+      },
+      {
+        name: "Lemmas.lean",
+        code: "theorem fib_add_two (n : Nat) : fib (n + 2) = fib n + fib (n + 1) := rfl\n\ntheorem gcd_fib_step (n : Nat) :\n    Nat.gcd (fib (n + 1)) (fib (n + 2)) = Nat.gcd (fib n) (fib (n + 1)) := by\n  sorry\n",
+      },
+      {
+        name: "Main.lean",
+        code: "theorem fib_coprime (n : Nat) : Nat.gcd (fib n) (fib (n + 1)) = 1 := by\n  induction n with\n  | zero => rfl\n  | succ k ih => rw [gcd_fib_step, ih]\n",
+      },
+    ],
+    notes: {
+      fib: ["$F_0 = 0$, $F_1 = 1$, and each next number is the sum of the two before.", "$F_0 = 0$、$F_1 = 1$，之後每個數都是前兩個的和。"],
+      fib_add_two: [
+        "The definition read aloud; `rfl` proves it because Lean computes the left side to the right side.",
+        "把定義唸出來；`rfl` 就能證明，因為 Lean 會把左邊算成右邊。",
+      ],
+      gcd_fib_step: [
+        "$\\gcd(F_{n+1}, F_n + F_{n+1}) = \\gcd(F_{n+1}, F_n) = \\gcd(F_n, F_{n+1})$: adding a multiple of one number to the other keeps the gcd. In Lean: `fib_add_two`, then `Nat.gcd_comm` and a lemma like `Nat.gcd_add_self_right` (try `exact?` or `rw?`).",
+        "$\\gcd(F_{n+1}, F_n + F_{n+1}) = \\gcd(F_{n+1}, F_n) = \\gcd(F_n, F_{n+1})$：把一個數的倍數加到另一個數上，最大公因數不變。在 Lean 裡：先用 `fib_add_two`，再用 `Nat.gcd_comm` 和像 `Nat.gcd_add_self_right` 這樣的引理（試試 `exact?` 或 `rw?`）。",
+      ],
+      fib_coprime: [
+        "**Main theorem.** Induction on $n$: $\\gcd(F_0, F_1) = \\gcd(0, 1) = 1$, and `gcd_fib_step` moves each step back to the previous one.",
+        "**主定理。** 對 $n$ 歸納：$\\gcd(F_0, F_1) = \\gcd(0, 1) = 1$，而 `gcd_fib_step` 把每一步帶回前一步。",
       ],
     },
   },

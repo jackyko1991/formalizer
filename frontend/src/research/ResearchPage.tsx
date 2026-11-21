@@ -10,11 +10,23 @@ import { go, RichText, useLang } from "@learnkit/web";
 import CodeMirror from "@uiw/react-codemirror";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { H, layout } from "../graphLayout";
+import { mergeFiles, onAgentFiles, setAgentContext, type AgentContext } from "../agent/bus";
 import { cancelJob, followJob, listJobs, startJob, type JobInfo } from "../jobs";
 import { check, joinFiles, RunnerError, type CheckResult, type Decl, type LeanFile } from "../runner";
 import { runnerReady, useRunner } from "../RunnerPanel";
 import { blueprintGraph, counts, declAt, exportZip, lostSince, place, readZip, summarize, workable, type Meta, type Placed } from "./model";
-import { browserStore, diskStore, newId, protectBrowserStorage, type ProjectInfo, type SavedInfo, type Store } from "./store";
+import {
+  browserStore,
+  diskStore,
+  FREE_PROJECTS,
+  fork,
+  newId,
+  protectBrowserStorage,
+  rename,
+  type ProjectInfo,
+  type SavedInfo,
+  type Store,
+} from "./store";
 import { TEMPLATES, type Template } from "./templates";
 
 type L = readonly [string, string];
@@ -73,12 +85,13 @@ export default function ResearchPage({ id }: { id: string | null }) {
 // ---------------------------------------------------------------------------------------------------- home
 
 function Home() {
-  const { pick, lang } = useLang();
+  const { pick } = useLang();
   const { runner } = useRunner();
   const ready = runnerReady(runner);
   const [projects, setProjects] = useState<(ProjectInfo & { where: Store["kind"] })[]>([]);
   const [error, setError] = useState<string | null>(null);
   const store = ready ? diskStore : browserStore;
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     let alive = true;
@@ -91,9 +104,26 @@ function Home() {
     return () => {
       alive = false;
     };
-  }, [ready]);
+  }, [ready, reload]);
+  // the free tier keeps FREE_PROJECTS research projects: starting, importing or forking another waits for a delete
+  const full = projects.length >= FREE_PROJECTS;
+  const limitNote = pick([
+    `The free tier keeps ${FREE_PROJECTS} research project. To start another, export this one if you want to keep it, then delete it. More projects come with Pro (pending).`,
+    `免費版保留 ${FREE_PROJECTS} 個研究專案。要開始另一個，先匯出這個（如果想保留），再刪除它。更多專案會隨 Pro 推出（籌備中）。`,
+  ]);
+
+  async function act(what: () => Promise<unknown>) {
+    try {
+      setError(null);
+      await what();
+    } catch (e) {
+      setError(String(e));
+    }
+    setReload((n) => n + 1);
+  }
 
   async function start(t: Template) {
+    if (full) return;
     const title = pick(t.title);
     const id = newId(t.id === "empty" ? "project" : t.id);
     const meta: Meta = {
@@ -125,11 +155,12 @@ function Home() {
         }
       } else if (f.name.endsWith(".lean")) files.push({ name: f.name, code: await f.text() });
     }
+    if (full) return setError(limitNote);
     if (!files.length) return setError(pick(["No .lean files found in what you chose.", "選取的檔案裡沒有 .lean 檔。"]));
     if (meta.order)
       files = [...meta.order.flatMap((n) => files.filter((f) => f.name === n)), ...files.filter((f) => !meta.order!.includes(f.name))];
     const title = meta.title ?? files[files.length - 1].name.replace(/\.lean$/, "");
-    const full: Meta = {
+    const imported: Meta = {
       title,
       main: meta.main ?? "",
       statements: meta.statements ?? [],
@@ -138,7 +169,7 @@ function Home() {
       lastVisit: Date.now(),
     };
     const id = newId(title);
-    await store.put(id, files, full);
+    await store.put(id, files, imported);
     go("research", id);
   }
 
@@ -172,6 +203,14 @@ function Home() {
 
       <section>
         <h2 className="text-lg font-semibold text-gray-900">{pick(["Start a project", "開始一個專案"])}</h2>
+        {full && (
+          <p className="mt-2 rounded-lg bg-gray-100 px-4 py-2.5 text-sm text-gray-700" data-testid="project-limit">
+            {limitNote}{" "}
+            <button onClick={() => go("agents", "roadmap")} className="text-(--lk-accent) hover:underline">
+              {pick(["Product roadmap", "產品路線圖"])} →
+            </button>
+          </p>
+        )}
         <div className="mt-3 grid gap-4 md:grid-cols-2">
           {TEMPLATES.map((t) => (
             <div key={t.id} className="flex flex-col rounded-xl border border-gray-200 bg-white p-5" data-testid={`template-${t.id}`}>
@@ -181,15 +220,27 @@ function Home() {
               </p>
               <button
                 onClick={() => void start(t)}
-                className="mt-4 self-start rounded-md bg-(--lk-accent) px-3 py-1.5 text-sm font-medium text-white hover:opacity-90"
+                disabled={full}
+                title={full ? limitNote : undefined}
+                className="mt-4 self-start rounded-md bg-(--lk-accent) px-3 py-1.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
               >
                 {pick(["Start", "開始"])}
               </button>
             </div>
           ))}
         </div>
-        <label className="mt-3 inline-flex cursor-pointer items-center gap-2 text-sm text-(--lk-accent) hover:underline">
-          <input type="file" accept=".zip,.lean" multiple className="hidden" onChange={(e) => void importFiles(e.target.files)} />
+        <label
+          className={`mt-3 inline-flex items-center gap-2 text-sm text-(--lk-accent) ${full ? "cursor-not-allowed opacity-40" : "cursor-pointer hover:underline"}`}
+          title={full ? limitNote : undefined}
+        >
+          <input
+            type="file"
+            accept=".zip,.lean"
+            multiple
+            disabled={full}
+            className="hidden"
+            onChange={(e) => void importFiles(e.target.files)}
+          />
           {pick(["Import an export (.zip) or .lean files…", "匯入匯出檔（.zip）或 .lean 檔……"])}
         </label>
         {error && <p className="mt-2 text-sm text-red-700">{error}</p>}
@@ -202,26 +253,124 @@ function Home() {
         ) : (
           <ul className="mt-3 divide-y divide-gray-100 rounded-xl border border-gray-200 bg-white" data-testid="research-projects">
             {projects.map((p) => (
-              <li key={`${p.where}-${p.id}`}>
-                <button
-                  onClick={() => go("research", p.id)}
-                  className="flex w-full flex-wrap items-baseline gap-x-3 px-5 py-3 text-left hover:bg-gray-50"
-                >
-                  <span className="font-medium text-gray-900">{p.title}</span>
-                  <span className="text-xs text-gray-500">
-                    {p.where === "disk" ? `⌂ ~/Formalizer/${p.id}` : pick(["this browser", "這個瀏覽器"])}
-                  </span>
-                  <span className="ml-auto text-xs text-gray-400" lang={lang}>
-                    {ago(p.updated, pick)}
-                    {p.saved && ` · ${pick(["saved version", "已存版本"])} ${new Date(p.saved.at).toLocaleDateString()}`}
-                  </span>
-                </button>
-              </li>
+              <ProjectRow
+                key={`${p.where}-${p.id}`}
+                project={p}
+                full={full}
+                limitNote={limitNote}
+                onRename={(title) => act(() => rename(p.where === "disk" ? diskStore : browserStore, p.id, title))}
+                onFork={(title) => act(async () => go("research", await fork(p.where === "disk" ? diskStore : browserStore, p.id, title)))}
+                onDelete={() => act(() => (p.where === "disk" ? diskStore : browserStore).remove(p.id))}
+              />
             ))}
           </ul>
         )}
       </section>
     </div>
+  );
+}
+
+/** One project in the list: open it, or rename, fork (a copy of the working copy) or delete it, each confirmed in place. */
+function ProjectRow({
+  project: p,
+  full,
+  limitNote,
+  onRename,
+  onFork,
+  onDelete,
+}: {
+  project: ProjectInfo & { where: Store["kind"] };
+  full: boolean;
+  limitNote: string;
+  onRename: (title: string) => Promise<void>;
+  onFork: (title: string) => Promise<void>;
+  onDelete: () => Promise<void>;
+}) {
+  const { pick, lang } = useLang();
+  const [mode, setMode] = useState<null | "rename" | "fork" | "delete">(null);
+  const [title, setTitle] = useState(p.title);
+  const btn = "rounded px-2 py-0.5 text-xs text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-transparent";
+  const commit = async () => {
+    const t = title.trim();
+    if (!t) return;
+    await (mode === "rename" ? onRename(t) : onFork(t));
+    setMode(null);
+  };
+  return (
+    <li className="px-5 py-3" data-testid={`project-${p.id}`}>
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <button onClick={() => go("research", p.id)} className="font-medium text-gray-900 hover:text-(--lk-accent) hover:underline">
+          {p.title}
+        </button>
+        <span className="text-xs text-gray-500">
+          {p.where === "disk" ? `⌂ ~/Formalizer/${p.id}` : pick(["this browser", "這個瀏覽器"])}
+        </span>
+        <span className="text-xs text-gray-400" lang={lang}>
+          {ago(p.updated, pick)}
+          {p.saved && ` · ${pick(["saved version", "已存版本"])} ${new Date(p.saved.at).toLocaleDateString()}`}
+        </span>
+        <span className="ml-auto flex gap-1">
+          <button onClick={() => (setTitle(p.title), setMode("rename"))} className={btn} data-testid="rename">
+            {pick(["Rename", "重新命名"])}
+          </button>
+          <button
+            onClick={() => (setTitle(pick([`${p.title} (copy)`, `${p.title}（副本）`])), setMode("fork"))}
+            disabled={full}
+            title={full ? limitNote : pick(["A copy of the working copy, as a new project", "把工作副本複製成一個新專案"])}
+            className={btn}
+            data-testid="fork"
+          >
+            {pick(["Fork", "分支"])}
+          </button>
+          <button onClick={() => setMode("delete")} className={`${btn} text-red-700 hover:bg-red-50`} data-testid="delete">
+            {pick(["Delete", "刪除"])}
+          </button>
+        </span>
+      </div>
+      {(mode === "rename" || mode === "fork") && (
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+          <input
+            autoFocus
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onKeyDown={(e) => (e.key === "Enter" ? void commit() : e.key === "Escape" && setMode(null))}
+            className="min-w-56 flex-1 rounded border border-gray-300 px-2 py-1"
+            data-testid="title-input"
+          />
+          <button onClick={() => void commit()} className="rounded-md bg-(--lk-accent) px-2.5 py-1 font-medium text-white">
+            {mode === "rename" ? pick(["Rename", "重新命名"]) : pick(["Fork", "建立分支"])}
+          </button>
+          <button onClick={() => setMode(null)} className="px-2 py-1 text-gray-600 hover:underline">
+            {pick(["Cancel", "取消"])}
+          </button>
+        </div>
+      )}
+      {mode === "delete" && (
+        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-900">
+          <span className="flex-1">
+            {p.where === "disk"
+              ? pick([
+                  "Delete this project? Its folder moves to ~/Formalizer/.deleted, where you can still get it back.",
+                  "刪除這個專案？它的資料夾會移到 ~/Formalizer/.deleted，還可以從那裡找回來。",
+                ])
+              : pick([
+                  "Delete this project from this browser? This can't be undone: export it first if you want to keep it.",
+                  "從這個瀏覽器刪除這個專案？無法復原：想保留的話請先匯出。",
+                ])}
+          </span>
+          <button
+            onClick={() => void onDelete()}
+            className="rounded-md bg-red-700 px-2.5 py-1 font-medium text-white"
+            data-testid="confirm-delete"
+          >
+            {pick(["Delete", "刪除"])}
+          </button>
+          <button onClick={() => setMode(null)} className="px-2 py-1 hover:underline">
+            {pick(["Cancel", "取消"])}
+          </button>
+        </div>
+      )}
+    </li>
   );
 }
 
@@ -249,6 +398,8 @@ function Workspace({ id }: { id: string }) {
   const [resume, setResume] = useState<{ decl: string; away: number } | null>(null);
   const [protectedStorage, setProtected] = useState<boolean | null>(null);
   const [view, setView] = useState<"graph" | "outline">("graph");
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const [sel, setSel] = useState<{ cursor: AgentContext["cursor"]; selection?: AgentContext["selection"] }>({ cursor: undefined });
   const [, tick] = useState(0);
   const loaded = useRef(false);
   const editor = useRef<EditorView | null>(null);
@@ -444,6 +595,46 @@ function Workspace({ id }: { id: string }) {
   const byName = useMemo(() => new Map(placed.map((d) => [d.name, d])), [placed]);
   const decl = selected ? byName.get(selected) : undefined;
 
+  // --- the AI assistant (agent/AgentPanel.tsx): what is on screen, and the agent's edits back into the editor
+  const { lang } = useLang();
+  useEffect(() => {
+    if (!meta) return;
+    const at = result?.where;
+    const inDecl = (file: string, line: number) => !decl || (file === decl.file && decl.fileLine <= line && line <= decl.fileEnd);
+    setAgentContext({
+      target: `project/${id}`,
+      title: meta.title,
+      files: files.map((f) => ({ name: f.name, code: f.code })),
+      main: meta.main,
+      statements: meta.statements,
+      next: selected ? meta.next[selected] : undefined,
+      focus: selected ? { name: selected, file: decl?.file, status: decl?.status, note: meta.notes[selected] } : undefined,
+      verdict: result?.verdict,
+      statuses: result?.decls ? Object.fromEntries(result.decls.map((d) => [d.name, d.status])) : undefined,
+      goals: at
+        ? result.goals.filter((g) => inDecl(at(g.line).file, at(g.line).line)).map((g) => [...g.hypotheses, `⊢ ${g.target}`].join("\n"))
+        : undefined,
+      errors: at
+        ? result.errors
+            .filter((e) => e.line > 0 && inDecl(at(e.line).file, at(e.line).line))
+            .map((e) => ({ ...at(e.line), message: e.message }))
+        : undefined,
+      cursor: sel.cursor,
+      selection: sel.selection,
+      lang,
+    });
+  }, [id, meta, files, selected, decl, result, sel, lang]);
+  useEffect(() => () => setAgentContext(null), []);
+  useEffect(
+    () =>
+      onAgentFiles((e) => {
+        if (e.target !== `project/${id}`) return false;
+        setFiles((fs) => mergeFiles(fs, e));
+        return true;
+      }),
+    [id],
+  );
+
   // --- moving between lemmas
   function selectDecl(name: string) {
     setSelected(name);
@@ -522,7 +713,32 @@ function Workspace({ id }: { id: string }) {
         <button onClick={() => go("research")} className="text-(--lk-accent) hover:underline">
           ◂ {pick(["Projects", "專案"])}
         </button>
-        <span className="text-sm font-semibold text-gray-900">{meta.title}</span>
+        {renaming !== null ? (
+          <input
+            autoFocus
+            value={renaming}
+            onChange={(e) => setRenaming(e.target.value)}
+            onBlur={() => {
+              if (renaming.trim()) setMeta((m) => m && { ...m, title: renaming.trim() }); // autosaved like any edit
+              setRenaming(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+              if (e.key === "Escape") setRenaming(null); // unmounts without committing
+            }}
+            className="rounded border border-gray-300 px-1.5 py-0.5 text-sm font-semibold text-gray-900"
+            data-testid="workspace-title-input"
+          />
+        ) : (
+          <button
+            onClick={() => setRenaming(meta.title)}
+            title={pick(["Rename", "重新命名"])}
+            className="rounded px-1 text-sm font-semibold text-gray-900 hover:bg-gray-100"
+            data-testid="workspace-title"
+          >
+            {meta.title} <span className="text-xs font-normal text-gray-400">✎</span>
+          </button>
+        )}
         <span title={folder} data-testid="storage-badge">
           {store.kind === "disk"
             ? `⌂ ~/Formalizer/${id}`
@@ -792,6 +1008,19 @@ function Workspace({ id }: { id: string }) {
                   onUpdate={(u) => {
                     if (!u.selectionSet || u.docChanged || !u.view.hasFocus) return; // follow moves, not typing
                     const line = u.state.doc.lineAt(u.state.selection.main.head).number;
+                    const r = u.state.selection.main;
+                    const text = u.state.sliceDoc(r.from, r.to);
+                    setSel({
+                      cursor: { file: active, line },
+                      selection: text.trim()
+                        ? {
+                            file: active,
+                            from_line: u.state.doc.lineAt(r.from).number,
+                            to_line: u.state.doc.lineAt(r.to).number,
+                            text: text.slice(0, 4000),
+                          }
+                        : undefined,
+                    });
                     const d = declAt(placed, active, line);
                     if (d && d.name !== selected) {
                       setSelected(d.name);

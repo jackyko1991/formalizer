@@ -88,8 +88,9 @@ Lean on the user's own computer. Your working directory holds the .lean files th
 - You can only touch the files in this folder. The page applies your edits to its editor after your turn."""
 
 PROBLEM_NOTE = """
-This chat is about ONE problem from Formalizer's problem bank. Proof.lean is the file in the user's editor. The
-problem's theorem statement is the test: it must stay exactly as given; only the proof (`sorry`) changes.
+This chat is about ONE problem from Formalizer's problem bank. Proof.lean is the file in the user's editor; any other
+.lean files are checked before it (the problem's own library, or lemma files the user added). The problem's theorem
+statement is the test: it must stay exactly as given; only the proof (`sorry`) changes.
 The user is learning. Unless they ask you to write the proof, teach: say what the goal means, suggest the next step
 and the tactic to try and why, and let them type it. When they ask for a hint, give a hint, not the proof. When they
 ask you to finish or fix it, edit Proof.lean and check it."""
@@ -229,11 +230,13 @@ def _session(session_id: str | None, target: str) -> Session:
 
 
 def _lean_files(s: Session) -> list[str]:
-    """The working copy's files in check order: the page's order, then files the agent added (by name)."""
+    """The working copy's files in check order: the page's order, then files the agent added (by name). A problem's
+    Proof.lean always comes last: its extra files (a library, the reader's lemmas) are checked before it."""
     present = {p.name for p in s.workspace.glob("*.lean") if p.is_file() and FILE.fullmatch(p.name)}
+    names = [n for n in s.order if n in present] + sorted(present - set(s.order))
     if s.kind == "problem":
-        return [PROBLEM_FILE] if PROBLEM_FILE in present else []
-    return [n for n in s.order if n in present] + sorted(present - set(s.order))
+        names = [n for n in names if n != PROBLEM_FILE] + ([PROBLEM_FILE] if PROBLEM_FILE in present else [])
+    return names
 
 
 def snapshot(s: Session) -> dict[str, str]:
@@ -267,10 +270,8 @@ def _write_files(s: Session, context: dict) -> None:
         for f in files[:MAX_FILES]
         if isinstance(f, dict) and FILE.fullmatch(str(f.get("name"))) and isinstance(f.get("code"), str)
     ]
-    if s.kind == "problem":
-        if clean:
-            (s.workspace / PROBLEM_FILE).write_text(clean[0][1][:MAX_FILE], encoding="utf-8")
-        return
+    if s.kind == "problem" and PROBLEM_FILE not in dict(clean):
+        return  # the page always sends Proof.lean; without it, keep the working copy as it is
     names = [n for n, _ in clean]
     for name, code in clean:
         (s.workspace / name).write_text(code[:MAX_FILE], encoding="utf-8")
@@ -278,6 +279,8 @@ def _write_files(s: Session, context: dict) -> None:
         if p.name not in names:
             p.unlink(missing_ok=True)
     s.order = names
+    if s.kind == "problem":
+        return  # a problem's statements and theorems come from the problem bank
     statements = context.get("statements")
     if isinstance(statements, list):
         s.statements = [str(x)[:2000] for x in statements if isinstance(x, str) and x.strip()][:20]

@@ -60,6 +60,23 @@ def test_guards(api):
     assert not (root.parent / "evil.lean").exists()
 
 
+def test_delete_moves_the_project_aside(api):
+    c, root = api
+    assert (
+        c.put(
+            "/api/projects/demo", json={"files": files(("Main.lean", "-- x\n")), "meta": {"title": "Demo"}}
+        ).status_code
+        == 200
+    )
+    c.post("/api/projects/demo/save", json={"label": "v1", "summary": {}})
+    r = c.delete("/api/projects/demo")
+    assert r.status_code == 200 and c.get("/api/projects").json() == []
+    kept = list((root / ".deleted").iterdir())
+    assert len(kept) == 1 and (kept[0] / "Main.lean").read_text() == "-- x\n" and (kept[0] / ".saved").is_dir()
+    assert c.delete("/api/projects/demo").status_code == 404
+    assert c.delete("/api/projects/demo", headers={"origin": "https://evil.example"}).status_code == 403
+
+
 def test_decl_status_through_check(client):  # noqa: F811
     code = (
         "def sumTo : Nat → Nat\n  | 0 => 0\n  | n + 1 => sumTo n + (n + 1)\n"
