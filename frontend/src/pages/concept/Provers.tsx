@@ -1,5 +1,5 @@
 /**
- * AI agent ▸ AI provers (#/agents/provers[/<section>]): how AI theorem provers fit Lean (they propose, the kernel
+ * Concept ▸ AI provers (#/concept/provers[/<section>]; the old #/agents/provers leads here): how AI theorem provers fit Lean (they propose, the kernel
  * checks), the systems (AlphaProof, DeepSeek-Prover, Goedel-Prover, Seed-Prover, Aristotle, in-editor helpers), the
  * benchmarks (miniF2F, PutnamBench). The plan for suggestions in the workspace is the Product roadmap tab (Roadmap.tsx).
  * Figures were checked against the papers and project pages in November 2026.
@@ -16,7 +16,7 @@ const SECTIONS: SectionInfo[] = [
   { id: "benchmarks", title: ["Benchmarks: miniF2F and PutnamBench", "評測基準：miniF2F 與 PutnamBench"] },
 ];
 
-export default function ProversAgent({ section }: { section: string | null }) {
+export default function ProversConcept({ section }: { section: string | null }) {
   return (
     <Page
       id={PAGE}
@@ -158,6 +158,18 @@ export default function ProversAgent({ section }: { section: string | null }) {
             "共同的模式是：語言模型寫 Lean、Lean 檢查、錯誤訊息回饋給下一次嘗試。不同的是搜尋方式（大量獨立嘗試、戰術樹，或子目標草稿），以及花多少算力。",
           ]}
         />
+        <Callout title={["Beyond olympiads: a claim under review (November 2026)", "超越奧林匹亞：審查中的宣稱（2026 年 11 月）"]}>
+          <P
+            t={[
+              "Levent Alpöge, a mathematician at Anthropic, posted a claimed proof of the Riemann hypothesis found with Claude, published as Lean. Whether it stands now rests on the same two questions as every problem here: is the Lean statement the right one, and does the check pass with only the standard axioms? Experts are still reviewing it.",
+              "Anthropic 的數學家 Levent Alpöge 發布了一個與 Claude 合作找到、以 Lean 公開的黎曼猜想證明宣稱。它是否成立，取決於和本站每一題相同的兩個問題：Lean 的陳述對不對？檢查是否只用標準公理就能通過？專家仍在審查中。",
+            ]}
+          />
+          <SiteLink
+            to={["concept", "history", "riemann-2026"]}
+            label={["Lean history: the card and its sources", "Lean 歷史：這張卡片與來源"]}
+          />
+        </Callout>
         <Sources
           items={[
             {

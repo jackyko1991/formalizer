@@ -21,6 +21,7 @@ const SECTIONS: SectionInfo[] = [
     ],
   },
   { id: "table", title: ["Summary: the goal looks like … → try …", "總整理：目標長這樣 … → 試試 …"] },
+  { id: "ai", title: ["AI provers as tactics", "把 AI 證明器當成戰術"] },
 ];
 
 const FAILS: L = ["the error message is the point: read it", "重點就是錯誤訊息：讀讀看"];
@@ -549,6 +550,70 @@ example (x : ℝ) : 0 < x ^ 2 + 1 := by positivity`}
             { label: "Lean Language Reference: Tactic Proofs", url: "https://lean-lang.org/doc/reference/latest/Tactic-Proofs/" },
             { label: "Mathematics in Lean", url: "https://leanprover-community.github.io/mathematics_in_lean/" },
             { label: "Mathlib documentation", url: "https://leanprover-community.github.io/mathlib4_docs/" },
+          ]}
+        />
+      </Section>
+
+      <Section page={PAGE} id="ai" n={12} title={SECTIONS[11].title}>
+        <P
+          t={[
+            "Some AI provers plug into a proof as a tactic: you write it where a goal is open, a language model proposes tactics, Lean tries each one, and only those that work are shown. The model only guesses; the kernel still checks every step, so a wrong guess costs time, never correctness.",
+            "有些 AI 證明器以戰術的形式接進證明：你把它寫在還沒完成的目標上，語言模型提議戰術，Lean 逐一試過，只顯示能用的。模型只是猜；每一步仍由核心檢查，所以猜錯只浪費時間，不會讓證明出錯。",
+          ]}
+        />
+        <Table
+          head={[
+            ["You write", "你寫"],
+            ["What happens", "會發生什麼"],
+          ]}
+          rows={[
+            [
+              ["`exact?`, `apply?`, `rw?`, `simp?`", "`exact?`、`apply?`、`rw?`、`simp?`"],
+              [
+                "Not AI: Lean searches its library for a lemma that fits and prints **Try this:** with the line to paste.",
+                "不是 AI：Lean 在函式庫中找合適的引理，印出 **Try this:** 與可以貼上的那一行。",
+              ],
+            ],
+            [
+              ["`suggest_tactics` (Lean Copilot)", "`suggest_tactics`（Lean Copilot）"],
+              [
+                "A small model on your computer lists next tactics; Lean marks the ones that work and those that close the goal.",
+                "你電腦上的小模型列出下一步戰術；Lean 標出能用的，以及能直接完成目標的。",
+              ],
+            ],
+            [
+              ['`llmstep ""` and `llmqed` (LLMLean)', '`llmstep ""` 與 `llmqed`（LLMLean）'],
+              [
+                "Next-step suggestions, or an attempt to finish the goal, from a model in your own Ollama or one you choose with an API key.",
+                "下一步建議，或嘗試直接完成目標；模型來自你自己的 Ollama，或你用 API 金鑰選的模型。",
+              ],
+            ],
+          ]}
+        />
+        <List
+          items={[
+            [
+              "**Paste the answer, then delete the call.** Model output changes from run to run and needs the model installed, so a finished proof keeps the suggested tactic, not `suggest_tactics`.",
+              "**貼上答案，然後刪掉呼叫。** 模型的輸出每次可能不同，而且需要裝好模型，所以完成的證明要留下建議的戰術，而不是 `suggest_tactics`。",
+            ],
+            [
+              "**Read what it proposes.** A suggestion that works but that you can't explain teaches you nothing; ask why it works before moving on.",
+              "**讀懂它提議的東西。** 能用、但你解釋不了的建議，什麼也沒教會你；先弄懂為什麼能用，再往下走。",
+            ],
+            [
+              "**In Formalizer:** the AI suggestions button by the Tactics panel is pending. Your own agent can already work on a problem through the skill and MCP server.",
+              "**在 Formalizer 裡：** 戰術面板旁的 AI 建議按鈕仍在籌備中。你自己的代理已經可以透過 skill 與 MCP 伺服器來做題。",
+            ],
+          ]}
+        />
+        <p className="flex flex-wrap gap-4">
+          <SiteLink to={["concept", "provers"]} label={["AI provers: the systems and benchmarks", "AI 證明器：系統與評測基準"]} />
+          <SiteLink to={["agents", "skills"]} label={["Use your own agent", "使用你自己的代理"]} />
+        </p>
+        <Sources
+          items={[
+            { label: "Lean Copilot (LeanDojo)", url: "https://github.com/lean-dojo/LeanCopilot" },
+            { label: "LLMLean", url: "https://github.com/cmu-l3/llmlean" },
           ]}
         />
       </Section>

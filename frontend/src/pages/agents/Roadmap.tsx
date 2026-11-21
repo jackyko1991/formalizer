@@ -170,7 +170,7 @@ export default function RoadmapAgent({ section }: { section: string | null }) {
             ],
           ]}
         />
-        <SiteLink to={["agents", "provers"]} label={["AI provers: what they can and can't do", "AI 證明器：能做與不能做的事"]} />
+        <SiteLink to={["concept", "provers"]} label={["AI provers: what they can and can't do", "AI 證明器：能做與不能做的事"]} />
       </Section>
     </Page>
   );

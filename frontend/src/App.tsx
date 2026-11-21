@@ -25,7 +25,7 @@ import SearchSkill from "./pages/skills/Search";
 import StructureSkill from "./pages/skills/Structure";
 import TacticsSkill from "./pages/skills/Tactics";
 import VerifySkill from "./pages/skills/Verify";
-import ProversAgent from "./pages/agents/Provers";
+import ProversConcept from "./pages/concept/Provers";
 import RoadmapAgent from "./pages/agents/Roadmap";
 import { McpAgent, SkillsAgent } from "./pages/agents/Setup";
 import ResearchPage from "./research/ResearchPage";
@@ -35,7 +35,7 @@ import { STRINGS } from "./strings";
 const REPO_URL = "https://github.com/jackyko1991/formalizer";
 const SCROLL = "fz-scroll";
 /** Concept's sub-pages (Tensorizer's order, History last); only History is built so far */
-const CONCEPT_TABS = ["method", "feynman", "maths", "kernel", "limits", "history"] as const;
+const CONCEPT_TABS = ["method", "feynman", "maths", "kernel", "limits", "provers", "history"] as const;
 const SKILLS_TABS = ["tactics", "search", "structure", "errors", "verify"] as const;
 /** Further reading: books & papers, then the learnkit series (Code labs, Explorables) */
 const READING = ["books", "papers", "labs", "explorables"] as const;
@@ -46,6 +46,7 @@ const CONCEPT_PAGES: Record<string, PageView> = {
   maths: LeanMathsConcept,
   kernel: KernelConcept,
   limits: LimitsConcept,
+  provers: ProversConcept,
 };
 const SKILLS_PAGES: Record<string, PageView> = {
   tactics: TacticsSkill,
@@ -78,12 +79,11 @@ export default function App() {
       id: "agents",
       label: t("page.agents"),
       tabs: [
-        { id: "provers", label: t("tab.provers") },
         { id: "skills", label: t("tab.skills") },
         { id: "mcp", label: t("tab.mcp") },
         { id: "roadmap", label: t("tab.roadmap") },
       ],
-      defaultTab: "provers",
+      defaultTab: "skills",
     },
     {
       id: "reading",
@@ -168,8 +168,11 @@ export default function App() {
           ) : route.tab === "roadmap" || (route.tab === "provers" && route.section === "pro") ? (
             // the roadmap was section "pro" of AI provers: that address still leads here
             <RoadmapAgent section={route.tab === "roadmap" ? route.section : null} />
+          ) : route.tab === "provers" ? (
+            // AI provers moved to Concept: the old address shows the same page
+            <ProversConcept section={route.section} />
           ) : (
-            <ProversAgent section={route.section} />
+            <SkillsAgent />
           )
         ) : route.page === "research" ? (
           <ResearchPage id={route.tab} />

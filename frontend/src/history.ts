@@ -560,4 +560,48 @@ export const HISTORY: TimelineCard[] = [
       { label: "openai/math", url: "https://github.com/openai/math" },
     ],
   },
+  {
+    id: "riemann-2026",
+    era: "ai",
+    year: "2026",
+    image: {
+      src: "history/riemann-2026.svg",
+      alt: [
+        "The critical strip with the first zeros of the zeta function on the line Re(s) = 1/2, and a Lean statement of the hypothesis: the code compiles, the mathematics is under review",
+        "臨界帶與 zeta 函數落在 Re(s) = 1/2 這條線上的前幾個零點，以及這個猜想的 Lean 陳述：程式碼能編譯，數學仍在審查中",
+      ],
+      credit: "Drawing: Formalizer",
+    },
+    title: ["A claimed proof of the Riemann hypothesis, with Claude", "一個宣稱的黎曼猜想證明，與 Claude 合作"],
+    body: [
+      [
+        "On 20 November 2026 Levent Alpöge, a mathematician at Anthropic, posted a short note saying that he and Claude had proved the **Riemann hypothesis** (posed in 1859: every non-trivial zero of the zeta function has real part $1/2$), and the generalized version with it. He published the proof in Lean, reportedly millions of lines long.",
+        "2026 年 11 月 20 日，Anthropic 的數學家 Levent Alpöge 發布一份簡短說明，表示他與 Claude 證明了 **黎曼猜想**（1859 年提出：zeta 函數的每個非平凡零點，實部都是 $1/2$），連同其推廣版本。他把證明以 Lean 公開，據報導長達數百萬行。",
+      ],
+      [
+        "At the time of writing it is a **claim under review**, not an accepted result. Andrew Sutherland (MIT) reported compiling the Lean code independently, while experts say the mathematical details still have to be understood. Anthropic had made no official announcement, and the Clay Institute still lists the problem as open.",
+        "在撰寫本文時，這仍是 **審查中的宣稱**，不是已被接受的結果。Andrew Sutherland（MIT）表示他獨立編譯了這份 Lean 程式碼，但專家指出證明的數學細節仍有待理解。Anthropic 尚未正式宣布，克雷研究所仍把這個問題列為未解決。",
+      ],
+      [
+        "It is the clearest example yet of what Lean can and cannot settle. If the code compiles with only the standard axioms, the kernel vouches for the steps; the questions left for people are the ones this site keeps asking: does the Lean statement say exactly what Riemann meant (for example, Mathlib's `RiemannHypothesis`), and what does the check trust?",
+        "這是目前最清楚的例子，說明 Lean 能判定什麼、不能判定什麼。如果程式碼只用標準公理就能通過，核心就為每一步背書；留給人的問題，正是本站一直在問的：Lean 的陳述是否正好說出黎曼的意思（例如 Mathlib 的 `RiemannHypothesis`），以及這個檢查信任了什麼？",
+      ],
+    ],
+    sources: [
+      { label: "L. Alpöge, the note (alpo.ge)", url: "https://alpo.ge/remark.pdf" },
+      {
+        label: "Scientific American: Anthropic mathematician claims to prove Riemann hypothesis (20 Nov 2026)",
+        url: "https://www.scientificamerican.com/article/anthropic-mathematician-claims-to-prove-riemann-hypothesis-most-famous-problem-in-all-of-math/",
+      },
+      {
+        label: "Nature: Mathematician says he and AI solved Riemann hypothesis",
+        url: "https://www.nature.com/articles/d41586-026-03812-7",
+      },
+      {
+        label: "SiliconANGLE: Anthropic researcher claims to have proven Riemann hypothesis using Claude",
+        url: "https://siliconangle.com/2026/11/20/anthropic-researcher-claims-to-have-proven-riemann-hypothesis-using-claude/",
+      },
+      { label: "Clay Mathematics Institute: the Riemann hypothesis", url: "https://www.claymath.org/millennium/riemann-hypothesis/" },
+    ],
+  },
 ];
