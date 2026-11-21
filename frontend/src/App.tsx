@@ -176,7 +176,7 @@ export default function App() {
             <SkillsAgent />
           )
         ) : route.page === "research" ? (
-          <ResearchPage id={route.tab} />
+          <ResearchPage id={route.tab} section={route.section} />
         ) : route.page === "problems" ? (
           <ProblemsPage id={route.tab} />
         ) : (

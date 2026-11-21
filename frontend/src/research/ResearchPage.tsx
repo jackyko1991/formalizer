@@ -23,11 +23,12 @@ import {
   newId,
   protectBrowserStorage,
   rename,
+  showcaseStore,
   type ProjectInfo,
   type SavedInfo,
   type Store,
 } from "./store";
-import { TEMPLATES, type Template } from "./templates";
+import { finishedFiles, SHOWCASES, TEMPLATES, type Template } from "./templates";
 
 type L = readonly [string, string];
 const RESUME_AFTER_MS = 30 * 60 * 1000;
@@ -78,8 +79,35 @@ function download(bytes: Uint8Array, name: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export default function ResearchPage({ id }: { id: string | null }) {
+export default function ResearchPage({ id, section }: { id: string | null; section?: string | null }) {
+  if (id === "showcase") {
+    const t = SHOWCASES().find((x) => x.id === section);
+    return t ? <Workspace key={`showcase-${t.id}`} id={`showcase-${t.id}`} showcase={t} /> : <Home />;
+  }
   return id ? <Workspace key={id} id={id} /> : <Home />;
+}
+
+/** A demo's starting meta, in the reader's language. */
+function templateMeta(t: Template, pick: (v: L) => string): Meta {
+  return {
+    title: pick(t.title),
+    main: t.main,
+    statements: t.statements,
+    notes: Object.fromEntries(Object.entries(t.notes).map(([k, v]) => [k, pick(v)])),
+    next: {},
+    template: t.id,
+    lastVisit: Date.now(),
+  };
+}
+
+/** Start a project from a demo (its lemmas open) where projects are kept now; false when the free tier is full. */
+async function startTemplate(t: Template, pick: (v: L) => string, ready: boolean): Promise<boolean> {
+  const disk = ready ? await diskStore.list().catch(() => []) : [];
+  if (disk.length + (await browserStore.list()).length >= FREE_PROJECTS) return false;
+  const id = newId(t.id === "empty" ? "project" : t.id);
+  await (ready ? diskStore : browserStore).put(id, t.files, templateMeta(t, pick));
+  go("research", id);
+  return true;
 }
 
 // ---------------------------------------------------------------------------------------------------- home
@@ -124,20 +152,8 @@ function Home() {
 
   async function start(t: Template) {
     if (full) return;
-    const title = pick(t.title);
-    const id = newId(t.id === "empty" ? "project" : t.id);
-    const meta: Meta = {
-      title,
-      main: t.main,
-      statements: t.statements,
-      notes: Object.fromEntries(Object.entries(t.notes).map(([k, v]) => [k, pick(v)])),
-      next: {},
-      template: t.id,
-      lastVisit: Date.now(),
-    };
     try {
-      await store.put(id, t.files, meta);
-      go("research", id);
+      if (!(await startTemplate(t, pick, ready))) setError(limitNote);
     } catch (e) {
       setError(String(e));
     }
@@ -200,6 +216,35 @@ function Home() {
               "沒有執行器時，專案存在這個瀏覽器裡，而瀏覽器可能會清掉它們。啟動執行器就能存到真正的資料夾（~/Formalizer），也才能檢查證明。",
             ])}
       </p>
+
+      <section>
+        <h2 className="text-lg font-semibold text-gray-900">{pick(["Showcase: finished projects", "範例展示：完成的專案"])}</h2>
+        <p className="mt-1 text-sm text-gray-600">
+          {pick([
+            "Each demo, fully proved: open it to see a whole blueprint turn green, read every lemma beside its note, and ask the AI about it. Read-only, and it doesn't count as one of your projects.",
+            "每個範例的完整證明版本：打開來看整張藍圖變綠、逐條對照引理與筆記，也可以問 AI。唯讀，而且不算你的專案。",
+          ])}
+        </p>
+        <div className="mt-3 grid gap-4 md:grid-cols-3" data-testid="showcases">
+          {SHOWCASES().map((t) => (
+            <button
+              key={t.id}
+              onClick={() => go("research", "showcase", t.id)}
+              className="flex flex-col rounded-xl border border-emerald-200 bg-white p-4 text-left hover:border-emerald-400 hover:shadow-sm"
+              data-testid={`showcase-${t.id}`}
+            >
+              <span className="text-xs font-medium text-emerald-700">
+                ✓ {pick(["Proved, standard axioms only", "已證明，只用標準公理"])}
+              </span>
+              <span className="mt-1 font-semibold text-gray-900">{pick(t.title)}</span>
+              <span className="mt-1 line-clamp-3 text-sm text-gray-600">
+                <RichText text={pick(t.about)} />
+              </span>
+              <span className="mt-3 text-sm font-medium text-(--lk-accent)">{pick(["Open the showcase", "打開範例"])} →</span>
+            </button>
+          ))}
+        </div>
+      </section>
 
       <section>
         <h2 className="text-lg font-semibold text-gray-900">{pick(["Start a project", "開始一個專案"])}</h2>
@@ -376,7 +421,7 @@ function ProjectRow({
 
 // ---------------------------------------------------------------------------------------------------- workspace
 
-function Workspace({ id }: { id: string }) {
+function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
   const { pick } = useLang();
   const { runner, open: openRunner } = useRunner();
   const ready = runnerReady(runner);
@@ -409,6 +454,18 @@ function Workspace({ id }: { id: string }) {
   useEffect(() => {
     let alive = true;
     if (runner === "checking") return;
+    if (showcase) {
+      // a finished demo: read-only, nothing saved
+      const m = templateMeta(showcase, pick);
+      const shown = finishedFiles(showcase);
+      loaded.current = false;
+      setStore(showcaseStore(shown, m));
+      setFiles(shown);
+      setMeta(m);
+      setActive(shown[shown.length - 1]?.name ?? "");
+      setSelected(m.main);
+      return;
+    }
     void (async () => {
       let got = ready ? await diskStore.load(id).catch(() => null) : null;
       let s: Store = diskStore;
@@ -628,7 +685,7 @@ function Workspace({ id }: { id: string }) {
   useEffect(
     () =>
       onAgentFiles((e) => {
-        if (e.target !== `project/${id}`) return false;
+        if (e.target !== `project/${id}` || showcase) return false; // a showcase stays as it is
         setFiles((fs) => mergeFiles(fs, e));
         return true;
       }),
@@ -731,29 +788,32 @@ function Workspace({ id }: { id: string }) {
           />
         ) : (
           <button
-            onClick={() => setRenaming(meta.title)}
-            title={pick(["Rename", "重新命名"])}
+            onClick={() => !showcase && setRenaming(meta.title)}
+            disabled={!!showcase}
+            title={showcase ? undefined : pick(["Rename", "重新命名"])}
             className="rounded px-1 text-sm font-semibold text-gray-900 hover:bg-gray-100"
             data-testid="workspace-title"
           >
-            {meta.title} <span className="text-xs font-normal text-gray-400">✎</span>
+            {meta.title} {!showcase && <span className="text-xs font-normal text-gray-400">✎</span>}
           </button>
         )}
         <span title={folder} data-testid="storage-badge">
-          {store.kind === "disk"
-            ? `⌂ ~/Formalizer/${id}`
-            : protectedStorage
-              ? pick(["This browser · protected", "這個瀏覽器 · 已保護"])
-              : pick(["This browser · may be cleared", "這個瀏覽器 · 可能被清除"])}
+          {store.kind === "showcase"
+            ? pick(["Showcase · read-only", "範例展示 · 唯讀"])
+            : store.kind === "disk"
+              ? `⌂ ~/Formalizer/${id}`
+              : protectedStorage
+                ? pick(["This browser · protected", "這個瀏覽器 · 已保護"])
+                : pick(["This browser · may be cleared", "這個瀏覽器 · 可能被清除"])}
         </span>
-        <span className={saveError ? "font-medium text-red-700" : ""} data-testid="autosave">
+        <span className={`${saveError ? "font-medium text-red-700" : ""} ${showcase ? "hidden" : ""}`} data-testid="autosave">
           {saveError
             ? pick(["Couldn't save: export now", "無法儲存：請立即匯出"])
             : savedAt
               ? pick([`Working copy saved ${ago(savedAt, pick)}`, `工作副本已儲存（${ago(savedAt, pick)}）`])
               : pick(["Working copy autosaves", "工作副本會自動儲存"])}
         </span>
-        <span className="ml-auto" data-testid="saved-version">
+        <span className={`ml-auto ${showcase ? "invisible" : ""}`} data-testid="saved-version">
           {saved
             ? pick([
                 `Saved version: ${saved.label} · ${new Date(saved.at).toLocaleString()}`,
@@ -796,6 +856,7 @@ function Workspace({ id }: { id: string }) {
         <button
           onClick={() => void restore()}
           disabled={!saved}
+          hidden={!!showcase}
           title={pick([
             "Swap: the saved version becomes your working copy, and your working copy becomes the saved version. Restore again to undo.",
             "互換：已存版本變成工作副本，工作副本變成已存版本。再還原一次即可復原。",
@@ -807,6 +868,7 @@ function Workspace({ id }: { id: string }) {
         </button>
         <button
           onClick={() => void askSave()}
+          hidden={!!showcase}
           className="rounded-md bg-(--lk-accent) px-2.5 py-1 font-medium text-white hover:opacity-90"
           data-testid="save-version"
         >
@@ -820,6 +882,8 @@ function Workspace({ id }: { id: string }) {
           {pick(["Export", "匯出"])}
         </button>
       </div>
+
+      {showcase && <ShowcaseBanner template={showcase} />}
 
       {saving && (
         <div
@@ -969,7 +1033,7 @@ function Workspace({ id }: { id: string }) {
             <InformalNote
               key={selected ?? "none"}
               value={note}
-              disabled={!selected}
+              disabled={!selected || !!showcase}
               onChange={(v) => selected && setMeta((m) => m && { ...m, notes: { ...m.notes, [selected]: v } })}
             />
             <div className="flex min-h-64 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white">
@@ -991,6 +1055,7 @@ function Workspace({ id }: { id: string }) {
                     setActive(name);
                   }}
                   className="mb-1 rounded px-2 text-sm text-gray-500 hover:bg-gray-200"
+                  hidden={!!showcase}
                   title={pick(["Add a file (checked before the main file)", "新增檔案（在主檔之前檢查）"])}
                 >
                   +
@@ -999,6 +1064,7 @@ function Workspace({ id }: { id: string }) {
               <div className="min-h-0 flex-1 overflow-auto">
                 <CodeMirror
                   key={active}
+                  editable={!showcase}
                   value={activeFile?.code ?? ""}
                   onChange={(v) => setFiles((fs) => fs.map((f) => (f.name === active ? { ...f, code: v } : f)))}
                   onCreateEditor={(v) => {
@@ -1140,13 +1206,46 @@ function Workspace({ id }: { id: string }) {
         <span className="shrink-0 text-xs font-semibold tracking-wide text-gray-500 uppercase">{pick(["Next step", "下一步"])}</span>
         <input
           value={next}
-          disabled={!selected}
+          disabled={!selected || !!showcase}
           onChange={(e) => selected && setMeta((m) => m && { ...m, next: { ...m.next, [selected]: e.target.value } })}
           placeholder={pick(["A note for when you come back, e.g. “try induction on n”", "留給回來時的自己，例如「試試對 n 歸納」"])}
           className="min-w-0 flex-1 rounded border border-gray-200 px-2 py-1"
           data-testid="next-step"
         />
       </div>
+    </div>
+  );
+}
+
+/** Above a showcase: what it is, and starting your own copy with the lemmas still open. */
+function ShowcaseBanner({ template }: { template: Template }) {
+  const { pick } = useLang();
+  const { runner } = useRunner();
+  const ready = runnerReady(runner);
+  const [full, setFull] = useState(false);
+  return (
+    <div
+      className="flex flex-wrap items-center gap-2 border-b border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-950"
+      data-testid="showcase-banner"
+    >
+      <span className="flex-1">
+        {full
+          ? pick([
+              "The free tier keeps one research project: delete yours on the Research page first (export it if you want to keep it).",
+              "免費版保留一個研究專案：請先到研究頁刪除你的專案（想保留的話先匯出）。",
+            ])
+          : pick([
+              "Showcase: this demo finished, every lemma proved. Read-only: try it yourself from the start, with the lemmas open.",
+              "範例展示：這個範例的完成版，每條引理都證好了。唯讀：想自己做的話，從頭開始，引理都還沒證。",
+            ])}
+      </span>
+      <button
+        onClick={() => void startTemplate(template, pick, ready).then((ok) => setFull(!ok))}
+        className="rounded-md bg-(--lk-accent) px-2.5 py-1 font-medium text-white hover:opacity-90"
+        data-testid="showcase-start"
+      >
+        {pick(["Try it yourself", "自己試試看"])}
+      </button>
     </div>
   );
 }

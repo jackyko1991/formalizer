@@ -29,7 +29,7 @@ export interface Loaded {
 }
 
 export interface Store {
-  kind: "disk" | "browser";
+  kind: "disk" | "browser" | "showcase";
   list(): Promise<ProjectInfo[]>;
   load(id: string): Promise<Loaded | null>;
   put(id: string, files: LeanFile[], meta: Meta): Promise<void>;
@@ -179,4 +179,18 @@ export function newId(title: string): string {
     .replace(/^-|-$/g, "")
     .slice(0, 40);
   return `${slug || "project"}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
+/** A finished demo, opened read-only: nothing is saved, nothing counts against the free tier. */
+export function showcaseStore(files: LeanFile[], meta: Meta): Store {
+  return {
+    kind: "showcase",
+    list: async () => [],
+    load: async () => ({ files, meta, saved: null }),
+    put: async () => {},
+    saveVersion: () => Promise.reject(new Error("a showcase is read-only")),
+    loadSaved: async () => null,
+    restore: async () => {},
+    remove: async () => {},
+  };
 }

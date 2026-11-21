@@ -15,7 +15,26 @@ export interface Template {
   statements: string[];
   files: LeanFile[];
   notes: Record<string, L>;
+  /** the lemmas' finished proofs (replacing `:= by\n  sorry`): the showcase shows the project done, and
+   *  tests/test_templates.py checks that they make the main theorem proved on the Lite runner */
+  proofs?: Record<string, string>;
 }
+
+/** A demo with every lemma proved (its showcase). */
+export function finishedFiles(t: Template): LeanFile[] {
+  return t.files.map((f) => {
+    let code = f.code;
+    for (const [name, proof] of Object.entries(t.proofs ?? {})) {
+      const head = code.indexOf(`theorem ${name} `);
+      const hole = head < 0 ? -1 : code.indexOf(":= by\n  sorry", head);
+      if (hole >= 0) code = code.slice(0, hole) + ":= " + proof + code.slice(hole + ":= by\n  sorry".length);
+    }
+    return { ...f, code };
+  });
+}
+
+/** The demos that have a finished version to show. */
+export const SHOWCASES = () => TEMPLATES.filter((t) => t.proofs);
 
 export const TEMPLATES: Template[] = [
   {
@@ -59,6 +78,10 @@ export const TEMPLATES: Template[] = [
         "**主定理。** 對 $n$ 做歸納：$n = 0$ 時兩邊都是 $0$；從 $n$ 到 $n+1$，兩邊各加 $2n+1$，再用上兩條引理。",
       ],
     },
+    proofs: {
+      oddSum_succ: "rfl",
+      square_succ: "by\n  simp only [Nat.add_mul, Nat.mul_add, Nat.mul_one, Nat.one_mul]\n  omega",
+    },
   },
   {
     id: "nicomachus",
@@ -99,6 +122,12 @@ export const TEMPLATES: Template[] = [
         "**主定理。** 對 $n$ 歸納：每一步左邊加上 $(n+1)^3$，而 `triangle_sq_succ` 說右邊恰好也多了這麼多。",
       ],
     },
+    proofs: {
+      two_triangle:
+        "by\n  induction n with\n  | zero => rfl\n  | succ k ih =>\n    simp only [triangle, Nat.mul_add, ih, Nat.add_mul, Nat.mul_one, Nat.one_mul]\n    omega",
+      triangle_sq_succ:
+        "by\n  have h := two_triangle n\n  show (triangle n + (n + 1)) * (triangle n + (n + 1)) = _\n  generalize triangle n = t at *\n  have expand : (t + (n + 1)) * (t + (n + 1)) = t * t + 2 * t * (n + 1) + (n + 1) * (n + 1) := by\n    simp only [Nat.add_mul, Nat.mul_add, Nat.two_mul, Nat.mul_one, Nat.one_mul, Nat.mul_comm n t]\n    omega\n  rw [expand, h, Nat.mul_assoc n, Nat.mul_assoc (n + 1), Nat.succ_mul n ((n + 1) * (n + 1)), Nat.add_assoc]",
+    },
   },
   {
     id: "fib-coprime",
@@ -137,6 +166,9 @@ export const TEMPLATES: Template[] = [
         "**Main theorem.** Induction on $n$: $\\gcd(F_0, F_1) = \\gcd(0, 1) = 1$, and `gcd_fib_step` moves each step back to the previous one.",
         "**主定理。** 對 $n$ 歸納：$\\gcd(F_0, F_1) = \\gcd(0, 1) = 1$，而 `gcd_fib_step` 把每一步帶回前一步。",
       ],
+    },
+    proofs: {
+      gcd_fib_step: "by\n  rw [fib_add_two, Nat.gcd_comm (fib n) (fib (n + 1)), Nat.add_comm, Nat.gcd_add_self_right]",
     },
   },
   {

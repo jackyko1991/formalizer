@@ -172,26 +172,58 @@ export function WhereChip({ where }: { where: Where }) {
   );
 }
 
-/** The agent's face: Formalizer's F with a friendly face; it looks up with a "…" while the agent works. */
+/** Blinking: about every 4 s, never exactly on a beat (3.2–4.8 s), now and then twice; none with reduced motion. */
+function useBlink(): boolean {
+  const [shut, setShut] = useState(false);
+  useEffect(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const blink = (times: number) => {
+      setShut(true);
+      timer = setTimeout(() => {
+        setShut(false);
+        timer =
+          times > 1
+            ? setTimeout(() => blink(times - 1), 180)
+            : setTimeout(() => blink(Math.random() < 0.15 ? 2 : 1), 3200 + Math.random() * 1600);
+      }, 130);
+    };
+    timer = setTimeout(() => blink(1), 3200 + Math.random() * 1600);
+    return () => clearTimeout(timer);
+  }, []);
+  return shut;
+}
+
+/** The agent's face: Formalizer's F (the green tile, edge to edge) with a friendly face; it blinks, and looks up with
+ *  a "…" while the agent works. */
 function Mascot({ thinking = false, className = "" }: { thinking?: boolean; className?: string }) {
+  const shut = useBlink();
   const y = thinking ? 41 : 44;
   return (
-    <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
+    <svg viewBox="2 2 60 60" className={className} aria-hidden="true">
       <image href={`${import.meta.env.BASE_URL}favicon.svg`} x="0" y="0" width="64" height="64" />
-      <ellipse cx="30" cy="44" rx="4.2" ry="5" fill="#ffffff" />
-      <ellipse cx="44" cy="44" rx="4.2" ry="5" fill="#ffffff" />
-      <circle cx={thinking ? 31 : 30.5} cy={y} r="2.2" fill="#111827" />
-      <circle cx={thinking ? 45 : 44.5} cy={y} r="2.2" fill="#111827" />
+      {shut ? (
+        <g stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" data-testid="mascot-blink">
+          <path d="M26 44h8M40 44h8" />
+        </g>
+      ) : (
+        <>
+          <ellipse cx="30" cy="44" rx="4.2" ry="5" fill="#ffffff" />
+          <ellipse cx="44" cy="44" rx="4.2" ry="5" fill="#ffffff" />
+          <circle cx={thinking ? 31 : 30.5} cy={y} r="2.2" fill="#111827" />
+          <circle cx={thinking ? 45 : 44.5} cy={y} r="2.2" fill="#111827" />
+        </>
+      )}
       {thinking ? (
         <ellipse cx="37" cy="54" rx="2.4" ry="1.8" fill="#111827" />
       ) : (
         <path d="M31 52 Q37 58 43 52" fill="none" stroke="#ffffff" strokeWidth="2.4" strokeLinecap="round" />
       )}
       {thinking && (
-        <g fill="#f59e0b">
-          <circle cx="50" cy="8" r="2.4" />
-          <circle cx="56" cy="8" r="2.4" />
-          <circle cx="62" cy="8" r="2.4" />
+        <g fill="#fbbf24">
+          <circle cx="47" cy="8" r="2.2" />
+          <circle cx="52.5" cy="8" r="2.2" />
+          <circle cx="58" cy="8" r="2.2" />
         </g>
       )}
     </svg>
@@ -612,7 +644,7 @@ export default function AgentPanel() {
         aria-label={pick(["Ask AI", "問 AI"])}
         aria-expanded={open}
         data-testid="agent-open"
-        className="group fixed right-4 bottom-10 z-40 h-16 w-16 rounded-full border border-teal-100 bg-white p-1.5 shadow-lg transition hover:scale-105 hover:shadow-xl"
+        className="group fixed right-4 bottom-10 z-40 h-16 w-16 rounded-[15px] shadow-lg transition hover:scale-105 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-teal-300 focus-visible:outline-none"
       >
         <Mascot thinking={busy !== null} className="h-full w-full" />
         <span className="pointer-events-none absolute top-1/2 right-full mr-2 -translate-y-1/2 rounded-full bg-teal-700 px-3 py-1 text-xs font-medium whitespace-nowrap text-white opacity-0 shadow transition group-hover:opacity-100 group-focus-visible:opacity-100">
