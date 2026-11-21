@@ -7,6 +7,7 @@ import type { Localized } from "@learnkit/web";
 import type { LeanFile } from "./runner";
 import geometry from "../../problems/geometry.json" with { type: "json" };
 import linearAlgebra from "../../problems/linear-algebra.json" with { type: "json" };
+import research from "../../problems/research.json" with { type: "json" };
 import collections from "../../problems/collections.json" with { type: "json" };
 import tutorial from "../../problems/tutorial.json" with { type: "json" };
 
@@ -15,7 +16,8 @@ export const LEVELS: Level[] = ["L1", "L2", "L3"];
 
 export type Category = "tutorial" | "geometry" | "linalg" | "research";
 
-/** Topics of the library, in order. The research showcase fills in with the Full runner (Mathlib). */
+/** Topics of the library, in order. The research showcase starts with Lite-runner problems; the openai/math results and
+ *  the Navier–Stokes challenge join it with the Full runner (Mathlib). */
 export const CATEGORIES: { id: Category; icon: string; title: Localized; empty?: Localized }[] = [
   { id: "tutorial", icon: "⊢", title: ["Tutorial track", "教學路線"] },
   { id: "geometry", icon: "△", title: ["Geometry", "幾何"] },
@@ -62,6 +64,7 @@ const FILES: [Category, unknown[]][] = [
   ["tutorial", tutorial],
   ["geometry", geometry],
   ["linalg", linearAlgebra],
+  ["research", research],
 ];
 export const PROBLEMS: Problem[] = FILES.flatMap(([category, list]) =>
   (list as Omit<Problem, "category">[]).map((p) => ({ ...p, category })),

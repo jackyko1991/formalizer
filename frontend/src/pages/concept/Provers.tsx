@@ -4,19 +4,23 @@
  * benchmarks (miniF2F, PutnamBench). The plan for suggestions in the workspace is the Product roadmap tab (Roadmap.tsx).
  * Figures were checked against the papers and project pages in November 2026.
  */
-import { Callout, List, P, Page, Section, SiteLink, Sources, Table, type SectionInfo } from "../kit";
+import { useLang } from "@learnkit/web";
+import { Callout, Figure, List, P, Page, Section, SiteLink, Sources, Table, type SectionInfo } from "../kit";
+import { DivideConquer, LearningLoop, ProposeCheck, ProverSpectrum, SearchStrategies } from "./ProverFigures";
 
 const PAGE = "provers";
 
 const SECTIONS: SectionInfo[] = [
   { id: "idea", title: ["An AI prover proposes, Lean checks", "AI 證明器負責提議，Lean 負責檢查"] },
   { id: "lean-search", title: ["Before AI: Lean's own search", "在 AI 之前：Lean 自己的搜尋"] },
+  { id: "inside", title: ["Inside an AI prover: no magic, three ideas", "打開 AI 證明器：沒有魔法，只有三個想法"] },
   { id: "systems", title: ["The systems, 2024–2026", "2024–2026 年的系統"] },
   { id: "helpers", title: ["In the editor: tactic suggestions", "在編輯器裡：戰術建議"] },
   { id: "benchmarks", title: ["Benchmarks: miniF2F and PutnamBench", "評測基準：miniF2F 與 PutnamBench"] },
 ];
 
 export default function ProversConcept({ section }: { section: string | null }) {
+  const { pick } = useLang();
   return (
     <Page
       id={PAGE}
@@ -35,6 +39,14 @@ export default function ProversConcept({ section }: { section: string | null }) 
             "從 Milner 的 LCF 開始，戰術就是一個 *提議* 下一步的程式，由檢查器決定這一步是否成立。在 Lean 裡，再聰明的戰術最後都會變成證明項，交給小小的核心（kernel）重新檢查。AI 證明器是同一個想法的放大版：訓練好的模型寫出戰術（或整個證明），由 Lean 執行。錯的建議只會變成錯誤訊息，永遠不會變成錯的定理。",
           ]}
         />
+        <Figure
+          caption={[
+            "The one loop inside every AI prover: the model guesses, Lean's kernel decides. A wrong guess only costs a try; its error message becomes the next hint.",
+            "每個 AI 證明器裡都是同一個迴圈：模型負責猜，Lean 的核心負責判定。猜錯只是浪費一次嘗試；錯誤訊息變成下一次的提示。",
+          ]}
+        >
+          <ProposeCheck />
+        </Figure>
         <Callout kind="note" title={["So what still needs a person?", "那還有什麼需要人？"]}>
           <List
             items={[
@@ -102,7 +114,90 @@ export default function ProversConcept({ section }: { section: string | null }) 
         <SiteLink to={["skills", "search"]} label={["Finding lemmas", "找引理"]} />
       </Section>
 
-      <Section page={PAGE} id="systems" n={3} title={SECTIONS[2].title}>
+      <Section page={PAGE} id="inside" n={3} title={SECTIONS[2].title}>
+        <P
+          t={[
+            'An AI prover is often described as a black box that "does mathematics". Opened up, the systems below combine three understandable ideas. None of them needs you to trust the model: Lean checks everything that survives.',
+            "AI 證明器常被說成一個會「做數學」的黑盒子。打開來看，下面這些系統是由三個可以理解的想法組合起來的。沒有一個需要你相信模型：留下來的每一樣東西都由 Lean 檢查。",
+          ]}
+        />
+        <p className="text-base font-semibold text-gray-900">1 · {pick(["Divide and conquer with sorry", "用 sorry 各個擊破"])}</p>
+        <P
+          t={[
+            "The same method this site teaches people: write the plan as a skeleton of `sorry`s, then close one hole at a time. *Draft, Sketch, and Prove* (2022) turned an informal proof into a formal sketch with holes for an automated prover to fill, and DeepSeek-Prover-V2 trains on proofs made this way: its large model splits a problem into subgoals, and a smaller prover solves each. Step through it:",
+            "和本站教人的方法一樣：先用一個個 `sorry` 寫出證明骨架，再一次補一個洞。*Draft, Sketch, and Prove*（2022）把非形式證明變成帶洞的形式骨架，再由自動證明器補洞；DeepSeek-Prover-V2 就是用這樣做出來的證明來訓練：大模型把問題拆成子目標，較小的證明器逐一解決。一步一步看：",
+          ]}
+        />
+        <Figure
+          caption={[
+            "Divide and conquer: a hard proof becomes several small ones; a hole that resists is split again. Amber = still `sorry`, green = proved by Lean.",
+            "各個擊破：一個難的證明變成幾個小的；攻不下的洞再拆開。琥珀色 = 還是 `sorry`，綠色 = Lean 已證明。",
+          ]}
+        >
+          <DivideConquer />
+        </Figure>
+        <p className="text-base font-semibold text-gray-900">
+          2 · {pick(["Search: try many, keep what Lean accepts", "搜尋：多試幾次，留下 Lean 接受的"])}
+        </p>
+        <P
+          t={[
+            "A model's single guess is often wrong, so provers make many and let Lean sort them. Some write whole proofs again and again and keep the one that checks (results are reported as *pass@k*: solved within k tries). Others grow a tree of single tactic steps, where Lean computes each new goal and the model only judges which branch looks promising, as AlphaZero judged positions in Go.",
+            "模型猜一次常常會錯，所以證明器猜很多次，讓 Lean 來篩選。有的一次次寫出整份證明，留下通過檢查的那一份（結果寫成 *pass@k*：k 次嘗試之內解出）。有的長出一棵由單一戰術步驟構成的樹：每個新目標由 Lean 算出，模型只判斷哪個分支比較有希望，就像 AlphaZero 在圍棋裡評估局面。",
+          ]}
+        />
+        <Figure
+          caption={[
+            "Two ways to search. Either way the model never decides what is true: Lean computes every goal and accepts or rejects every proof.",
+            "兩種搜尋方式。不論哪一種，模型都不決定什麼是對的：每個目標都由 Lean 算出，每個證明都由 Lean 接受或拒絕。",
+          ]}
+        >
+          <SearchStrategies />
+        </Figure>
+        <p className="text-base font-semibold text-gray-900">3 · {pick(["Learning from Lean's verdict", "從 Lean 的判定中學習"])}</p>
+        <P
+          t={[
+            "Why is mathematics suddenly a frontier for AI? Because a proof checker gives an exact, free, tireless answer: right or wrong. That is a perfect training signal. AlphaProof had about a million informal problems turned into formal statements by a formalizer network, then trained its solver network by proving or disproving them, AlphaZero-style, for weeks before IMO 2024. Proofs Lean accepts become lessons; harder problems come next.",
+            "為什麼數學突然成了 AI 的前沿？因為證明檢查器給出精確、免費、不知疲倦的答案：對或錯。這是完美的訓練訊號。AlphaProof 先由一個形式化網路把大約一百萬道非形式題目轉成形式化陳述，再讓解題網路以 AlphaZero 的方式證明或否證它們，在 2024 年 IMO 前訓練了好幾週。Lean 接受的證明成為教材，接著換更難的題目。",
+          ]}
+        />
+        <Figure
+          caption={[
+            "The learning loop: no human grader is needed, because Lean's ✓ or ✖ is the reward. This is what makes AI in mathematics a genuinely new direction: progress can be checked, not just claimed.",
+            "學習迴圈：不需要人來改，因為 Lean 的 ✓ 或 ✖ 就是獎勵。這正是 AI 做數學成為真正新方向的原因：進展可以被檢查，而不只是被宣稱。",
+          ]}
+        >
+          <LearningLoop />
+        </Figure>
+        <Callout kind="note" title={["The same method as yours", "和你用的是同一套方法"]}>
+          <P
+            t={[
+              "Plan with `sorry`, check often, read the goal, split what is hard: the strategies that work for AI provers are the habits this site teaches. The difference is speed and patience: a prover can try ten thousand times; you can understand why the one that worked works.",
+              "用 `sorry` 規劃、經常檢查、讀懂目標、把難的拆開：對 AI 證明器有效的策略，正是本站教的習慣。差別在速度與耐心：證明器可以試一萬次；而你能理解成功的那一次為什麼成功。",
+            ]}
+          />
+          <SiteLink to={["concept", "method"]} label={["The method: a plan made of sorrys", "方法：用 sorry 搭出計畫"]} />
+        </Callout>
+        <Sources
+          items={[
+            { label: "Jiang et al., Draft, Sketch, and Prove (arXiv 2210.12283)", url: "https://arxiv.org/abs/2210.12283" },
+            { label: "DeepSeek-Prover-V2: subgoal decomposition (arXiv 2504.21801)", url: "https://arxiv.org/abs/2504.21801" },
+            {
+              label: "Google DeepMind: AlphaProof's training loop (2024)",
+              url: "https://deepmind.google/discover/blog/ai-achieves-silver-medal-standard-solving-international-mathematical-olympiad-problems/",
+            },
+          ]}
+        />
+      </Section>
+
+      <Section page={PAGE} id="systems" n={4} title={SECTIONS[3].title}>
+        <Figure
+          caption={[
+            "From Lean's own search to research-level claims: the further right, the more the AI does. What never moves is the bottom row.",
+            "從 Lean 自己的搜尋到研究級的宣稱：越往右，AI 做得越多。永遠不變的是最下面那一列。",
+          ]}
+        >
+          <ProverSpectrum />
+        </Figure>
         <Table
           head={[
             ["System", "系統"],
@@ -189,7 +284,7 @@ export default function ProversConcept({ section }: { section: string | null }) 
         />
       </Section>
 
-      <Section page={PAGE} id="helpers" n={4} title={SECTIONS[3].title}>
+      <Section page={PAGE} id="helpers" n={5} title={SECTIONS[4].title}>
         <P
           t={[
             "Big provers try to finish a whole theorem. For learning, a smaller tool is often better: one that suggests the *next tactic* where you are stuck, and leaves the thinking to you.",
@@ -229,7 +324,7 @@ export default function ProversConcept({ section }: { section: string | null }) 
         />
       </Section>
 
-      <Section page={PAGE} id="benchmarks" n={5} title={SECTIONS[4].title}>
+      <Section page={PAGE} id="benchmarks" n={6} title={SECTIONS[5].title}>
         <P
           t={[
             "**miniF2F** is not a model but a test set: 488 competition problems (AMC, AIME, IMO, and the MATH dataset), half for validation and 244 for the test, stated formally (first in Lean 3, Metamath and Isabelle; now in Lean 4). It was published in 2021 by Kunhao Zheng, Jesse Michael Han and Stanislas Polu, and has been the standard yardstick since.",

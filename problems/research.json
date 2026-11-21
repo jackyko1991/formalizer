@@ -1,0 +1,137 @@
+[
+  {
+    "id": "fermat-seven",
+    "level": "L1",
+    "runner": "lite",
+    "title": [
+      "Fermat's little theorem, for p = 7",
+      "費馬小定理：p = 7 的情形"
+    ],
+    "summary": [
+      "Fermat (1640): for a prime $p$, $a^p \\equiv a \\pmod p$. The general proof needs Mathlib (`ZMod`); for one prime, Lean can simply **compute** all seven cases $a = 0, \\dots, 6$. This is how much research begins: check the small cases by machine, then look for the reason.",
+      "費馬（1640）：對質數 $p$，$a^p \\equiv a \\pmod p$。一般的證明需要 Mathlib（`ZMod`）；但對單一個質數，Lean 可以直接 **算出** 全部七種情形 $a = 0, \\dots, 6$。很多研究正是這樣開始的：先用機器檢查小的情形，再去找背後的原因。"
+    ],
+    "statements": [
+      "theorem fermat_seven : ∀ a, a < 7 → a ^ 7 % 7 = a"
+    ],
+    "theorems": [
+      "fermat_seven"
+    ],
+    "start": "theorem fermat_seven : ∀ a, a < 7 → a ^ 7 % 7 = a := by\n  sorry\n",
+    "tactics": [
+      "intro a ha",
+      "decide"
+    ],
+    "steps": [],
+    "hint": [
+      "`decide` asks Lean to evaluate the statement: it tries every $a < 7$ (at most $6^7 = 279936$, small for a computer). `intro` first would leave one unknown $a$, which can't be computed: that's the point.",
+      "`decide` 請 Lean 直接計算這個陳述：它會試每一個 $a < 7$（最大是 $6^7 = 279936$，對電腦很小）。如果先 `intro`，就只剩一個未知的 $a$，沒辦法算：這正是重點。"
+    ],
+    "solution": "theorem fermat_seven : ∀ a, a < 7 → a ^ 7 % 7 = a := by\n  decide\n"
+  },
+  {
+    "id": "collatz-check",
+    "level": "L2",
+    "runner": "lite",
+    "title": [
+      "Collatz: an open problem, checked below 30",
+      "考拉茲：一個未解問題，檢查到 30"
+    ],
+    "summary": [
+      "Halve an even number; send an odd $n$ to $3n + 1$; repeat. The **Collatz conjecture** (1937) says every start reaches 1. Nobody knows a proof: it is an open problem (Google DeepMind's Formal Conjectures states it in Lean). What Lean can do is check finitely many starts, here every $n$ below 30 within 120 steps ($27$ alone needs 111). A check is evidence, never a proof of the conjecture.",
+      "偶數就除以 2；奇數 $n$ 就變成 $3n + 1$；一直重複。**考拉茲猜想**（1937）說：從任何數出發最後都會到 1。沒有人知道怎麼證明：它是未解問題（Google DeepMind 的 Formal Conjectures 用 Lean 寫下了它）。Lean 能做的是檢查有限多個起點，這裡是 30 以下的每個 $n$，在 120 步之內（光是 $27$ 就要 111 步）。檢查是證據，永遠不是這個猜想的證明。"
+    ],
+    "statements": [
+      "theorem collatz_below_30 : ∀ n, n < 30 → 0 < n → reachesOne 120 n = true",
+      "def collatzStep (n : Nat) : Nat := if n % 2 = 0 then n / 2 else 3 * n + 1"
+    ],
+    "theorems": [
+      "collatz_below_30"
+    ],
+    "start": "def collatzStep (n : Nat) : Nat := if n % 2 = 0 then n / 2 else 3 * n + 1\n\n/-- does `n` reach 1 within `fuel` Collatz steps? -/\ndef reachesOne : Nat → Nat → Bool\n  | 0, n => n == 1\n  | fuel + 1, n => n == 1 || reachesOne fuel (collatzStep n)\n\ntheorem collatz_below_30 : ∀ n, n < 30 → 0 < n → reachesOne 120 n = true := by\n  sorry\n",
+    "tactics": [
+      "intro n h0 h1",
+      "decide"
+    ],
+    "steps": [],
+    "hint": [
+      "The statement only talks about $n < 30$, so it is a finite list of computations: `decide` runs them all. Try `#eval reachesOne 120 27` and `#eval reachesOne 110 27` to see where 27 needs its 111 steps.",
+      "這個陳述只談 $n < 30$，所以是一串有限的計算：`decide` 會全部算完。試試 `#eval reachesOne 120 27` 與 `#eval reachesOne 110 27`，看看 27 為什麼需要 111 步。"
+    ],
+    "solution": "def collatzStep (n : Nat) : Nat := if n % 2 = 0 then n / 2 else 3 * n + 1\n\n/-- does `n` reach 1 within `fuel` Collatz steps? -/\ndef reachesOne : Nat → Nat → Bool\n  | 0, n => n == 1\n  | fuel + 1, n => n == 1 || reachesOne fuel (collatzStep n)\n\ntheorem collatz_below_30 : ∀ n, n < 30 → 0 < n → reachesOne 120 n = true := by\n  decide\n"
+  },
+  {
+    "id": "fib-coprime",
+    "level": "L3",
+    "runner": "lite",
+    "title": [
+      "Neighbouring Fibonacci numbers are coprime",
+      "相鄰的費波那契數互質"
+    ],
+    "summary": [
+      "$\\gcd(F_n, F_{n+1}) = 1$ for every $n$. The main theorem is already assembled by induction from one lemma, `gcd_fib_step`: Euclid's observation that $\\gcd(a, a + b) = \\gcd(a, b)$ carries the gcd down to $\\gcd(0, 1) = 1$. Prove the lemma, and the whole blueprint turns green.",
+      "對每個 $n$，$\\gcd(F_n, F_{n+1}) = 1$。主定理已經用歸納法由一條引理 `gcd_fib_step` 組好了：歐幾里得的觀察 $\\gcd(a, a + b) = \\gcd(a, b)$ 把最大公因數一路帶到 $\\gcd(0, 1) = 1$。證出這條引理，整張藍圖就會變綠。"
+    ],
+    "statements": [
+      "theorem gcd_fib_step (n : Nat) : Nat.gcd (fib (n + 1)) (fib (n + 2)) = Nat.gcd (fib n) (fib (n + 1))",
+      "theorem fib_coprime (n : Nat) : Nat.gcd (fib n) (fib (n + 1)) = 1"
+    ],
+    "theorems": [
+      "fib_coprime"
+    ],
+    "start": "def fib : Nat → Nat\n  | 0 => 0\n  | 1 => 1\n  | n + 2 => fib n + fib (n + 1)\n\ntheorem fib_add_two (n : Nat) : fib (n + 2) = fib n + fib (n + 1) := rfl\n\ntheorem gcd_fib_step (n : Nat) : Nat.gcd (fib (n + 1)) (fib (n + 2)) = Nat.gcd (fib n) (fib (n + 1)) := by\n  sorry\n\ntheorem fib_coprime (n : Nat) : Nat.gcd (fib n) (fib (n + 1)) = 1 := by\n  induction n with\n  | zero => rfl\n  | succ k ih => rw [gcd_fib_step, ih]\n",
+    "tactics": [
+      "rw [fib_add_two]",
+      "rw [Nat.gcd_comm (fib n) (fib (n + 1))]",
+      "rw [Nat.add_comm, Nat.gcd_add_self_right]"
+    ],
+    "steps": [
+      "rw [fib_add_two]",
+      "rw [Nat.gcd_comm (fib n) (fib (n + 1))]"
+    ],
+    "hint": [
+      "Unfold $F_{n+2} = F_n + F_{n+1}$ with `fib_add_two`, turn the right side around with `Nat.gcd_comm`, then use a library lemma saying $\\gcd(m, k + m) = \\gcd(m, k)$: `rw?` or `exact?` finds `Nat.gcd_add_self_right`.",
+      "用 `fib_add_two` 展開 $F_{n+2} = F_n + F_{n+1}$，用 `Nat.gcd_comm` 把右邊轉過來，再用一條說 $\\gcd(m, k + m) = \\gcd(m, k)$ 的函式庫引理：`rw?` 或 `exact?` 會找到 `Nat.gcd_add_self_right`。"
+    ],
+    "solution": "def fib : Nat → Nat\n  | 0 => 0\n  | 1 => 1\n  | n + 2 => fib n + fib (n + 1)\n\ntheorem fib_add_two (n : Nat) : fib (n + 2) = fib n + fib (n + 1) := rfl\n\ntheorem gcd_fib_step (n : Nat) : Nat.gcd (fib (n + 1)) (fib (n + 2)) = Nat.gcd (fib n) (fib (n + 1)) := by\n  rw [fib_add_two]\n  rw [Nat.gcd_comm (fib n) (fib (n + 1))]\n  rw [Nat.add_comm, Nat.gcd_add_self_right]\n\ntheorem fib_coprime (n : Nat) : Nat.gcd (fib n) (fib (n + 1)) = 1 := by\n  induction n with\n  | zero => rfl\n  | succ k ih => rw [gcd_fib_step, ih]\n"
+  },
+  {
+    "id": "nicomachus",
+    "level": "L3",
+    "runner": "lite",
+    "title": [
+      "Nicomachus: cubes add up to a square",
+      "尼科馬庫斯：立方數加起來是平方數"
+    ],
+    "summary": [
+      "$1^3 + 2^3 + \\dots + n^3 = (1 + 2 + \\dots + n)^2$, known since antiquity. Here it is a small research blueprint: Gauss's formula is proved, the main theorem is assembled, and one **key lemma** is open: the square of a triangular number grows by exactly a cube. This is the shape of real formalization work: the hard step, isolated.",
+      "$1^3 + 2^3 + \\dots + n^3 = (1 + 2 + \\dots + n)^2$，古時候就知道了。這裡把它做成一張小小的研究藍圖：高斯公式已證好，主定理已組好，只剩一條 **關鍵引理**：三角形數的平方每一步恰好多一個立方。真正的形式化工作就是這個樣子：把困難的那一步單獨拿出來。"
+    ],
+    "statements": [
+      "theorem triangle_sq_succ (n : Nat) :\n    triangle (n + 1) * triangle (n + 1) = triangle n * triangle n + (n + 1) * (n + 1) * (n + 1)",
+      "theorem nicomachus (n : Nat) : cubeSum n = triangle n * triangle n"
+    ],
+    "theorems": [
+      "nicomachus"
+    ],
+    "start": "def triangle : Nat → Nat\n  | 0 => 0\n  | n + 1 => triangle n + (n + 1)\n\ndef cubeSum : Nat → Nat\n  | 0 => 0\n  | n + 1 => cubeSum n + (n + 1) * (n + 1) * (n + 1)\n\n-- Gauss, already proved: 2 · (1 + 2 + ⋯ + n) = n (n + 1)\ntheorem two_triangle (n : Nat) : 2 * triangle n = n * (n + 1) := by\n  induction n with\n  | zero => rfl\n  | succ k ih =>\n    simp only [triangle, Nat.mul_add, ih, Nat.add_mul, Nat.mul_one, Nat.one_mul]\n    omega\n\ntheorem triangle_sq_succ (n : Nat) :\n    triangle (n + 1) * triangle (n + 1) = triangle n * triangle n + (n + 1) * (n + 1) * (n + 1) := by\n  sorry\n\n-- the main theorem, already assembled from the key lemma\ntheorem nicomachus (n : Nat) : cubeSum n = triangle n * triangle n := by\n  induction n with\n  | zero => rfl\n  | succ k ih => rw [cubeSum, ih, triangle_sq_succ]\n",
+    "tactics": [
+      "have h := two_triangle n",
+      "show (triangle n + (n + 1)) * (triangle n + (n + 1)) = _",
+      "generalize triangle n = t at *",
+      "have expand : (t + (n + 1)) * (t + (n + 1)) = t * t + 2 * t * (n + 1) + (n + 1) * (n + 1) := by\n  simp only [Nat.add_mul, Nat.mul_add, Nat.two_mul, Nat.mul_one, Nat.one_mul, Nat.mul_comm n t]\n  omega",
+      "rw [expand, h, Nat.mul_assoc n, Nat.mul_assoc (n + 1), Nat.succ_mul n ((n + 1) * (n + 1)), Nat.add_assoc]"
+    ],
+    "steps": [
+      "have h := two_triangle n",
+      "show (triangle n + (n + 1)) * (triangle n + (n + 1)) = _",
+      "generalize triangle n = t at *",
+      "have expand : (t + (n + 1)) * (t + (n + 1)) = t * t + 2 * t * (n + 1) + (n + 1) * (n + 1) := by\n  simp only [Nat.add_mul, Nat.mul_add, Nat.two_mul, Nat.mul_one, Nat.one_mul, Nat.mul_comm n t]\n  omega"
+    ],
+    "hint": [
+      "On paper: $T_{n+1}^2 = (T_n + (n+1))^2 = T_n^2 + 2T_n(n+1) + (n+1)^2$, and Gauss's $2T_n = n(n+1)$ turns the middle term into $n(n+1)^2$. In Lean: bring in `two_triangle n`, name $T_n$ as `t`, expand the square (linear once products are atoms: `omega`), then rewrite with Gauss.",
+      "紙上：$T_{n+1}^2 = (T_n + (n+1))^2 = T_n^2 + 2T_n(n+1) + (n+1)^2$，高斯的 $2T_n = n(n+1)$ 把中間項變成 $n(n+1)^2$。在 Lean 裡：引入 `two_triangle n`，把 $T_n$ 叫做 `t`，展開平方（把乘積當成原子後就是線性的：`omega`），再用高斯公式改寫。"
+    ],
+    "solution": "def triangle : Nat → Nat\n  | 0 => 0\n  | n + 1 => triangle n + (n + 1)\n\ndef cubeSum : Nat → Nat\n  | 0 => 0\n  | n + 1 => cubeSum n + (n + 1) * (n + 1) * (n + 1)\n\n-- Gauss, already proved: 2 · (1 + 2 + ⋯ + n) = n (n + 1)\ntheorem two_triangle (n : Nat) : 2 * triangle n = n * (n + 1) := by\n  induction n with\n  | zero => rfl\n  | succ k ih =>\n    simp only [triangle, Nat.mul_add, ih, Nat.add_mul, Nat.mul_one, Nat.one_mul]\n    omega\n\ntheorem triangle_sq_succ (n : Nat) :\n    triangle (n + 1) * triangle (n + 1) = triangle n * triangle n + (n + 1) * (n + 1) * (n + 1) := by\n  have h := two_triangle n\n  show (triangle n + (n + 1)) * (triangle n + (n + 1)) = _\n  generalize triangle n = t at *\n  have expand : (t + (n + 1)) * (t + (n + 1)) = t * t + 2 * t * (n + 1) + (n + 1) * (n + 1) := by\n    simp only [Nat.add_mul, Nat.mul_add, Nat.two_mul, Nat.mul_one, Nat.one_mul, Nat.mul_comm n t]\n    omega\n  rw [expand, h, Nat.mul_assoc n, Nat.mul_assoc (n + 1), Nat.succ_mul n ((n + 1) * (n + 1)), Nat.add_assoc]\n\n-- the main theorem, already assembled from the key lemma\ntheorem nicomachus (n : Nat) : cubeSum n = triangle n * triangle n := by\n  induction n with\n  | zero => rfl\n  | succ k ih => rw [cubeSum, ih, triangle_sq_succ]\n"
+  }
+]

@@ -1,4 +1,4 @@
-"""Every problem file in problems/ (one per topic: tutorial.json, geometry.json, linear-algebra.json): each problem is
+"""Every problem file in problems/ (one per topic: tutorial.json, geometry.json, linear-algebra.json, research.json): each problem is
 well formed, and with real Lean its starting file is incomplete, its reference solution is proved, and pressing its
 chips in order (as the page does) reaches a proof. The Lean part is skipped when the toolchain or the built REPL is
 missing; CI builds both."""
@@ -33,7 +33,7 @@ def insert_chip(code: str, chip: str, step: bool) -> str:
 
 
 def test_problems_are_well_formed():
-    assert set(FILES) == {"tutorial", "geometry", "linear-algebra"}, "a new topic also needs frontend/src/problems.ts"
+    assert set(FILES) == {"tutorial", "geometry", "linear-algebra", "research"}, "a new topic also needs frontend/src/problems.ts"
     assert len(IDS) == len(set(IDS)) and len(FILES["tutorial"]) >= 15
     for p in PROBLEMS:
         assert re.fullmatch(r"[a-z0-9-]+", p["id"]), p["id"]
