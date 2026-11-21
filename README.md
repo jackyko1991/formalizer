@@ -34,6 +34,7 @@ and [pixi](https://pixi.sh), then:
 git clone https://github.com/jackyko1991/formalizer && cd formalizer
 pixi run lean-build   # builds the Lean project and the REPL (the first time takes a while)
 pixi run runner       # the runner on http://localhost:8790
+pixi run dev          # developing: the runner and the site together, http://localhost:5180
 ```
 
 Then open https://jackyko1991.github.io/formalizer/: the chip at the top right turns green when the site finds the

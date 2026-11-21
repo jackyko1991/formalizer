@@ -15,8 +15,14 @@ ruff = ">=0.6"
 # Lean itself comes from elan (https://github.com/leanprover/elan); the runner needs `lake` on PATH.
 lean-build = { cmd = "lake build && lake build repl", cwd = "lean" }
 runner = "python -m backend.serve"
+# Hot-reload development: the runner and Vite together, open http://localhost:5180 (scripts/dev.py). Uses the
+# Node.js on your PATH (22 or newer): node_modules holds native builds for that Node only.
+dev = "python scripts/dev.py"
+# the site alone (Vite), or a production build
+web = { cmd = "npm run dev", cwd = "frontend" }
+web-build = { cmd = "npm install --no-audit --no-fund && npm run build", cwd = "frontend" }
 test = "pytest -q tests"
-lint = "ruff check backend tests && ruff format --check backend tests"
+lint = "ruff check backend tests scripts && ruff format --check backend tests scripts"
 
 [pypi-dependencies]
 # the in-page agent's Claude Code adapter (backend/agents/claude_code.py); the other agents are CLIs found on PATH

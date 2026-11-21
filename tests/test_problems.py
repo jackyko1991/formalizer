@@ -33,7 +33,9 @@ def insert_chip(code: str, chip: str, step: bool) -> str:
 
 
 def test_problems_are_well_formed():
-    assert set(FILES) == {"tutorial", "geometry", "linear-algebra", "research"}, "a new topic also needs frontend/src/problems.ts"
+    assert set(FILES) == {"tutorial", "geometry", "linear-algebra", "research"}, (
+        "a new topic also needs frontend/src/problems.ts"
+    )
     assert len(IDS) == len(set(IDS)) and len(FILES["tutorial"]) >= 15
     for p in PROBLEMS:
         assert re.fullmatch(r"[a-z0-9-]+", p["id"]), p["id"]
