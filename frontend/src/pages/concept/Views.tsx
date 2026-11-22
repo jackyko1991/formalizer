@@ -19,7 +19,7 @@ const PAGE = "views";
 const VIDEO = "zqzk43bSdDI";
 
 const SECTIONS: SectionInfo[] = [
-  { id: "video", title: ["Video summary", "影片摘要"] },
+  { id: "video", title: ["A fulfilled prophecy", "應驗的預言"] },
   { id: "honeycomb", title: ["Six views on a proof nobody can read", "沒人讀得懂的證明：六種觀點"] },
   { id: "sceptic", title: ["The sceptic's case: Michael Harris", "懷疑者的論點：Michael Harris"] },
   { id: "two-problems", title: ["Two different problems", "兩道不同的題"] },
@@ -691,8 +691,8 @@ export default function ViewsConcept({ section }: { section: string | null }) {
       <Section page={PAGE} id="video" n={1} title={SECTIONS[0].title}>
         <P
           t={[
-            "Since last year, the YouTube channel 3Blue1Brown has been asking mathematicians one question: what if an AI proved the Riemann hypothesis and nobody could read the proof? Their answers range from \"verify it, then take it apart\" to \"understanding is the whole point\". Asked as a hypothetical, they now read like a prophecy.",
-            "從去年起，YouTube 頻道 3Blue1Brown 就在問數學家同一個問題：如果 AI 證明了黎曼猜想，卻沒有人讀得懂這份證明，會怎樣？回答從「先驗證，再拆開來讀」到「理解才是重點」都有。當初問的是假設，如今讀起來像一則預言。",
+            "Since last year, the YouTube channel 3Blue1Brown has been asking mathematicians one question: what if an AI proved the Riemann hypothesis and nobody could read the proof? Their answers range from \"verify it, then take it apart\" to \"understanding is the whole point\". Asked as a hypothetical, the question became real on 20 November 2026.",
+            "從去年起，YouTube 頻道 3Blue1Brown 就在問數學家同一個問題：如果 AI 證明了黎曼猜想，卻沒有人讀得懂這份證明，會怎樣？回答從「先驗證，再拆開來讀」到「理解才是重點」都有。當初問的是假設，2026 年 11 月 20 日這個問題成真了。",
           ]}
         />
         <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-gray-900">
