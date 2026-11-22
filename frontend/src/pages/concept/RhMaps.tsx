@@ -8,7 +8,7 @@
 import { go, Graph3D, RichText, useLang, type G3Link, type G3Node } from "@learnkit/web";
 import { useMemo, useState, type ReactNode } from "react";
 import { adjacency, areaOf, loadGraph, loadIndex, reachable, shortestPath, type MathlibIndex, type TheoremGraph } from "../../mathlib/data";
-import { AreaDot, Legend, NodeCard, TheoremGraph3D, TreeView } from "../../mathlib/Explorer";
+import { AreaDot, Legend, NodeCard, STAR_HINT, TheoremGraph3D, TreeView } from "../../mathlib/Explorer";
 import { useAsync, useViewMode } from "../../mathlib/hooks";
 import {
   colourOf,
@@ -216,6 +216,7 @@ function ProofGraph({ map }: { map: ProofMap }) {
               onSelect={setSel}
               arrows={false}
               testId="rh-proof-3d"
+              hint={STAR_HINT}
               side={card}
               card={(i) => <DistrictHover map={map} i={i} />}
             />

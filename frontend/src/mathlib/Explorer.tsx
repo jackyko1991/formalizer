@@ -355,6 +355,12 @@ function SearchBox({
   );
 }
 
+/** The line under an enlarged map whose nodes are stars (districts: Mathlib's galaxy, the RH proof's shape). */
+export const STAR_HINT = [
+  "Drag to turn · scroll to zoom · right-drag to move · click a star · Esc to close",
+  "拖曳旋轉 · 滾輪縮放 · 右鍵拖曳平移 · 點一顆星 · Esc 關閉",
+] as const;
+
 export function TheoremGraph3D({
   graph,
   visible,

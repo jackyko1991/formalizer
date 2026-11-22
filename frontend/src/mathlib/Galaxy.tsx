@@ -5,7 +5,7 @@
 import { Graph3D, useLang, type G3Link, type G3Node } from "@learnkit/web";
 import { useMemo, useState } from "react";
 import { AREAS, areaOf, docsUrl, loadGalaxy, type Galaxy as GalaxyData, type MathlibIndex } from "./data";
-import { AreaDot, Legend } from "./Explorer";
+import { AreaDot, Legend, STAR_HINT } from "./Explorer";
 import { useAsync, useViewMode } from "./hooks";
 
 /** The `k` heaviest import links out of each district. */
@@ -71,7 +71,7 @@ export default function Galaxy({ index, onOpen }: { index: MathlibIndex; onOpen:
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="min-w-0">
           {mode === "3d" ? (
-            <Graph3D nodes={nodes} links={links} focus={sel} onSelect={setSel} height={420} arrows={false} testId="mathlib-galaxy-3d" side={details} card={(d) => <DistrictHover g={g} d={d} />} />
+            <Graph3D nodes={nodes} links={links} focus={sel} onSelect={setSel} height={420} arrows={false} testId="mathlib-galaxy-3d" hint={STAR_HINT} side={details} card={(d) => <DistrictHover g={g} d={d} />} />
           ) : (
             <AreaList g={g} onSelect={setSel} />
           )}
