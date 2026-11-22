@@ -171,6 +171,72 @@ const EVENTS: { year: string; kind: Kind; who: L; said: L; chip: L; faces: Face[
   },
 ];
 
+/** Levent Alpöge's statement (alpo.ge/remark.pdf, 20 Nov 2026), quoted exactly in English; our own translation. */
+const REMARK = "https://alpo.ge/remark.pdf";
+const OWN_WORDS: { en: string; zh: string; page: number }[] = [
+  {
+    en: "I had us on the line of combining two quite different ideas present in a toy setting, one of which was already new and shocking … I guided us to the right situation analogous to that toy setting, and then Claude began to leave me in awe.",
+    zh: "我讓我們走上把一個玩具情境裡兩個很不一樣的想法結合起來的路，其中一個本身就已經新穎得令人震驚……我把我們帶到與那個玩具情境相應的正確情境，接著 Claude 開始讓我驚嘆。",
+    page: 1,
+  },
+  {
+    en: "While its formalization is finished and it is routine to produce a huge, unreadable document containing sufficient detail, in my view of my path I have just taken a step. I intend to do my best to understand and impart understanding of this argument and its certain simplifications, to speak about it, to write it properly.",
+    zh: "雖然形式化已經完成，要產出一份細節足夠、篇幅龐大、讀不下去的文件也只是例行公事，但在我看來，在自己的路上我才剛踏出一步。我打算盡力理解這個論證和它必然會有的簡化，也讓別人理解它；去講它，好好地把它寫出來。",
+    page: 1,
+  },
+  {
+    en: "It being obviously inappropriate to attempt to post some massive unreadable travesty of “slop”, I decided to only present Lean.",
+    zh: "貼出一大份讀不下去、粗製濫造的東西（slop）顯然不妥，所以我決定只公開 Lean。",
+    page: 2,
+  },
+];
+
+/** The claimant's own words on who did what, and on the stream still missing (the natural-language proof). */
+function InHisOwnWords() {
+  const { pick, lang } = useLang();
+  return (
+    <figure className="rounded-lg border border-gray-200 bg-white p-4" data-testid="rh-own-words">
+      <figcaption className="mb-1 font-semibold text-gray-900">{pick(["In his own words", "他自己的話"])}</figcaption>
+      <p className="mb-3 text-sm text-gray-600">
+        <RichText
+          text={pick([
+            "Levent Alpöge's statement describes both halves of this section: who did what (he chose the toy setting and the analogy; Claude's technical speed took over), and which stream is still missing (the Lean is finished; the argument written for people is not).",
+            "Levent Alpöge 的聲明正好說出本節的兩半：誰做了什麼（他選了玩具情境和類比，Claude 的技術速度接手），以及哪一條流還沒有（Lean 已完成，寫給人看的論證還沒有）。",
+          ])}
+        />
+      </p>
+      <div className="space-y-3">
+        {OWN_WORDS.map((q) => (
+          <blockquote key={q.page + q.en.slice(0, 12)} className="border-l-4 border-teal-200 pl-3 text-[15px] leading-relaxed text-gray-800">
+            {lang === "en" ? (
+              <p lang="en">“{q.en}”</p>
+            ) : (
+              <>
+                <p>「{q.zh}」</p>
+                <p lang="en" className="mt-1 text-xs text-gray-500">
+                  “{q.en}”
+                </p>
+              </>
+            )}
+            <p className="mt-1 text-xs text-gray-500">
+              — Levent Alpöge, {pick(["statement", "聲明"])} ({pick([`page ${q.page}`, `第 ${q.page} 頁`])}),{" "}
+              <a href={REMARK} target="_blank" rel="noreferrer" className="text-(--lk-accent) hover:underline">
+                alpo.ge/remark.pdf ↗
+              </a>
+            </p>
+          </blockquote>
+        ))}
+      </div>
+      <p className="mt-3 text-xs text-gray-500">
+        {pick([
+          "Quoted from the statement as published on 20 November 2026 (the file whose checksum the community re-check repository records); the Chinese is this site's translation. As of 22 November 2026 the claim is under review.",
+          "引自 2026 年 11 月 20 日公開的聲明（即社群複查倉庫記錄了雜湊值的那個檔案）；中文為本站翻譯。截至 2026 年 11 月 22 日，這個宣稱仍在審查中。",
+        ])}
+      </p>
+    </figure>
+  );
+}
+
 /** One person beside a timeline entry: a round photo with its credit (author · licence · Commons), or the initials. */
 function FaceCard({ f }: { f: Face }) {
   const { pick } = useLang();
@@ -488,6 +554,7 @@ export default function RhConcept({ section }: { section: string | null }) {
         >
           <OneStreamEach />
         </Figure>
+        <InHisOwnWords />
         <SiteLink to={["concept", "method", "two-languages"]} label={["One proof, two languages", "一個證明，兩種語言"]} />
         <Sources
           items={[
