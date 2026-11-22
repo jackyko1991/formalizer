@@ -147,8 +147,8 @@ function StatementGraph({ index, graph }: { index: MathlibIndex; graph: TheoremG
           <Legend areas={new Set(graph.nodes.map((n) => areaOf(n.module, n.kind).id))} />
           <Caption
             t={[
-              `Showing ${visible.size} of the ${fmt(entry.closure)} declarations (instances and automatically generated helpers folded into their users). Arrows point from a declaration to what it uses; the gold dots run along the highlighted path. Click a star for its card; hover for a summary.`,
-              `顯示 ${fmt(entry.closure)} 個宣告中的 ${visible.size} 個（實例與自動產生的輔助宣告併入使用它們的宣告）。箭頭由宣告指向它所用到的東西；金色光點沿著標示的路徑移動。點一顆星看它的卡片；滑過看摘要。`,
+              `Showing ${visible.size} of the ${fmt(entry.closure)} declarations (instances and automatically generated helpers folded into their users). Arrows point from a declaration to what it uses; the gold dots run along the highlighted path. Click a node for its card; hover for a summary.`,
+              `顯示 ${fmt(entry.closure)} 個宣告中的 ${visible.size} 個（實例與自動產生的輔助宣告併入使用它們的宣告）。箭頭由宣告指向它所用到的東西；金色光點沿著標示的路徑移動。點一個節點看它的卡片；滑過看摘要。`,
             ]}
           />
         </div>
