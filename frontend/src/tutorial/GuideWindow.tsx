@@ -6,12 +6,21 @@
  * One level, no card inside: a header strip (🧭 Guide · the step's title · its dots · – ×), the step's words, a footer
  * (‹ Back · Skip · Next ›). It sits beside what it explains (that gets a pulsing outline; a short line joins them when
  * there is a gap), never over it; dragged by its header it stays where the reader put it for this visit. × is "don't
- * show the guide again" (🧭 Guide in the problem's header brings it back). Phones: a compact sheet at the bottom.
+ * show the guide again" (🧭 Guide in the problem's header brings it back). It also keeps clear of the tactic list when
+ * that is open (re-placed as the list opens, closes or moves).
+ *
+ * The statement's parts (StatementAnatomy) are explained here in tutorial mode: a clicked part's meaning joins the
+ * statement step, or, on a later step, shows on its own until OK. (With the mode off, a popover on the part says it.)
+ *
+ * Phones: a one-line sheet at the bottom (🧭 · the step's title · ‹ › · ▴), opened by a tap; each step scrolls its
+ * target into the part of the screen above the sheet.
  */
 import { RichText, useLang } from "@learnkit/web";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import type { AnatomyPart } from "../StatementAnatomy";
 import type { TacticInfo } from "../tactics";
 import type { ProblemGuide } from "../tutorialGuide";
+import { overlaps, placeBeside, type Box } from "./place";
 import { COACH_STEPS, DONE, guideOff, skipGuide, type CoachStep } from "./progress";
 import { NoGoals, STEP_TITLE, TacticReveal, UnlockNote } from "./Tutorial";
 import { updateTutorial } from "./useTutorial";
@@ -19,14 +28,17 @@ import { updateTutorial } from "./useTutorial";
 type L = readonly [string, string];
 
 /** What each step points at on the page, most precise first. */
-export const GUIDE_TARGET: Record<CoachStep | "reveal" | "solved", string> = {
+export const GUIDE_TARGET: Record<CoachStep | "reveal" | "solved" | "part", string> = {
   statement: '[data-testid="coach-statement"], [data-testid="statement"]',
   goal: '[data-testid="result-tab-goals"]',
   tactic: '.cm-sorry-target, [data-testid="lean-editor"]',
   result: '[data-testid="result-tab-checkers"]',
   reveal: ".cm-tactic-list, .cm-sorry-target",
   solved: '[data-testid="result-tab-checkers"]',
+  part: '[data-testid="statement-anatomy"] [aria-expanded="true"], [data-testid="coach-statement"]',
 };
+/** the open tactic list (CodeMirror's completion tooltip) and its info box: the window keeps clear of them */
+const LIST = ".cm-tooltip-autocomplete, .cm-tooltip.cm-completionInfo";
 
 /** the tactic step's extra words: the list opens by itself */
 const HINTS_WORDS: L = [
@@ -35,39 +47,7 @@ const HINTS_WORDS: L = [
 ];
 
 const W = 300;
-const GAP = 12;
 const POS_KEY = "formalizer.guide.pos";
-
-interface Box {
-  x: number;
-  y: number;
-}
-interface Rect {
-  left: number;
-  top: number;
-  right: number;
-  bottom: number;
-}
-const overlaps = (a: Rect, b: Rect) => a.left < b.right + 4 && a.right + 4 > b.left && a.top < b.bottom + 4 && a.bottom + 4 > b.top;
-
-/** beside the target where there is room (right, left, below, above), else a corner clear of it */
-export function placeBeside(t: Rect | null, w: number, h: number, vw: number, vh: number): Box {
-  const top = 60;
-  const clampY = (y: number) => Math.min(Math.max(top, y), vh - h - 8);
-  const clampX = (x: number) => Math.min(Math.max(8, x), vw - w - 8);
-  const spots: Box[] = t
-    ? [
-        { x: t.right + GAP, y: clampY(t.top) },
-        { x: t.left - w - GAP, y: clampY(t.top) },
-        { x: clampX(t.left), y: t.bottom + GAP },
-        { x: clampX(t.left), y: t.top - h - GAP },
-      ]
-    : [];
-  spots.push({ x: vw - w - 24, y: vh - h - 110 }, { x: 24, y: vh - h - 60 }, { x: vw - w - 24, y: top });
-  const fits = (s: Box) => s.x >= 8 && s.y >= 8 && s.x + w <= vw - 8 && s.y + h <= vh - 8;
-  const clear = (s: Box) => !t || !overlaps({ left: s.x, top: s.y, right: s.x + w, bottom: s.y + h }, t);
-  return spots.find((s) => fits(s) && clear(s)) ?? spots[spots.length - 1];
-}
 
 export interface GuideWindowProps {
   guide: ProblemGuide;
@@ -83,22 +63,31 @@ export interface GuideWindowProps {
   /** the proof is done: the celebration and the next problem */
   solved: boolean;
   next: { title: string; go: () => void } | null;
+  /** a part of the statement the reader clicked (StatementAnatomy): what it means */
+  part?: AnatomyPart | null;
+  onClosePart?: () => void;
   /** the goal step's words about reading a goal (behind ⓘ) */
   goalWords?: L;
 }
 
 export default function GuideWindow(props: GuideWindowProps) {
   const { pick } = useLang();
-  const { guide, problemId, coach, onStep, reveal, onCloseReveal, unlocked, solved, next } = props;
+  const { guide, problemId, coach, onStep, reveal, onCloseReveal, unlocked, solved, next, part = null, onClosePart } = props;
   const [min, setMin] = useState(false);
   const [more, setMore] = useState(false);
   const [doneSeen, setDoneSeen] = useState(false);
   const [open, setOpen] = useState(false); // phones: the sheet's body
   const step: CoachStep | undefined = COACH_STEPS[coach];
   const showSolved = solved && !doneSeen;
-  const what: keyof typeof GUIDE_TARGET | null = reveal ? "reveal" : step ? step : showSolved ? "solved" : null;
+  // a clicked part joins the statement step; on any other step (or after the walk) it shows on its own
+  const partAlone = !!part && step !== "statement";
+  const what: keyof typeof GUIDE_TARGET | null = reveal ? "reveal" : partAlone ? "part" : step ? step : showSolved ? "solved" : null;
   const visible = !!what || unlocked;
   useEffect(() => setMore(false), [coach]);
+  // a part or a tool the reader asked about: bring the window back and, on a phone, open the sheet
+  useEffect(() => {
+    if (part || reveal) (setMin(false), setOpen(true));
+  }, [part, reveal]);
 
   const box = useRef<HTMLDivElement>(null);
   const [wide, setWide] = useState(() => typeof window !== "undefined" && window.matchMedia("(min-width: 1280px)").matches);
@@ -129,11 +118,15 @@ export default function GuideWindow(props: GuideWindowProps) {
       el?.classList.add("tut-coach");
       el?.setAttribute("data-coach-active", "");
       setTarget(el);
-      // phones: the sheet covers the bottom of the screen; bring the target above it
+      // phones: the sheet covers the bottom of the screen; scroll the target into the part above it
       const sheet = box.current?.getBoundingClientRect();
-      const r = el?.getBoundingClientRect();
-      if (r && sheet && !window.matchMedia("(min-width: 1280px)").matches && r.top > sheet.top - 40)
-        window.scrollBy({ top: r.top - sheet.top + 80, behavior: "smooth" });
+      if (el instanceof HTMLElement && sheet && !window.matchMedia("(min-width: 1280px)").matches) {
+        const room = window.innerHeight - sheet.height;
+        el.style.scrollMarginBottom = `${Math.ceil(sheet.height) + 12}px`;
+        el.style.scrollMarginTop = "56px"; // the phone's tab bar
+        const r = el.getBoundingClientRect();
+        if (r.top < 56 || r.bottom > room - 8) el.scrollIntoView({ block: r.height < room - 80 ? "nearest" : "start", behavior: "smooth" });
+      }
     };
     find();
     // the editor redraws its marks, a tab may appear later: look again now and then
@@ -145,18 +138,40 @@ export default function GuideWindow(props: GuideWindowProps) {
     };
   }, [what, min]);
 
-  // beside the target, per step; where the reader dragged it (this visit), unless that would cover the target
+  // the open tactic list, as "left,top,right,bottom" ("" when closed): watched so the window can keep clear of it
+  const [list, setList] = useState("");
+  useEffect(() => {
+    if (!wide || !visible || min) return setList("");
+    const look = () => {
+      const rs = [...document.querySelectorAll(LIST)].map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0);
+      const key = rs.map((r) => [r.left, r.top, r.right, r.bottom].map(Math.round).join(",")).join(";");
+      setList((k) => (k === key ? k : key));
+    };
+    look();
+    const timer = setInterval(look, 150);
+    return () => clearInterval(timer);
+  }, [wide, visible, min]);
+
+  // beside the target, per step, clear of the open list; where the reader dragged it (this visit), unless that would
+  // cover the target or the list
   const [pos, setPos] = useState<Box | null>(null);
   const dragged = useRef(false);
   useLayoutEffect(() => {
     if (!wide || !box.current) return;
     const r = box.current.getBoundingClientRect();
     const t = target?.getBoundingClientRect() ?? null;
+    const avoid = list
+      ? list.split(";").map((k) => {
+          const [left, top, right, bottom] = k.split(",").map(Number);
+          return { left, top, right, bottom };
+        })
+      : [];
     const mine = pos && { left: pos.x, top: pos.y, right: pos.x + r.width, bottom: pos.y + r.height };
-    if (dragged.current && mine && (!t || !overlaps(mine, t)) && mine.right <= window.innerWidth && mine.bottom <= window.innerHeight) return;
-    setPos(placeBeside(t, r.width, r.height, window.innerWidth, window.innerHeight));
+    const blocked = (m: NonNullable<typeof mine>) => (t && overlaps(m, t)) || avoid.some((a) => overlaps(m, a));
+    if (mine && dragged.current && !blocked(mine) && mine.right <= window.innerWidth && mine.bottom <= window.innerHeight) return;
+    setPos(placeBeside(t, r.width, r.height, window.innerWidth, window.innerHeight, avoid));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target, wide, what, min, more]);
+  }, [target, wide, what, min, more, list, part]);
 
   // a short line from the window to the target when they don't touch
   const [line, setLine] = useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null);
@@ -229,7 +244,9 @@ export default function GuideWindow(props: GuideWindowProps) {
       </button>
     );
 
-  const title = step
+  const title = partAlone
+    ? pick(["What it means", "代表什麼"])
+    : step
     ? pick(STEP_TITLE[step]).replace(/^[①②③④]\s*/, "")
     : reveal
       ? reveal.tactic.split("\n")[0]
@@ -238,7 +255,7 @@ export default function GuideWindow(props: GuideWindowProps) {
         : pick(["New tools", "新工具"]);
   const words = (l: L) => <RichText text={pick(l)} />;
   const body: ReactNode[] = [];
-  if (step) {
+  if (step && !partAlone) {
     body.push(
       <p key="coach" data-testid="coach-card" data-step={step}>
         {words(guide.coach[step])}
@@ -257,6 +274,17 @@ export default function GuideWindow(props: GuideWindowProps) {
         </p>,
       );
   }
+  if (part)
+    body.push(
+      <div key="part" data-testid="guide-part" className={partAlone ? "" : "rounded-md bg-amber-50/70 px-2 py-1.5"}>
+        <p className="font-semibold text-gray-900">
+          <RichText text={pick(part.title)} />
+        </p>
+        <p>
+          <RichText text={pick(part.text)} />
+        </p>
+      </div>,
+    );
   if (unlocked) body.push(<UnlockNote key="unlock" note={guide.unlockNote} />);
   if (reveal)
     body.push(
@@ -276,7 +304,8 @@ export default function GuideWindow(props: GuideWindowProps) {
       </div>,
     );
 
-  const footer = step ? (
+  const walking = !!step && !partAlone;
+  const footer = walking ? (
     <div className="flex h-9 shrink-0 items-center gap-2 border-t border-amber-100 px-3">
       {coach > 0 && (
         <button type="button" onClick={() => onStep(coach - 1)} className="text-amber-800 hover:underline">
@@ -310,7 +339,8 @@ export default function GuideWindow(props: GuideWindowProps) {
     <div className="flex h-9 shrink-0 items-center border-t border-amber-100 px-3">
       <button
         type="button"
-        onClick={() => (reveal ? onCloseReveal() : setDoneSeen(true))}
+        onClick={() => (reveal ? onCloseReveal() : partAlone ? onClosePart?.() : setDoneSeen(true))}
+        data-testid="guide-ok"
         className="ml-auto rounded-md border border-amber-300 px-2.5 py-1 text-amber-900 hover:bg-amber-50"
       >
         {pick(["OK", "知道了"])}
@@ -342,11 +372,40 @@ export default function GuideWindow(props: GuideWindowProps) {
         <div
           onPointerDown={drag}
           onClick={() => !wide && setOpen((o) => !o)}
-          className={`flex h-8 shrink-0 items-center gap-2 border-b border-amber-200 bg-amber-50 px-3 ${wide ? "cursor-move" : ""}`}
+          data-testid="guide-head"
+          aria-expanded={wide ? undefined : open}
+          className={`flex shrink-0 items-center gap-2 bg-amber-50 px-3 ${wide ? "h-8 cursor-move border-b border-amber-200" : `h-10 ${open ? "border-b border-amber-200" : ""}`}`}
         >
-          <span className="shrink-0 font-semibold text-amber-900">🧭 {pick(["Guide", "引導"])}</span>
+          <span className="shrink-0 font-semibold text-amber-900">🧭{wide ? ` ${pick(["Guide", "引導"])}` : ""}</span>
           <span className="min-w-0 flex-1 truncate font-medium text-gray-800">{title}</span>
-          {dots}
+          {wide && dots}
+          {/* phones: the step's ‹ › on the sheet's one line, so the sheet can stay closed */}
+          {!wide && walking && (
+            <span className="flex shrink-0 items-center">
+              <button
+                type="button"
+                onClick={(e) => (e.stopPropagation(), onStep(coach - 1))}
+                disabled={coach === 0}
+                aria-label={pick(["Back", "上一步"])}
+                data-testid="guide-sheet-back"
+                className="rounded px-2 py-1 text-base leading-none text-amber-800 disabled:opacity-30"
+              >
+                ‹
+              </button>
+              <span className="text-[11px] text-amber-700 tabular-nums">
+                {coach + 1}/{DONE}
+              </span>
+              <button
+                type="button"
+                onClick={(e) => (e.stopPropagation(), onStep(coach + 1))}
+                aria-label={coach === DONE - 1 ? pick(["Done", "完成"]) : pick(["Next", "下一步"])}
+                data-testid="guide-sheet-next"
+                className="rounded px-2 py-1 text-base leading-none text-amber-800"
+              >
+                {coach === DONE - 1 ? "✓" : "›"}
+              </button>
+            </span>
+          )}
           {!wide && <span className="text-amber-700">{open ? "▾" : "▴"}</span>}
           <button
             type="button"
@@ -372,7 +431,7 @@ export default function GuideWindow(props: GuideWindowProps) {
         {(wide || open) && (
           <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto px-3 py-2 text-[12.5px] leading-relaxed text-gray-800">{body}</div>
         )}
-        {footer}
+        {(wide || open) && footer}
       </div>
     </>
   );

@@ -33,7 +33,7 @@ import ResearchList from "./research/ResearchList";
 import ResearchPage from "./research/ResearchPage";
 import { LEFT_TAB_KEY, parseRecent, problemsView, pushRecent, RECENT_KEY, store, stored, type LeftTab } from "./routes";
 import { GUIDE } from "./tutorialGuide";
-import StatementAnatomy from "./StatementAnatomy";
+import StatementAnatomy, { type AnatomyPart } from "./StatementAnatomy";
 import { showsAnatomy } from "./tutorial/anatomy";
 import NaturalProof, { MirrorLegend, stepWords } from "./tutorial/NaturalProof";
 import { mirrorLeanText, paperSteps, type GuideMirror } from "./tutorial/mirror";
@@ -218,6 +218,10 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
   /** the tools that just unlocked here (they slide in, with the guide's note) */
   const [justUnlocked, setJustUnlocked] = useState<string[]>([]);
   const coachMoved = useRef(false);
+  /** tutorial mode: the statement part last clicked, said by the guide window (free mode: a popover on the part) */
+  const [part, setPart] = useState<AnatomyPart | null>(null);
+  const guideShown = tutorial && !progress.guideOff;
+  useEffect(() => setPart(null), [coach, problem.id, guideShown]);
   useEffect(() => {
     if (!tutorial || coach >= DONE) return;
     setMobileTab(COACH_TAB[coach]);
@@ -590,7 +594,12 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
             {/* a simple `theorem … := by sorry` file is shown once, clickable part by part; anything else as plain text */}
             {showsAnatomy(problem) ? (
               <div data-testid="coach-statement">
-                <StatementAnatomy start={problem.start} beginner={problem.level === "L1"} onPick={() => advance(1)} mirror={mirror?.statementMirror} />
+                <StatementAnatomy
+                  start={problem.start}
+                  beginner={problem.level === "L1"}
+                  mirror={mirror?.statementMirror}
+                  explain={guideShown ? { part: part?.code ?? null, onPart: setPart } : undefined}
+                />
               </div>
             ) : mirror?.statementMirror?.length ? (
               <PlainStatementMirror text={mirrorLeanText(problem.statements, problem.start, mirror.statementMirror)} pairs={mirror.statementMirror} />
@@ -974,8 +983,10 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
   const nextTitle = next ? pick(next.title) : "";
   return (
     <>
-      {tutorial && guide && !progress.guideOff && (
+      {guideShown && guide && (
         <GuideWindow
+          part={part}
+          onClosePart={() => setPart(null)}
           guide={guide}
           problemId={problem.id}
           coach={coach}

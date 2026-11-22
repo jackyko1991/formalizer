@@ -1,13 +1,22 @@
 import { RichText, useLang } from "@learnkit/web";
-import { useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { statementParts } from "./tactics";
 import { mirrorRuns, type MirrorPair } from "./tutorial/mirror";
 import { LeanRuns, MirrorLinks, NaturalRow, useStatementMirror } from "./tutorial/StatementMirror";
 
+/** A clicked part of the statement and what it means: shown by the guide window in tutorial mode. */
+export interface AnatomyPart {
+  code: string;
+  title: readonly [string, string];
+  text: readonly [string, string];
+}
+
 /**
  * The statement, shown once: the start file laid out as in the editor (`theorem hello : 2 + 2 = 4 := by`, then
- * `sorry` on the next line), every part clickable; the part you click is explained under the code. `beginner` (L1)
- * only changes the caption.
+ * `sorry` on the next line), every part clickable. The page looks the same with tutorial mode on or off, so the
+ * meaning of a clicked part is never written into the page: with `explain` (tutorial mode, the guide window showing)
+ * it goes to the guide window, which says it in its statement step; without, it opens in a small popover under the
+ * part (Esc, a click elsewhere or the part again closes it). `beginner` (L1) only changes the caption.
  *
  * With `mirror` (the tutorial guide's statement mirror) the statement is shown twice: the natural-language statement above, piece by
  * piece, and the Lean statement below. Each natural-language piece and its Lean words share a soft colour, joined by a thin line
@@ -18,14 +27,17 @@ export default function StatementAnatomy({
   beginner,
   onPick,
   mirror,
+  explain,
 }: {
   start: string;
   beginner: boolean;
   onPick?: () => void;
   mirror?: readonly MirrorPair[];
+  /** tutorial mode: the part being explained (its code) and where a click sends it (the guide window) */
+  explain?: { part: string | null; onPart: (part: AnatomyPart | null) => void };
 }) {
   const { pick } = useLang();
-  const [open, setOpen] = useState<number | null>(null);
+  const [own, setOwn] = useState<number | null>(null);
   const parts = statementParts(start);
   if (!parts) return null;
   type Piece = { code: string; title: readonly [string, string]; text: readonly [string, string]; tone: string; space?: string };
@@ -104,10 +116,46 @@ export default function StatementAnatomy({
       space: "\n  ",
     },
   ];
-  const shown = open === null ? null : pieces[open];
   const codes = pieces.map((p) => p.code);
+  const open = explain ? (explain.part === null ? null : codes.indexOf(explain.part)) : own;
+  const choose = (i: number) => {
+    const next = open === i ? null : i;
+    if (explain) explain.onPart(next === null ? null : { code: pieces[next].code, title: pieces[next].title, text: pieces[next].text });
+    else setOwn(next);
+    onPick?.();
+  };
+  const shown = !explain && own !== null ? pieces[own] : null;
   const runs = useMemo(() => (mirror?.length ? mirrorRuns(codes, mirror) : null), [mirror, codes.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
   const m = useStatementMirror(mirror, start);
+  // free mode: the popover under the clicked part, inside the statement box
+  const buttons = useRef<(HTMLButtonElement | null)[]>([]);
+  const pop = useRef<HTMLDivElement>(null);
+  const [at, setAt] = useState<{ left: number; top: number; width: number } | null>(null);
+  useLayoutEffect(() => {
+    const b = shown && own !== null ? buttons.current[own] : null;
+    const root = m.box.current;
+    if (!b || !root) return setAt(null);
+    const place = () => {
+      const r = root.getBoundingClientRect();
+      const br = b.getBoundingClientRect();
+      const width = Math.min(280, r.width - 16);
+      setAt({ left: Math.min(Math.max(8, br.left - r.left), r.width - width - 8), top: br.bottom - r.top + 6, width });
+    };
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [own, !!shown, m.box]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (own === null || explain) return;
+    const key = (e: KeyboardEvent) => e.key === "Escape" && (setOwn(null), buttons.current[own]?.focus());
+    const away = (e: PointerEvent) => {
+      const t = e.target as Node;
+      if (!pop.current?.contains(t) && !buttons.current.some((b) => b?.contains(t))) setOwn(null);
+    };
+    document.addEventListener("keydown", key);
+    document.addEventListener("pointerdown", away);
+    return () => (document.removeEventListener("keydown", key), document.removeEventListener("pointerdown", away));
+  }, [own, !!explain]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <figure className="rounded-lg border border-gray-200 bg-white" data-testid="statement-anatomy">
@@ -130,8 +178,12 @@ export default function StatementAnatomy({
             {i > 0 && (piece.space ?? " ")}
             <button
               type="button"
-              onClick={() => (setOpen(open === i ? null : i), onPick?.())}
+              ref={(b) => {
+                buttons.current[i] = b;
+              }}
+              onClick={() => choose(i)}
               aria-expanded={open === i}
+              data-testid={`anatomy-part-${i}`}
               onFocus={() => m.setHover(runs?.[i].find((r) => r.pair !== null)?.pair ?? null)}
               onBlur={() => m.setHover(null)}
               className={`rounded px-0.5 text-left font-mono font-semibold underline decoration-dotted decoration-2 underline-offset-4 transition-colors ${piece.tone} ${
@@ -144,25 +196,22 @@ export default function StatementAnatomy({
         ))}
       </pre>
       <MirrorLinks m={m} />
-      </div>
-      <div className="border-t border-gray-100 bg-gray-50/70 px-4 py-2.5 text-xs leading-relaxed text-gray-700" aria-live="polite">
-        {shown ? (
-          <>
-            <p className="font-semibold text-gray-900">
-              <RichText text={pick(shown.title)} />
-            </p>
-            <p className="mt-0.5">
-              <RichText text={pick(shown.text)} />
-            </p>
-          </>
-        ) : (
-          <p className="text-gray-500">
-            {pick([
-              "Each underlined part means something. Click one to see what. Then pick a tactic on the right: if it is the wrong tool, Lean tells you why, and nothing breaks.",
-              "每段畫底線的部分都有意思。點一段看看它代表什麼。然後從右邊選一個戰術：用錯工具時 Lean 會告訴你原因，什麼都不會壞掉。",
-            ])}
+      {shown && at && (
+        <div
+          ref={pop}
+          role="tooltip"
+          data-testid="anatomy-popover"
+          className="absolute z-30 rounded-md border border-gray-200 bg-white px-3 py-2 text-xs leading-relaxed text-gray-700 shadow-lg"
+          style={{ left: at.left, top: at.top, width: at.width }}
+        >
+          <p className="font-semibold text-gray-900">
+            <RichText text={pick(shown.title)} />
           </p>
-        )}
+          <p className="mt-0.5">
+            <RichText text={pick(shown.text)} />
+          </p>
+        </div>
+      )}
       </div>
     </figure>
   );
