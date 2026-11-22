@@ -6,7 +6,7 @@
  * Fast-moving facts are dated "as of 22 November 2026"; sources were fetched that day. Pictures: RhFigures.tsx.
  */
 import { RelatedProblems, RichText, useLang } from "@learnkit/web";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Callout, Figure, List, P, Page, Section, SiteLink, Sources, Table, type L, type SectionInfo } from "../kit";
 import {
   CriticalStrip,
@@ -227,9 +227,11 @@ const OWN_WORDS: OwnVoice[] = [
   },
 ];
 
-/** Two columns, one per claim: each author's own words, and the one stream each claim has. */
+/** One tab per claim: each author's own words, and the one stream each claim has. */
 function InTheirOwnWords() {
   const { pick, lang } = useLang();
+  // one tab per author (the mirror is in the tab labels: which stream each claim has)
+  const [who, setWho] = useState(0);
   return (
     <figure className="rounded-lg border border-gray-200 bg-white p-4" data-testid="rh-own-words">
       <figcaption className="mb-1 font-semibold text-gray-900">{pick(["In their own words", "他們自己的話"])}</figcaption>
@@ -241,13 +243,26 @@ function InTheirOwnWords() {
           ])}
         />
       </p>
-      <div className="grid gap-4 md:grid-cols-2">
-        {OWN_WORDS.map((v) => (
+      <div role="tablist" className="mb-3 flex flex-wrap gap-1 border-b border-gray-200">
+        {OWN_WORDS.map((v, i) => (
+          <button
+            key={v.name}
+            type="button"
+            role="tab"
+            aria-selected={who === i}
+            onClick={() => setWho(i)}
+            className={`-mb-px rounded-t-md border px-3 py-1.5 text-left ${
+              who === i ? "border-gray-200 border-b-white bg-white" : "border-transparent hover:bg-gray-50"
+            }`}
+          >
+            <span className={`block text-sm font-semibold ${who === i ? "text-(--lk-accent)" : "text-gray-700"}`}>{v.name}</span>
+            <span className="block text-[11px] text-gray-500">{pick(v.stream)}</span>
+          </button>
+        ))}
+      </div>
+      <div role="tabpanel">
+        {OWN_WORDS.filter((_, i) => i === who).map((v) => (
           <div key={v.name} className="space-y-3">
-            <div>
-              <p className="font-semibold text-gray-900">{v.name}</p>
-              <p className="text-xs text-(--lk-accent)">{pick(v.stream)}</p>
-            </div>
             {v.quotes.map((q) => (
               <blockquote key={q.en.slice(0, 24)} className="border-l-4 border-teal-200 pl-3 text-[15px] leading-relaxed text-gray-800">
                 {lang === "en" ? (
