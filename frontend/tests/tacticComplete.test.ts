@@ -6,7 +6,7 @@ import { test } from "node:test";
 import { takeAgentOpen } from "../src/agent/bus.ts";
 import { PROBLEMS } from "../src/problems.ts";
 import { insertChip } from "../src/runner.ts";
-import { aiQuestion, applyTactic, askAiForSorry, pillAt, tacticItems, tacticPosition } from "../src/tacticComplete.ts";
+import { aiQuestion, applyTactic, askAiForSorry, autoOpenAt, HINTS_KEY, loadHints, pillAt, saveHints, tacticItems, tacticPosition } from "../src/tacticComplete.ts";
 import { GUIDE } from "../src/tutorialGuide.ts";
 import { visibleChips } from "../src/tutorial/progress.ts";
 
@@ -78,4 +78,30 @@ test("the AI row: Ask AI opens with a question naming the sorry's line and its g
   assert.match(open.draft, /L6/);
   assert.match(open.draft, /⊢ 2 \* sumTo n/);
   assert.match(aiQuestion(0, { file: "Proof.lean", line: 14 }), /line 14 \(L14\)/);
+});
+
+test("tactic hints open the list at a sorry (inside, touching, or in its indentation), and nowhere else", () => {
+  const code = "theorem t : P := by\n  sorry\n\ntheorem u : Q := by\n  exact q\n";
+  const at = code.indexOf("sorry");
+  for (const pos of [at, at + 2, at + 5, at - 1, at - 2]) assert.equal(autoOpenAt(code, pos), 0, `pos ${pos}`);
+  assert.equal(autoOpenAt(code, at - 3), -1, "the end of the line above");
+  assert.equal(autoOpenAt(code, code.indexOf("exact")), -1);
+  assert.equal(autoOpenAt(code, code.indexOf("theorem t") + 3), -1);
+  const two = "a := by\n  · sorry\n  · sorry";
+  assert.equal(autoOpenAt(two, two.lastIndexOf("sorry") + 1), 1);
+  assert.equal(autoOpenAt(two, two.indexOf("·")), -1, "after a bullet, not just indentation");
+});
+
+test("the tactic-hints switch is remembered (on by default)", () => {
+  const box = new Map<string, string>();
+  const store = { getItem: (k: string) => box.get(k) ?? null, setItem: (k: string, v: string) => void box.set(k, v) };
+  assert.equal(loadHints(store), true);
+  saveHints(false, store);
+  assert.equal(box.get(HINTS_KEY), "off");
+  assert.equal(loadHints(store), false);
+  saveHints(true, store);
+  assert.equal(loadHints(store), true);
+  const broken = { getItem: () => { throw new Error("blocked"); }, setItem: () => { throw new Error("blocked"); } };
+  assert.equal(loadHints(broken), true);
+  assert.doesNotThrow(() => saveHints(false, broken));
 });

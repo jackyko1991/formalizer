@@ -4,7 +4,7 @@
  * nested `/- -/`, `/-- -/`), strings, numbers, declaration keywords, proof words, tactics, `sorry`, types, `#check`
  * and `@[…]`, and the maths operators. It colours; it does not parse (Lean itself checks the file).
  * Colours follow learnkit's inline-code palette (violet keywords, amber numbers, emerald strings) plus Formalizer's teal
- * for tactics; `sorry` is underlined with dots, since it is the hole still to fill.
+ * for tactics; `sorry` is amber, since it is the hole still to fill.
  */
 import { HighlightStyle, StreamLanguage, syntaxHighlighting, type StreamParser } from "@codemirror/language";
 import { tags as t } from "@lezer/highlight";
@@ -94,15 +94,8 @@ const LEAN_STYLE = HighlightStyle.define([
   { tag: t.comment, color: "#6b7280", fontStyle: "italic" }, // gray-500
   { tag: t.meta, color: "#be185d" }, // pink-700: #check, @[simp]
   { tag: t.operator, color: "#475569" }, // slate-600
-  // sorry: the hole to fill, underlined with dots (as in the editor, sorryMarks.ts)
-  {
-    tag: t.invalid,
-    color: "#b45309",
-    fontWeight: "600",
-    textDecoration: "underline dotted #f59e0b",
-    textDecorationThickness: "2px",
-    textUnderlineOffset: "4px",
-  },
+  // sorry: the hole to fill, in amber (as in the editor, sorryMarks.ts)
+  { tag: t.invalid, color: "#b45309", fontWeight: "600" },
 ]);
 
 const LEAN = StreamLanguage.define(parser);

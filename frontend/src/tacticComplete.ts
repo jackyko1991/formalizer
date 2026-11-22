@@ -87,3 +87,34 @@ export function aiQuestion(lang: 0 | 1, at: { file: string; line: number; goal?:
 export function askAiForSorry(lang: 0 | 1, at: { file: string; line: number; goal?: string }): void {
   requestAgentOpen(aiQuestion(lang, at));
 }
+
+/**
+ * Tactic hints open the list by themselves when the cursor is at a sorry: inside or touching the word, or in the
+ * indentation before it on its line. The index of that sorry, or -1.
+ */
+export function autoOpenAt(code: string, pos: number): number {
+  const all = sorryOffsets(code);
+  return all.findIndex((from) => {
+    if (pos >= from && pos <= from + "sorry".length) return true;
+    const lineStart = code.lastIndexOf("\n", from - 1) + 1;
+    return pos >= lineStart && pos < from && /^\s*$/.test(code.slice(lineStart, from));
+  });
+}
+
+/** The "Tactic hints" switch, remembered per browser (on unless the reader turned it off). */
+export const HINTS_KEY = "formalizer.tacticHints";
+type Store = Pick<Storage, "getItem" | "setItem">;
+export function loadHints(store: Store | undefined = globalThis.localStorage): boolean {
+  try {
+    return store?.getItem(HINTS_KEY) !== "off";
+  } catch {
+    return true;
+  }
+}
+export function saveHints(on: boolean, store: Store | undefined = globalThis.localStorage): void {
+  try {
+    store?.setItem(HINTS_KEY, on ? "on" : "off");
+  } catch {
+    /* storage blocked: the choice lasts for this visit */
+  }
+}

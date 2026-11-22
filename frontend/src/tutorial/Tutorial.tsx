@@ -85,7 +85,7 @@ export function TutorialBar({ problemId }: { problemId: string }) {
   );
 }
 
-const STEP_TITLE: Record<CoachStep, L> = {
+export const STEP_TITLE: Record<CoachStep, L> = {
   statement: ["① The statement: what is claimed", "① 陳述：宣稱了什麼"],
   goal: ["② The goal: what is left to prove", "② 目標：還要證明什麼"],
   tactic: ["③ A tactic: one proof step", "③ 戰術：證明的一步"],

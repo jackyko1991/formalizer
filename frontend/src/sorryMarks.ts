@@ -1,7 +1,7 @@
 /**
- * The holes in a proof, made visible in the editor: every `sorry` is a highlighted badge, the one the tactics will
- * fill (the "target", picked by clicking it) is outlined, and while a tactic is hovered it is shown in place of the
- * target, so you see the replacement before you press it.
+ * The holes in a proof, made visible in the editor: every `sorry` in amber, the one the tactics will fill (the
+ * "target", picked by clicking it) on an amber ground, and the tactic under the list's cursor shown in its place, so
+ * you see the replacement before you choose it. With tactic hints off, a faint "Ctrl+Space" after the target.
  */
 import { RangeSetBuilder } from "@codemirror/state";
 import { Decoration, EditorView, ViewPlugin, WidgetType, type DecorationSet, type ViewUpdate } from "@codemirror/view";
@@ -30,16 +30,17 @@ class Pill extends WidgetType {
     readonly label: string,
     readonly at: number,
     readonly onOpen: (view: EditorView, at: number) => void,
+    readonly ghost = false,
   ) {
     super();
   }
   eq(other: Pill) {
-    return other.label === this.label && other.at === this.at;
+    return other.label === this.label && other.at === this.at && other.ghost === this.ghost;
   }
   toDOM(view: EditorView) {
     const el = document.createElement("button");
     el.type = "button";
-    el.className = "cm-tactic-pill";
+    el.className = this.ghost ? "cm-tactic-ghost" : "cm-tactic-pill";
     el.textContent = this.label;
     el.setAttribute("data-testid", "tactic-pill");
     el.onmousedown = (e) => e.preventDefault();
@@ -55,6 +56,8 @@ export interface PillOptions {
   label: string;
   /** open the list on the sorry that ends at `at` */
   onOpen: (view: EditorView, at: number) => void;
+  /** a faint hint ("Ctrl+Space") rather than a pill: tactic hints are off */
+  ghost?: boolean;
 }
 
 function build(view: EditorView, target: number, preview: string | null, pill?: PillOptions): DecorationSet {
@@ -73,7 +76,7 @@ function build(view: EditorView, target: number, preview: string | null, pill?: 
           attributes: { title: i === aim ? "the tactics fill this sorry" : "click to fill this sorry next" },
         }),
       );
-    if (i === aim && pill && !preview) builder.add(to, to, Decoration.widget({ widget: new Pill(pill.label, to, pill.onOpen), side: 1 }));
+    if (i === aim && pill && !preview) builder.add(to, to, Decoration.widget({ widget: new Pill(pill.label, to, pill.onOpen, pill.ghost), side: 1 }));
   });
   return builder.finish();
 }

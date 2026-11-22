@@ -26,7 +26,7 @@ import { runnerReady, useRunner, type RunnerState } from "./RunnerPanel";
 import { lean } from "./leanLanguage";
 import { sorryAt, sorryMarks } from "./sorryMarks";
 import { explainTactic, statementParts } from "./tactics";
-import { askAiForSorry, tacticItems, type TacticItem } from "./tacticComplete";
+import { askAiForSorry, loadHints, saveHints, tacticItems, type TacticItem } from "./tacticComplete";
 import { agentStatus } from "./agent/api";
 import { openTactics, tacticCompletion } from "./tacticCompletion";
 import ResearchList from "./research/ResearchList";
@@ -413,6 +413,9 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code]);
   const chipKey = chips.shown.join("\n");
+  // Tactic hints: the list opens by itself at a sorry (remembered per browser; always on in tutorial mode)
+  const [hintsChoice, setHintsChoice] = useState(() => loadHints());
+  const hints = tutorial || hintsChoice;
   const completion = useMemo(
     () =>
       tacticCompletion({
@@ -421,22 +424,24 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
         lang: langIndex,
         onPick: (next, _hole, item) => picked.current(next, item),
         onPreview: (tactic) => previewed.current(tactic),
+        auto: hints,
         ai: { connected: agentConnected, onAsk: (line) => asked.current(line) },
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [chipKey, chips.locked.length, langIndex, problem.steps, agentConnected],
+    [chipKey, chips.locked.length, langIndex, problem.steps, agentConnected, hints],
   );
-  const pillLabel = pick(["Tactic ▾", "戰術 ▾"]);
+  // with hints off, a faint "Ctrl+Space" after the target sorry says how to open the list
+  const pillLabel = "Ctrl+Space";
   const extensions = useMemo(
     () =>
       [
         lean(),
         ...(editing
-          ? [sorryMarks(hole, preview, { label: pillLabel, onOpen: (view, at) => openTactics(view, at) }), completion]
+          ? [sorryMarks(hole, preview, hints ? undefined : { label: pillLabel, ghost: true, onOpen: (view, at) => openTactics(view, at) }), completion]
           : []),
         ...(active === MAIN && anchors.length ? [stepMarks(anchors, activeStep, onBadge)] : []),
       ],
-    [editing, hole, preview, anchors, activeStep, active, completion, pillLabel],
+    [editing, hole, preview, anchors, activeStep, active, completion, hints],
   );
   // a paper step pointed at: bring its Lean lines into view
   const pointed = stepHover ?? stepPin;
@@ -657,8 +662,26 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
     </div>
   );
 
-  // one line over the editor: Run, (tutorial: the locked tools), the answer switch, Reset; the tactics are in the editor,
-  // a "Tactic ▾" list at the target sorry
+  // a small switch on the toolbar
+  const toggle = (on: boolean, flip: () => void, label: string, testId: string, title: string, locked = false) => (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={flip}
+      disabled={locked}
+      title={title}
+      data-testid={testId}
+      className="flex shrink-0 items-center gap-1 text-[11px] text-gray-600 hover:text-gray-900 disabled:cursor-default disabled:opacity-60"
+    >
+      <span aria-hidden className={`relative h-4 w-7 shrink-0 rounded-full transition-colors ${on ? "bg-(--lk-accent)" : "bg-gray-300"}`}>
+        <span className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform ${on ? "translate-x-3" : ""}`} />
+      </span>
+      {label}
+    </button>
+  );
+  // one line over the editor: Run, the tactic-hints and answer switches, (tutorial: the locked tools), Reset; the
+  // tactics themselves are a list at the sorry, in the editor
   const toolbar = (
     <div className="relative flex shrink-0 flex-wrap items-center gap-1.5 border-b border-gray-200 bg-white px-2 py-1.5 xl:h-10 xl:flex-nowrap xl:py-0" data-testid="toolbar">
       <button
@@ -670,22 +693,14 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
       >
         {running ? t("run.running") : `▶ ${t("run.run")}`}
       </button>
+      {editing &&
+        toggle(hints, () => (setHintsChoice(!hints), saveHints(!hints)), pick(["Tactic hints", "戰術提示"]), "hints-switch", pick([
+          "On: the tactic list opens by itself when the cursor is at a sorry. Off: Ctrl+Space opens it.",
+          "開：游標到 sorry 時，戰術清單自己打開。關：按 Ctrl+Space 打開。",
+        ]), tutorial)}
+      {toggle(showProof, () => setShowProof((v) => !v), t("proof.switch"), "proof-switch", t("proof.switchHint"))}
       <span className="min-w-0 flex-1" />
       {guide && tutorial && <LockedRow count={chips.locked.length} rule={guide.unlock} pill />}
-      <button
-        type="button"
-        role="switch"
-        aria-checked={showProof}
-        onClick={() => setShowProof((v) => !v)}
-        title={t("proof.switchHint")}
-        data-testid="proof-switch"
-        className="flex shrink-0 items-center gap-1 text-[11px] text-gray-600 hover:text-gray-900"
-      >
-        {t("proof.switch")}
-        <span aria-hidden className={`relative h-4 w-7 shrink-0 rounded-full transition-colors ${showProof ? "bg-(--lk-accent)" : "bg-gray-300"}`}>
-          <span className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform ${showProof ? "translate-x-3" : ""}`} />
-        </span>
-      </button>
       {edited && (
         <button onClick={reset} className="shrink-0 rounded px-1.5 text-[11px] text-(--lk-accent) hover:bg-teal-50" data-testid="reset">
           {t("run.reset")}
@@ -782,7 +797,7 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
             selection: text.trim() ? { file: active, from_line: line(r.from), to_line: line(r.to), text: text.slice(0, 4000) } : undefined,
           });
         }}
-        // no boxes on every other `sorry` when one is selected: the dotted underlines mark them
+        // no boxes on every other `sorry` when one is selected: their colour marks them
         basicSetup={{ foldGutter: false, highlightSelectionMatches: false, autocompletion: false }}
         extensions={extensions}
         className="font-mono text-sm"

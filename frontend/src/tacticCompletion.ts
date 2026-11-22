@@ -19,8 +19,7 @@ import {
 } from "@codemirror/autocomplete";
 import type { Extension } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
-import { sorryAt } from "./sorryMarks";
-import { AI_ROW, applyTactic, tacticPosition, type TacticItem } from "./tacticComplete";
+import { AI_ROW, applyTactic, autoOpenAt, tacticPosition, type TacticItem } from "./tacticComplete";
 import { sorryOffsets } from "./runner";
 
 type L = readonly [string, string];
@@ -35,6 +34,8 @@ export interface TacticCompletionOptions {
   onPick: (code: string, hole: number, item: TacticItem) => void;
   /** the tactic under the list's cursor (null when the list closes): previewed in place of the sorry */
   onPreview: (tactic: string | null) => void;
+  /** Tactic hints: the list opens by itself when the cursor is at a sorry (off: Ctrl+Space or the ghost hint) */
+  auto: boolean;
   /** the last row, "AI": ask the reader's agent about the sorry on this line (absent: no AI row) */
   ai?: { connected: boolean; onAsk: (line: number) => void };
 }
@@ -55,10 +56,11 @@ const WORDS = {
 function source(opts: TacticCompletionOptions) {
   return (ctx: CompletionContext): CompletionResult | null => {
     const doc = ctx.state.doc.toString();
-    const hole = sorryAt(doc, ctx.pos);
+    // at a sorry (inside, touching it, or in the indentation before it): the whole list, for that sorry
+    const hole = autoOpenAt(doc, ctx.pos);
     let from: number;
     let to: number;
-    if (hole >= 0 && ctx.explicit) {
+    if (hole >= 0 && (ctx.explicit || opts.auto)) {
       from = sorryOffsets(doc)[hole];
       to = from + "sorry".length;
     } else {
@@ -115,7 +117,7 @@ function source(opts: TacticCompletionOptions) {
       });
     }
     // what was typed filters the list; on a sorry (asked for) everything is shown
-    return { from, to, options, filter: !(hole >= 0 && ctx.explicit) };
+    return { from, to, options, filter: !(hole >= 0 && (ctx.explicit || opts.auto)) };
   };
 }
 
@@ -131,6 +133,14 @@ export function openTactics(view: EditorView, at?: number) {
 
 export function tacticCompletion(opts: TacticCompletionOptions): Extension {
   const pick = (l: L | undefined) => (l ? l[opts.lang] : "");
+  // Tactic hints: which sorry the list was opened at by itself, and which one the reader closed with Esc (it stays
+  // closed until the cursor leaves that sorry and comes back)
+  let opened: number | null = null;
+  let escaped: number | null = null;
+  const sorryStart = (doc: string, pos: number) => {
+    const i = autoOpenAt(doc, pos);
+    return i < 0 ? null : sorryOffsets(doc)[i];
+  };
   return [
     autocompletion({
       override: [source(opts)],
@@ -178,7 +188,31 @@ export function tacticCompletion(opts: TacticCompletionOptions): Extension {
       const was = completionStatus(u.startState) === "active" ? (selectedCompletion(u.startState) as TacticCompletion | null) : null;
       if (sel?.item?.tactic !== was?.item?.tactic) opts.onPreview(sel?.item?.tactic ?? null);
     }),
-    keymap.of([{ key: "Escape", run: (v) => (opts.onPreview(null), closeCompletion(v)) }]),
+    keymap.of([
+      {
+        key: "Escape",
+        run: (v) => {
+          escaped = sorryStart(v.state.doc.toString(), v.state.selection.main.head);
+          opts.onPreview(null);
+          return closeCompletion(v);
+        },
+      },
+    ]),
+    // Tactic hints: open the list at a sorry by itself; close it when the cursor moves away
+    EditorView.updateListener.of((u) => {
+      if (!opts.auto || (!u.selectionSet && !u.focusChanged)) return;
+      const at = sorryStart(u.state.doc.toString(), u.state.selection.main.head);
+      const status = completionStatus(u.state);
+      if (at === null) {
+        escaped = null;
+        if (opened !== null && status && !u.docChanged) setTimeout(() => closeCompletion(u.view));
+        opened = null;
+        return;
+      }
+      if (at === escaped || !u.view.hasFocus || status) return;
+      opened = at;
+      setTimeout(() => startCompletion(u.view));
+    }),
     EditorView.theme({
       ".cm-tooltip.cm-tactic-list": {
         border: "1px solid #e5e7eb",
@@ -253,6 +287,18 @@ export function tacticCompletion(opts: TacticCompletionOptions): Extension {
         verticalAlign: "1px",
       },
       ".cm-tactic-pill:hover": { background: "#ccfbf1" },
+      // tactic hints off: a faint reminder after the target sorry
+      ".cm-tactic-ghost": {
+        marginLeft: "8px",
+        padding: "0 4px",
+        border: "none",
+        background: "transparent",
+        color: "#9ca3af",
+        fontFamily: "inherit",
+        fontSize: "11px",
+        cursor: "pointer",
+      },
+      ".cm-tactic-ghost:hover": { color: "#0f766e" },
       // phones: the list is a sheet at the bottom of the screen, the side pane under it
       "@media (max-width: 1279px)": {
         ".cm-tooltip.cm-tactic-list": {

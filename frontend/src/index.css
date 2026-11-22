@@ -11,27 +11,23 @@
   --lk-accent: #0f766e; /* teal-700 */
 }
 
-/* The holes in a proof (sorryMarks.ts): every sorry underlined with dots, the one the tactics fill with a thicker
-   line, a hovered tactic previewed in its place (teal) */
+/* The holes in a proof (sorryMarks.ts): every sorry in amber, the one the tactics fill on a light amber ground, the
+   tactic under the list's cursor previewed in its place (teal) */
 .cm-sorry {
-  color: #b45309; /* amber-700 */
+  color: #b45309; /* amber-700: the hole, findable by its colour (the inline tactic list marks the target) */
   font-weight: 600;
-  text-decoration: underline dotted #f59e0b; /* amber-500 */
-  text-decoration-thickness: 2px;
-  text-underline-offset: 4px;
   cursor: pointer;
 }
 .cm-sorry-target {
   color: #92400e; /* amber-800 */
-  text-decoration-color: #d97706; /* amber-600 */
-  text-decoration-thickness: 3px;
+  background: #fef3c7; /* amber-100 */
+  border-radius: 3px;
 }
 .cm-sorry-preview {
   color: #0f766e; /* teal-700 */
   font-weight: 600;
-  text-decoration: underline dotted #0d9488; /* teal-600 */
-  text-decoration-thickness: 3px;
-  text-underline-offset: 4px;
+  background: #ccfbf1; /* teal-100 */
+  border-radius: 3px;
 }
 
 /* Tutorial mode (src/tutorial): the coach's flashing box, tools sliding in, the "No goals" celebration, and the
