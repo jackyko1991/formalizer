@@ -10,8 +10,28 @@ import { EditorView } from "@codemirror/view";
 import { go, RichText, useLang } from "@learnkit/web";
 import CodeMirror from "@uiw/react-codemirror";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { H, layout } from "../graphLayout";
-import { mergeFiles, onAgentFiles, setAgentContext, type AgentContext } from "../agent/bus";
+import { mergeFiles, onAgentAnswer, onAgentFiles, requestAgentOpen, setAgentContext, type AgentContext } from "../agent/bus";
+import { band } from "../tutorial/mirror";
+import {
+  acceptAi,
+  AI_MARK,
+  aiPrompt,
+  declAtLine,
+  declLines,
+  declSpans,
+  findDecl,
+  parseAiLinks,
+  resolveLinks,
+  sentenceAtLine,
+  sentences,
+  toggleLine,
+  type DeclLinks,
+  type Resolved,
+} from "./links";
+import { DownloadIcon, EnlargeIcon } from "./icons";
+import { linkMarks } from "./linkMarks";
 import { cancelJob, followJob, listJobs, startJob, type JobInfo } from "../jobs";
 import { proEnabled } from "../checkers";
 import CheckersPanel from "../CheckersPanel";
@@ -22,7 +42,18 @@ import { sorryMarks } from "../sorryMarks";
 import TwoLayerMap from "../TwoLayerMap";
 import { showcaseOf } from "../routes";
 import { blueprintGraph, counts, declAt, exportZip, lostSince, place, progressOf, summarize, workable, type Meta, type Placed } from "./model";
-import { ago, download, openProject, startTemplate, templateMeta, useProjects, type Listed } from "./projects";
+import {
+  ago,
+  download,
+  notifyProjectsChanged,
+  onFocusDecl,
+  openProject,
+  startTemplate,
+  takeFocusDecl,
+  templateMeta,
+  useProjects,
+  type Listed,
+} from "./projects";
 import { browserStore, diskStore, protectBrowserStorage, showcaseStore, type SavedInfo, type Store } from "./store";
 import { finishedFiles, SHOWCASES, TEMPLATES, type Template } from "./templates";
 
@@ -31,6 +62,13 @@ const RESEARCH_EXTENSIONS = [...lean(), sorryMarks(-1, null), EditorView.lineWra
 
 type L = readonly [string, string];
 const RESUME_AFTER_MS = 30 * 60 * 1000;
+/** the "Link text and code" switch, remembered per browser */
+const LINKS_KEY = "formalizer.research.links";
+/** the blueprint column's width (dragged), remembered per browser */
+const BLUEPRINT_W_KEY = "formalizer.research.blueprintWidth";
+const BP_MIN = 220;
+const BP_MAX = 640;
+const BP_DEFAULT = 280;
 
 const STATUS: Record<Decl["status"], { glyph: string; cls: string; fill: string; label: L }> = {
   proved: {
@@ -332,6 +370,38 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
   const [resume, setResume] = useState<{ decl: string; away: number } | null>(null);
   const [protectedStorage, setProtected] = useState<boolean | null>(null);
   const [view, setView] = useState<"graph" | "outline">("graph");
+  // the blueprint: enlarged over the whole window, and its column's width (dragged on wide screens, remembered)
+  const [bpBig, setBpBig] = useState(false);
+  const [bpWidth, setBpWidth] = useState(() => {
+    try {
+      const w = Number(localStorage.getItem(BLUEPRINT_W_KEY));
+      return w >= BP_MIN && w <= BP_MAX ? w : BP_DEFAULT;
+    } catch {
+      return BP_DEFAULT;
+    }
+  });
+  const saveBpWidth = (w: number) => {
+    setBpWidth(w);
+    try {
+      localStorage.setItem(BLUEPRINT_W_KEY, String(w));
+    } catch {
+      /* storage blocked: the width holds for this visit */
+    }
+  };
+  function startBpResize(e: React.PointerEvent) {
+    e.preventDefault();
+    const x0 = e.clientX;
+    const w0 = bpWidth;
+    let w = w0;
+    const move = (ev: PointerEvent) => setBpWidth((w = Math.min(BP_MAX, Math.max(BP_MIN, w0 + ev.clientX - x0))));
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      saveBpWidth(w);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  }
   const [renaming, setRenaming] = useState<string | null>(null);
   const [sel, setSel] = useState<{ cursor: AgentContext["cursor"]; selection?: AgentContext["selection"] }>({ cursor: undefined });
   const [, tick] = useState(0);
@@ -345,14 +415,15 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
     if (runner === "checking") return;
     if (showcase) {
       // a finished demo: read-only, nothing saved
-      const m = templateMeta(showcase, pick);
       const shown = finishedFiles(showcase);
+      const m = templateMeta(showcase, pick, shown);
       loaded.current = false;
       setStore(showcaseStore(shown, m));
       setFiles(shown);
       setMeta(m);
-      setActive(shown[shown.length - 1]?.name ?? "");
-      setSelected(m.main);
+      const want = takeFocusDecl(id) ?? m.main;
+      setActive(findDecl(shown, want)?.file ?? shown[shown.length - 1]?.name ?? "");
+      setSelected(want);
       return;
     }
     void (async () => {
@@ -377,9 +448,10 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
         main: got.meta.main ?? "",
       };
       if (m.lastVisit && Date.now() - m.lastVisit > RESUME_AFTER_MS && m.lastDecl) setResume({ decl: m.lastDecl, away: m.lastVisit });
-      setMeta({ ...m, lastVisit: Date.now() });
-      setActive(got.files.find((f) => m.lastDecl && f.code.includes(m.lastDecl))?.name ?? got.files[got.files.length - 1]?.name ?? "");
-      setSelected(m.lastDecl ?? m.main ?? null);
+      const want = takeFocusDecl(id) ?? m.lastDecl ?? m.main ?? null;
+      setMeta({ ...m, lastVisit: Date.now(), lastDecl: want ?? undefined });
+      setActive((want && findDecl(got.files, want)?.file) || got.files[got.files.length - 1]?.name || "");
+      setSelected(want);
       if (s.kind === "browser") setProtected(await protectBrowserStorage());
     })();
     return () => {
@@ -399,6 +471,7 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
       await store.put(id, f, m);
       setSavedAt(Date.now());
       setSaveError(false);
+      notifyProjectsChanged(); // the project panel's tree shows the new statuses and files
     } catch {
       setSaveError(true);
     }
@@ -569,7 +642,13 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
   useEffect(() => {
     if (!result?.decls || showcase) return;
     const p = progressOf(result.decls);
-    setMeta((m) => (!m || (m.progress?.proved === p.proved && m.progress?.total === p.total) ? m : { ...m, progress: p }));
+    const statuses = Object.fromEntries(result.decls.map((d) => [d.name, d.status]));
+    setMeta((m) =>
+      !m ||
+      (m.progress?.proved === p.proved && m.progress?.total === p.total && JSON.stringify(m.statuses ?? {}) === JSON.stringify(statuses))
+        ? m
+        : { ...m, progress: p, statuses },
+    );
   }, [result, showcase]);
 
   const placed: Placed[] = useMemo(() => (result?.decls ? place(result.decls, result.where) : []), [result]);
@@ -621,11 +700,143 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
     setSelected(name);
     setMeta((m) => m && { ...m, lastDecl: name });
     const d = byName.get(name);
-    if (!d) return;
-    jump.current = d.fileLine;
-    if (d.file !== active) setActive(d.file);
-    else scrollTo(d.fileLine);
+    const span = d ? null : findDecl(files, name); // not checked yet: found in the text
+    const at = d ? { file: d.file, line: d.fileLine } : span && { file: span.file, line: span.from };
+    if (!at) return;
+    jump.current = at.line;
+    if (at.file !== active) setActive(at.file);
+    else scrollTo(at.line);
   }
+  // a lemma picked in the project panel's tree while this project is open
+  const selectRef = useRef(selectDecl);
+  selectRef.current = selectDecl;
+  useEffect(() => onFocusDecl(id, (n) => selectRef.current(n)), [id]);
+
+  // --- text ↔ code links (links.ts): the selected declaration's sentences, each tied to its Lean lines
+  const [linkOn, setLinkOnState] = useState(() => {
+    try {
+      return localStorage.getItem(LINKS_KEY) !== "off";
+    } catch {
+      return true;
+    }
+  });
+  const setLinkOn = (on: boolean) => {
+    setLinkOnState(on);
+    try {
+      localStorage.setItem(LINKS_KEY, on ? "on" : "off");
+    } catch {
+      /* storage blocked: the switch holds for this visit */
+    }
+  };
+  const [hand, setHand] = useState(false);
+  const [sentHover, setSentHover] = useState<number | null>(null);
+  const [sentPin, setSentPin] = useState<number | null>(null);
+  const [cursorSent, setCursorSent] = useState<number | null>(null);
+  const [handLine, setHandLine] = useState<number | null>(null);
+  const [aiState, setAiState] = useState<{ decl: string; state: "asked" | "none" } | null>(null);
+  const span = useMemo(() => (selected ? findDecl(files, selected) : null), [files, selected]);
+  const spanLines = useMemo(
+    () => (span ? declLines(files.find((f) => f.name === span.file)?.code ?? "", span) : []),
+    [files, span],
+  );
+  const projectNames = useMemo(() => files.flatMap((f) => declSpans(f.code).map((d) => d.name)), [files]);
+  const noteText = selected ? (meta?.notes[selected] ?? "") : "";
+  const sents = useMemo(() => sentences(noteText), [noteText]);
+  const declLinks = selected ? meta?.links?.[selected] : undefined;
+  const resolved: Resolved[] = useMemo(
+    () => (linkOn && span && selected ? resolveLinks(sents, { name: selected, head: span.head, lines: spanLines }, declLinks, projectNames) : []),
+    [linkOn, span, selected, sents, spanLines, declLinks, projectNames],
+  );
+  // a new declaration or text: nothing pointed at, nothing half-tied
+  useEffect(() => {
+    setSentPin(null);
+    setSentHover(null);
+    setCursorSent(null);
+    setHandLine(null);
+  }, [selected]);
+  const activeSent = sentHover ?? sentPin ?? cursorSent;
+  const marksHere = linkOn && !!span && span.file === active;
+  const setDeclLinks = (fn: (l: DeclLinks | undefined) => DeclLinks | undefined) =>
+    selected &&
+    setMeta((m) => {
+      if (!m) return m;
+      const next = fn(m.links?.[selected]);
+      const links = { ...m.links };
+      if (next && (next.manual?.length || next.ai?.length)) links[selected] = next;
+      else delete links[selected];
+      return { ...m, links };
+    });
+  const tie = (sentence: number, line: number) => {
+    if (!span || line < span.from || line > span.to) return;
+    setDeclLinks((l) => toggleLine(l, sents[sentence], resolved[sentence]?.lines ?? [], line, spanLines));
+  };
+  const onLinkLine = (line: number) => {
+    if (sentPin !== null) tie(sentPin, line);
+    else setHandLine((h) => (h === line ? null : line));
+  };
+  const onSentence = (i: number) => {
+    if (hand && handLine !== null) return tie(i, handLine);
+    setSentPin((p) => (p === i ? null : i));
+    if (span && span.file !== active) {
+      jump.current = resolved[i]?.lines[0] ?? span.from;
+      setActive(span.file);
+    }
+  };
+  const onLine = useRef(onLinkLine);
+  onLine.current = onLinkLine;
+  const linkExt = useMemo(() => {
+    if (!marksHere) return [];
+    const byLine = new Map<number, number>();
+    const firsts = new Map<number, number>();
+    for (const l of spanLines) {
+      const s = sentenceAtLine(resolved, l.n);
+      if (s !== null) byLine.set(l.n, s);
+    }
+    resolved.forEach((r, i) => r.lines[0] !== undefined && !firsts.has(r.lines[0]) && firsts.set(r.lines[0], i));
+    return [
+      linkMarks({
+        byLine,
+        firsts,
+        active: activeSent,
+        picked: new Set(hand && handLine !== null ? [handLine] : hand && sentPin !== null ? (resolved[sentPin]?.lines ?? []) : []),
+        hand,
+        onBadge: (i) => setSentPin(i),
+        onLine: (n) => onLine.current(n),
+        onPoint: (n) => setCursorSent(byLine.get(n) ?? null),
+      }),
+    ];
+  }, [marksHere, spanLines, resolved, activeSent, hand, handLine, sentPin]);
+  const extensions = useMemo(() => [...RESEARCH_EXTENSIONS, ...linkExt], [linkExt]);
+  // a sentence pointed at: bring its first line into view
+  const pointedSent = sentHover ?? sentPin;
+  useEffect(() => {
+    const v = editor.current;
+    const n = pointedSent === null ? undefined : resolved[pointedSent]?.lines[0];
+    if (!v || !n || !marksHere) return;
+    v.dispatch({ effects: EditorView.scrollIntoView(v.state.doc.line(Math.min(n, v.state.doc.lines)).from, { y: "nearest" }) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pointedSent]);
+  // ask the reader's agent for links (in the Ask AI panel); its answer comes back here when the turn ends
+  function askAiLinks() {
+    if (!span || !selected || !sents.length) return;
+    setAiState({ decl: selected, state: "asked" });
+    requestAgentOpen(aiPrompt({ name: selected, file: span.file, lines: spanLines }, sents, lang), { send: true });
+  }
+  useEffect(
+    () =>
+      onAgentAnswer((a) => {
+        if (a.target !== `project/${id}` || !a.message.includes(AI_MARK)) return;
+        const name = a.message.match(new RegExp(`"${AI_MARK}": \\{"decl": "([^"]+)"`))?.[1];
+        const { files: fs, meta: m } = latest.current;
+        const d = name ? findDecl(fs, name) : null;
+        if (!name || !m || !d) return;
+        const lines = declLines(fs.find((f) => f.name === d.file)!.code, d);
+        const got = parseAiLinks(a.text, { name, lines }, sentences(m.notes[name] ?? ""));
+        setAiState(got ? null : { decl: name, state: "none" });
+        if (got) setMeta((x) => x && { ...x, links: { ...x.links, [name]: { ...x.links?.[name], ai: got } } });
+      }),
+    [id],
+  );
   function scrollTo(line: number) {
     const v = editor.current;
     if (!v) return;
@@ -650,7 +861,11 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
   }
   async function exportSaved() {
     const got = store && (await store.loadSaved(id));
-    if (got) download(exportZip(got.files, got.meta), `${id}-saved.zip`);
+    if (got) download(exportZip(got.files, got.meta, id, lang), `${id}-saved.zip`);
+  }
+  /** the working copy as a runnable Lean project (model.ts exportFiles) */
+  function exportProject() {
+    if (meta) download(exportZip(files, meta, showcase ? showcase.id : id, lang), `${showcase ? showcase.id : id}.zip`);
   }
   async function restore() {
     if (!store || !saved) return;
@@ -799,11 +1014,12 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
           {pick(["Save version", "存成版本"])}
         </button>
         <button
-          onClick={() => download(exportZip(files, meta), `${id}.zip`)}
-          className="rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-50"
+          onClick={exportProject}
+          title={pick(["A Lean project you can build anywhere (lake build), with a README", "可以在任何地方建置（lake build）的 Lean 專案，附 README"])}
+          className="flex items-center gap-1 rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-50"
           data-testid="export"
         >
-          {pick(["Export", "匯出"])}
+          <DownloadIcon /> {pick(["Export", "匯出"])}
         </button>
       </div>
 
@@ -850,12 +1066,15 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
         </div>
       )}
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 overflow-auto xl:grid-cols-[minmax(240px,300px)_minmax(0,1fr)_minmax(260px,340px)] xl:overflow-hidden">
+      <div
+        className="grid min-h-0 flex-1 grid-cols-1 overflow-auto xl:grid-cols-[var(--bp-w)_minmax(0,1fr)_minmax(260px,340px)] xl:overflow-hidden"
+        style={{ "--bp-w": `${bpWidth}px` } as React.CSSProperties}
+      >
         {/* blueprint */}
-        <aside className="flex min-h-0 flex-col border-b border-gray-200 bg-white xl:border-r xl:border-b-0" data-testid="blueprint">
+        <aside className="relative flex min-h-0 flex-col border-b border-gray-200 bg-white xl:border-r xl:border-b-0" data-testid="blueprint">
           <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
             <span className="text-xs font-semibold tracking-wide text-gray-500 uppercase">{pick(["Blueprint", "藍圖"])}</span>
-            <div className="flex gap-1 text-xs">
+            <div className="flex items-center gap-1 text-xs">
               {(["graph", "outline"] as const).map((v) => (
                 <button
                   key={v}
@@ -865,9 +1084,43 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
                   {v === "graph" ? pick(["Graph", "圖"]) : pick(["Outline", "清單"])}
                 </button>
               ))}
+              <button
+                onClick={() => setBpBig(true)}
+                title={pick(["Enlarge the blueprint (Esc to close)", "放大藍圖（按 Esc 關閉）"])}
+                aria-label={pick(["Enlarge the blueprint", "放大藍圖"])}
+                className="ml-1 rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                data-testid="blueprint-enlarge"
+              >
+                <EnlargeIcon />
+              </button>
             </div>
           </div>
-          <div className="min-h-40 flex-1 overflow-auto p-2">
+          {/* drag to widen the column (wide screens); remembered */}
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label={pick(["Drag to resize the blueprint", "拖曳調整藍圖寬度"])}
+            onPointerDown={startBpResize}
+            onDoubleClick={() => saveBpWidth(BP_DEFAULT)}
+            className="absolute top-0 right-0 z-10 hidden h-full w-1.5 translate-x-1/2 cursor-col-resize hover:bg-teal-300/60 xl:block"
+            data-testid="blueprint-resize"
+          />
+          <div className="h-72 flex-none resize-y overflow-auto p-2 xl:h-auto xl:min-h-40 xl:flex-1 xl:resize-none">
+            {bpBig && (
+              <BlueprintOverlay onClose={() => setBpBig(false)} view={view} setView={setView}>
+                {!result?.decls ? (
+                  <p className="p-6 text-sm text-gray-500">
+                    {ready
+                      ? pick(["Checking with Lean…", "正在用 Lean 檢查……"])
+                      : pick(["Start the runner to see the blueprint.", "啟動執行器即可看到藍圖。"])}
+                  </p>
+                ) : view === "graph" ? (
+                  <BlueprintGraph decls={result.decls} main={meta.main} selected={selected} onSelect={(n) => (selectDecl(n), setBpBig(false))} big />
+                ) : (
+                  <BlueprintOutline placed={placed} selected={selected} onSelect={(n) => (selectDecl(n), setBpBig(false))} big />
+                )}
+              </BlueprintOverlay>
+            )}
             {!result?.decls ? (
               <p className="p-2 text-xs text-gray-500">
                 {ready
@@ -877,20 +1130,7 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
             ) : view === "graph" ? (
               <BlueprintGraph decls={result.decls} main={meta.main} selected={selected} onSelect={selectDecl} />
             ) : (
-              <ul className="space-y-0.5 text-sm">
-                {placed.map((d) => (
-                  <li key={d.name}>
-                    <button
-                      onClick={() => selectDecl(d.name)}
-                      className={`flex w-full items-center gap-2 rounded px-2 py-1 text-left font-mono text-xs ${selected === d.name ? "bg-teal-50" : "hover:bg-gray-50"}`}
-                    >
-                      <span className={`w-4 shrink-0 rounded text-center ring-1 ${STATUS[d.status].cls}`}>{STATUS[d.status].glyph}</span>
-                      <span className="truncate">{d.name}</span>
-                      <span className="ml-auto shrink-0 text-[10px] text-gray-400">{d.file}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <BlueprintOutline placed={placed} selected={selected} onSelect={selectDecl} />
             )}
           </div>
           {result?.decls && (
@@ -952,6 +1192,53 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
             {selected === meta.main && (
               <span className="text-xs text-gray-500">{pick(["main theorem · its statement is fixed", "主定理 · 陳述固定不變"])}</span>
             )}
+            {/* text ↔ code links: on / off (remembered), by hand, from the AI */}
+            <span className="ml-auto flex flex-wrap items-center justify-end gap-1.5 text-xs">
+              <button
+                role="switch"
+                aria-checked={linkOn}
+                onClick={() => (setLinkOn(!linkOn), setHand(false))}
+                title={pick([
+                  "Each sentence of the text and the Lean lines that do it share a colour and a number: point at one to light up the other.",
+                  "文字的每個句子和做這件事的 Lean 行共用一個顏色和編號：指向一邊，另一邊就會亮起來。",
+                ])}
+                className="flex items-center gap-1.5 rounded-full px-2 py-0.5 text-gray-700 hover:bg-gray-100"
+                data-testid="link-switch"
+              >
+                <span className={`relative inline-block h-4 w-7 rounded-full transition-colors ${linkOn ? "bg-teal-600" : "bg-gray-300"}`}>
+                  <span className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all ${linkOn ? "left-3.5" : "left-0.5"}`} />
+                </span>
+                ⇄ {pick(["Link text and code", "連結文字與程式碼"])}
+              </button>
+              {linkOn && !showcase && span && sents.length > 0 && (
+                <>
+                  <button
+                    onClick={() => (setHand(!hand), setHandLine(null))}
+                    aria-pressed={hand}
+                    title={pick([
+                      "Click a sentence, then the code lines it should be tied to (click again to untie). Or a line first, then sentences.",
+                      "點一個句子，再點它該連到的程式碼行（再點一次取消）。也可以先點一行，再點句子。",
+                    ])}
+                    className={`rounded-md border px-2 py-0.5 ${hand ? "border-teal-600 bg-teal-50 font-medium text-teal-900" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}
+                    data-testid="link-hand"
+                  >
+                    ✋ {pick(["Link by hand", "手動連結"])}
+                  </button>
+                  <button
+                    onClick={askAiLinks}
+                    disabled={aiState?.state === "asked" && aiState.decl === selected}
+                    title={pick([
+                      "Your AI agent reads this text and code and proposes which sentence goes with which lines; you can keep or clear them.",
+                      "你的 AI 代理讀這段文字和程式碼，提出每個句子對應哪幾行；你可以保留或清除。",
+                    ])}
+                    className="rounded-md border border-gray-300 px-2 py-0.5 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                    data-testid="link-ai"
+                  >
+                    ✨ {aiState?.state === "asked" && aiState.decl === selected ? pick(["Asking the AI…", "正在問 AI……"]) : pick(["Ask AI to link", "請 AI 連結"])}
+                  </button>
+                </>
+              )}
+            </span>
           </div>
           <div className="grid min-h-0 flex-1 gap-3 px-4 pb-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
             <InformalNote
@@ -959,9 +1246,35 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
               value={note}
               disabled={!selected || !!showcase}
               onChange={(v) => selected && setMeta((m) => m && { ...m, notes: { ...m.notes, [selected]: v } })}
+              linked={
+                linkOn && span && sents.length
+                  ? {
+                      sents,
+                      resolved,
+                      file: span.file,
+                      active: activeSent,
+                      pinned: sentPin,
+                      hand,
+                      handLine,
+                      onHover: setSentHover,
+                      onClick: onSentence,
+                      ai:
+                        !showcase && declLinks?.ai?.length
+                          ? {
+                              count: declLinks.ai.length,
+                              accept: () => setDeclLinks((l) => acceptAi(l)),
+                              clear: () => setDeclLinks((l) => (l?.manual?.length ? { manual: l.manual } : undefined)),
+                            }
+                          : null,
+                      aiNone: aiState?.state === "none" && aiState.decl === selected,
+                      clearHand: !showcase && !!declLinks?.manual?.length ? () => setDeclLinks((l) => (l?.ai?.length ? { ai: l.ai } : undefined)) : null,
+                    }
+                  : null
+              }
             />
             <div className="flex min-h-64 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white">
-              <div className="flex shrink-0 items-end gap-0.5 border-b border-gray-200 bg-gray-50 px-2 pt-1.5">
+              <div className="flex shrink-0 items-end gap-1 border-b border-gray-200 bg-gray-50 px-2 pt-1.5">
+                <div className="flex min-w-0 flex-1 items-end gap-0.5 overflow-x-auto">
                 {files.map((f) => (
                   <button
                     key={f.name}
@@ -983,6 +1296,20 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
                   title={pick(["Add a file (checked before the main file)", "新增檔案（在主檔之前檢查）"])}
                 >
                   +
+                </button>
+                </div>
+                <button
+                  onClick={exportProject}
+                  className="mb-1 flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs text-gray-600 hover:bg-gray-200"
+                  title={pick([
+                    "Download the project as a Lean project you can build anywhere (lake build), with a README holding the text beside the Lean. Import it back from the Research list.",
+                    "把專案下載成在任何地方都能建置（lake build）的 Lean 專案，附上 README，文字與 Lean 並排。之後可以從研究清單匯回來。",
+                  ])}
+                  aria-label={pick(["Export the project", "匯出專案"])}
+                  data-testid="export-tabs"
+                >
+                  <DownloadIcon className="h-3.5 w-3.5" />
+                  <span className="hidden 2xl:inline">{pick(["Export", "匯出"])}</span>
                 </button>
               </div>
               <div className="min-h-0 flex-1 overflow-auto">
@@ -1011,13 +1338,16 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
                           }
                         : undefined,
                     });
-                    const d = declAt(placed, active, line);
+                    // the declaration under the cursor (placed by Lean, else found in the text)
+                    const d = declAt(placed, active, line) ?? declAtLine(activeFile?.code ?? "", line);
                     if (d && d.name !== selected) {
                       setSelected(d.name);
                       setMeta((m) => m && { ...m, lastDecl: d.name });
                     }
+                    // the sentence this line does lights up
+                    setCursorSent(marksHere && (!d || d.name === selected) ? sentenceAtLine(resolved, line) : null);
                   }}
-                  extensions={RESEARCH_EXTENSIONS}
+                  extensions={extensions}
                   basicSetup={{ foldGutter: false }}
                   className="font-mono text-sm"
                   data-testid="research-editor"
@@ -1221,8 +1551,43 @@ function ShowcaseBanner({ template }: { template: Template }) {
   );
 }
 
-/** The informal side: Markdown with maths, edited in place, shown rendered when not editing. */
-function InformalNote({ value, onChange, disabled }: { value: string; onChange: (v: string) => void; disabled: boolean }) {
+interface Linked {
+  sents: string[];
+  resolved: Resolved[];
+  file: string;
+  active: number | null;
+  pinned: number | null;
+  hand: boolean;
+  handLine: number | null;
+  onHover: (i: number | null) => void;
+  onClick: (i: number) => void;
+  /** the AI's proposal, to keep (as the reader's own) or clear */
+  ai: { count: number; accept: () => void; clear: () => void } | null;
+  /** the AI answered without links in the expected shape */
+  aiNone: boolean;
+  /** forget the links made by hand (back to the AI's and the automatic ones) */
+  clearHand: (() => void) | null;
+}
+
+const SOURCE: Record<"manual" | "ai" | "auto", readonly [string, string]> = {
+  manual: ["by hand", "手動"],
+  ai: ["AI", "AI"],
+  auto: ["automatic", "自動"],
+};
+
+/** The informal side: Markdown with maths, edited in place, shown rendered when not editing. With links on, the
+ *  text as its sentences, each sharing a colour and number with its Lean lines (the problems' mirror look). */
+function InformalNote({
+  value,
+  onChange,
+  disabled,
+  linked,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  disabled: boolean;
+  linked?: Linked | null;
+}) {
   const { pick } = useLang();
   const [editing, setEditing] = useState(false);
   return (
@@ -1235,6 +1600,7 @@ function InformalNote({ value, onChange, disabled }: { value: string; onChange: 
           </button>
         )}
       </div>
+      {linked && !editing && <LinkedSentences linked={linked} />}
       {editing ? (
         <textarea
           autoFocus
@@ -1243,7 +1609,7 @@ function InformalNote({ value, onChange, disabled }: { value: string; onChange: 
           className="min-h-0 flex-1 resize-none p-3 font-mono text-xs leading-relaxed outline-none"
           placeholder={pick(["The idea of this step, in words and $\\LaTeX$ maths", "這一步的想法，用文字與 $\\LaTeX$ 數學"])}
         />
-      ) : (
+      ) : linked ? null : (
         <div
           role="button"
           tabIndex={disabled ? -1 : 0}
@@ -1262,17 +1628,231 @@ function InformalNote({ value, onChange, disabled }: { value: string; onChange: 
   );
 }
 
-/** The blueprint graph: the main theorem on the left, what it uses to the right, coloured by status; a stable layout. */
+/** The text as its sentences, each tied to Lean lines (point at one: its lines light up; click: it stays lit). */
+function LinkedSentences({ linked: k }: { linked: Linked }) {
+  const { pick } = useLang();
+  const span = (ls: number[]) => {
+    if (!ls.length) return "";
+    const runs: string[] = [];
+    let a = ls[0];
+    let b = ls[0];
+    for (const n of [...ls.slice(1), Infinity]) {
+      if (n === b + 1) b = n;
+      else {
+        runs.push(a === b ? `${a}` : `${a}–${b}`);
+        a = b = n;
+      }
+    }
+    return runs.join(", ");
+  };
+  return (
+    <div className="min-h-0 flex-1 space-y-1.5 overflow-auto p-2.5" data-testid="linked-text">
+      <p className="rounded-md bg-teal-50/70 px-2.5 py-1 text-[11px] leading-snug text-teal-900">
+        {k.hand
+          ? k.handLine !== null
+            ? pick([`Line ${k.handLine} picked: click the sentences to tie it to (or untie).`, `已選第 ${k.handLine} 行：點要連到的句子（再點一次取消）。`])
+            : pick([
+                "Linking by hand: click a sentence, then the code lines it does (click again to untie). Or a line first, then sentences.",
+                "手動連結：點一個句子，再點它對應的程式碼行（再點一次取消）。也可以先點一行，再點句子。",
+              ])
+          : pick(["⇄ Point at a sentence: its Lean lines light up, and back.", "⇄ 指向句子，它的 Lean 行就會亮起來；反過來也一樣。"])}
+      </p>
+      {k.ai && (
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md bg-violet-50 px-2.5 py-1 text-[11px] text-violet-950" data-testid="ai-links">
+          <span className="flex-1">
+            ✨ {pick([`The AI proposed links for ${k.ai.count} sentence(s), marked “AI”.`, `AI 提出了 ${k.ai.count} 個句子的連結，標成「AI」。`])}
+          </span>
+          <button onClick={k.ai.accept} className="font-medium text-violet-800 hover:underline" data-testid="ai-accept">
+            {pick(["Keep them", "保留"])}
+          </button>
+          <button onClick={k.ai.clear} className="text-violet-800 hover:underline" data-testid="ai-clear">
+            {pick(["Clear", "清除"])}
+          </button>
+        </p>
+      )}
+      {k.aiNone && (
+        <p className="rounded-md bg-amber-50 px-2.5 py-1 text-[11px] text-amber-900">
+          {pick([
+            "The AI's answer had no links in the expected form: see the AI panel, or ask again.",
+            "AI 的回答裡沒有照格式的連結：請看 AI 面板，或再問一次。",
+          ])}
+        </p>
+      )}
+      <ol className="space-y-1.5">
+        {k.sents.map((s, i) => {
+          const r = k.resolved[i] ?? { lines: [], source: null };
+          const on = k.active === i;
+          const tied = k.handLine !== null && r.lines.includes(k.handLine);
+          return (
+            <li key={i}>
+              <div
+                role="button"
+                tabIndex={0}
+                aria-pressed={k.pinned === i}
+                data-testid="linked-sentence"
+                data-source={r.source ?? "none"}
+                onMouseEnter={() => k.onHover(i)}
+                onMouseLeave={() => k.onHover(null)}
+                onFocus={() => k.onHover(i)}
+                onBlur={() => k.onHover(null)}
+                onClick={() => k.onClick(i)}
+                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), k.onClick(i))}
+                className="flex cursor-pointer gap-2 rounded-md border-l-4 bg-white px-2.5 py-1.5 text-sm leading-relaxed text-gray-800 ring-1 ring-gray-200 transition-shadow outline-none focus-visible:ring-2 focus-visible:ring-(--lk-accent)"
+                style={{
+                  borderLeftColor: r.lines.length ? band(i).line : "#d1d5db",
+                  background: on || k.pinned === i || tied ? band(i).bg : undefined,
+                  boxShadow: on || (k.hand && k.pinned === i) ? `0 0 0 1px ${band(i).line}` : undefined,
+                }}
+              >
+                <span
+                  className="mt-1 inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded px-1 text-[10px] font-bold text-white"
+                  style={{ background: r.lines.length ? band(i).line : "#9ca3af" }}
+                  aria-hidden
+                >
+                  {i + 1}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <RichText text={s} />
+                  <span className="mt-0.5 block text-[10px] text-gray-500">
+                    {r.lines.length
+                      ? pick([`${k.file}, line ${span(r.lines)}`, `${k.file} 第 ${span(r.lines)} 行`])
+                      : pick(["not tied to a line", "沒有連到任何一行"])}
+                    {r.source && (
+                      <span
+                        className={`ml-1.5 rounded px-1 ${r.source === "manual" ? "bg-teal-100 text-teal-900" : r.source === "ai" ? "bg-violet-100 text-violet-900" : "bg-gray-100 text-gray-600"}`}
+                      >
+                        {pick(SOURCE[r.source])}
+                      </span>
+                    )}
+                  </span>
+                </span>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+      {k.clearHand && (
+        <button onClick={k.clearHand} className="px-1 text-[11px] text-gray-500 hover:text-gray-800 hover:underline" data-testid="clear-hand">
+          {pick(["Forget the links made by hand", "清除手動做的連結"])}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** The blueprint over the whole window (like the maps' ⤢): drawn large, still clickable; Esc or ✕ closes it. */
+function BlueprintOverlay({
+  onClose,
+  view,
+  setView,
+  children,
+}: {
+  onClose: () => void;
+  view: "graph" | "outline";
+  setView: (v: "graph" | "outline") => void;
+  children: React.ReactNode;
+}) {
+  const { pick } = useLang();
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, [onClose]);
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={pick(["Blueprint", "藍圖"])}
+      className="fixed inset-0 z-50 flex flex-col bg-white"
+      data-testid="blueprint-overlay"
+    >
+      <div className="flex items-center gap-3 border-b border-gray-200 px-4 py-2">
+        <span className="text-sm font-semibold text-gray-900">{pick(["Blueprint", "藍圖"])}</span>
+        <span className="hidden text-xs text-gray-500 sm:inline">
+          {pick([
+            "What uses what: the main theorem on the left, the lemmas it rests on to the right, each coloured by what Lean says. Click a lemma to open it.",
+            "誰用到誰：主定理在左，它依賴的引理在右，顏色是 Lean 判定的狀態。點一條引理就能打開它。",
+          ])}
+        </span>
+        <span className="ml-auto flex gap-1 text-xs">
+          {(["graph", "outline"] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className={`rounded px-2 py-0.5 ${view === v ? "bg-gray-100 font-medium text-gray-900" : "text-gray-500"}`}
+            >
+              {v === "graph" ? pick(["Graph", "圖"]) : pick(["Outline", "清單"])}
+            </button>
+          ))}
+        </span>
+        <button
+          onClick={onClose}
+          aria-label={pick(["Close", "關閉"])}
+          title={pick(["Close (Esc)", "關閉（Esc）"])}
+          className="rounded px-2 py-0.5 text-lg leading-none text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+          data-testid="blueprint-close"
+        >
+          ✕
+        </button>
+      </div>
+      <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-6">{children}</div>
+      <p className="flex flex-wrap justify-center gap-x-4 gap-y-1 border-t border-gray-100 px-4 py-2 text-xs text-gray-600">
+        {(["proved", "depends", "sorry", "error", "def"] as const).map((s) => (
+          <span key={s}>
+            <span className={`mr-1 inline-block w-4 rounded text-center ring-1 ${STATUS[s].cls}`}>{STATUS[s].glyph}</span>
+            <RichText text={pick(STATUS[s].label)} />
+          </span>
+        ))}
+      </p>
+    </div>,
+    document.body,
+  );
+}
+
+/** The blueprint as a list: each declaration with its status and file. */
+function BlueprintOutline({
+  placed,
+  selected,
+  onSelect,
+  big = false,
+}: {
+  placed: Placed[];
+  selected: string | null;
+  onSelect: (n: string) => void;
+  big?: boolean;
+}) {
+  return (
+    <ul className={`space-y-0.5 ${big ? "w-full max-w-2xl self-start text-base" : "text-sm"}`}>
+      {placed.map((d) => (
+        <li key={d.name}>
+          <button
+            onClick={() => onSelect(d.name)}
+            className={`flex w-full items-center gap-2 rounded px-2 py-1 text-left font-mono ${big ? "text-sm" : "text-xs"} ${selected === d.name ? "bg-teal-50" : "hover:bg-gray-50"}`}
+          >
+            <span className={`w-4 shrink-0 rounded text-center ring-1 ${STATUS[d.status].cls}`}>{STATUS[d.status].glyph}</span>
+            <span className="truncate">{d.name}</span>
+            <span className="ml-auto shrink-0 text-[10px] text-gray-400">{d.file}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** The blueprint graph: the main theorem on the left, what it uses to the right, coloured by status; a stable layout.
+ *  `big`: enlarged, filling its box (up to about three times its natural size). */
 function BlueprintGraph({
   decls,
   main,
   selected,
   onSelect,
+  big = false,
 }: {
   decls: Decl[];
   main: string;
   selected: string | null;
   onSelect: (n: string) => void;
+  big?: boolean;
 }) {
   const g = useMemo(() => blueprintGraph(decls, main), [decls, main]);
   const { pos, width, height } = useMemo(() => layout(g), [g]);
@@ -1280,9 +1860,14 @@ function BlueprintGraph({
   return (
     <svg
       viewBox={`0 0 ${width} ${height}`}
-      style={{ width: "100%", minWidth: Math.min(width, 260), maxWidth: width }}
+      style={
+        big
+          ? { width: "100%", height: "100%", maxWidth: width * 3, maxHeight: height * 3 }
+          : { width: "100%", minWidth: Math.min(width, 260), maxWidth: width * 1.6 }
+      }
       role="img"
       aria-label="blueprint"
+      data-testid={big ? "blueprint-big" : undefined}
     >
       {g.edges.map((e, i) => {
         const a = pos.get(e.from)!;

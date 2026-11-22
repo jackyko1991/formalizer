@@ -53,14 +53,35 @@ export function subscribeAgentContext(l: () => void): () => void {
  *  request waits until the panel is on screen (it appears on the Problems page). */
 export const AGENT_OPEN_EVENT = "formalizer:agent-open";
 let openRequest: string | null = null;
-export function requestAgentOpen(draft = ""): void {
+let sendRequest = false;
+/** `send`: send the message at once when an agent is connected (else it waits in the box, to send by hand). */
+export function requestAgentOpen(draft = "", { send = false }: { send?: boolean } = {}): void {
   openRequest = draft;
+  sendRequest = send;
   window.dispatchEvent(new Event(AGENT_OPEN_EVENT));
 }
-export function takeAgentOpen(): string | null {
-  const d = openRequest;
+export function takeAgentOpen(): { draft: string; send: boolean } | null {
+  if (openRequest === null) return null;
+  const d = { draft: openRequest, send: sendRequest };
   openRequest = null;
+  sendRequest = false;
   return d;
+}
+
+/** The agent's answer text when a turn ends, for pages that asked something they read back (the research
+ *  workspace's "Ask AI to link"). */
+export interface AgentAnswer {
+  target: string;
+  message: string;
+  text: string;
+}
+const answerListeners = new Set<(a: AgentAnswer) => void>();
+export function onAgentAnswer(l: (a: AgentAnswer) => void): () => void {
+  answerListeners.add(l);
+  return () => void answerListeners.delete(l);
+}
+export function publishAgentAnswer(a: AgentAnswer): void {
+  answerListeners.forEach((l) => l(a));
 }
 
 const appliers = new Set<(e: FilesEvent) => boolean>();

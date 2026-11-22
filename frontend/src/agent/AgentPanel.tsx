@@ -26,7 +26,15 @@ import {
   type Conversation,
   type FoundAgent,
 } from "./api";
-import { AGENT_OPEN_EVENT, applyAgentFiles, getAgentContext, subscribeAgentContext, takeAgentOpen, type FilesEvent } from "./bus";
+import {
+  AGENT_OPEN_EVENT,
+  applyAgentFiles,
+  getAgentContext,
+  publishAgentAnswer,
+  subscribeAgentContext,
+  takeAgentOpen,
+  type FilesEvent,
+} from "./bus";
 import { suggestQuestions } from "./suggest";
 
 type L = readonly [string, string];
@@ -317,6 +325,10 @@ export default function AgentPanel() {
   const [progress, setProgress] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  /** a message another page asked to send (Ask AI to link): sent once an agent is connected */
+  const [pendingSend, setPendingSend] = useState<string | null>(null);
+  /** each chat's answer text in the turn now running, handed to the page when the turn ends (publishAgentAnswer) */
+  const answerText = useRef<Record<string, string>>({});
   const [dropSel, setDropSel] = useState<string | null>(null); // the selection the user removed from the context
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
@@ -332,7 +344,8 @@ export default function AgentPanel() {
       const d = takeAgentOpen();
       if (d === null) return;
       setOpen(true);
-      if (d) setDraft(d);
+      if (d.draft) setDraft(d.draft);
+      if (d.send && d.draft) setPendingSend(d.draft);
     };
     take();
     window.addEventListener(AGENT_OPEN_EVENT, take);
@@ -398,14 +411,15 @@ export default function AgentPanel() {
         saveChat(m, { session: String(e.id), turns: c.turns, conversation });
         return { ...c, session: String(e.id), conversation };
       });
-    else if (e.type === "text")
+    else if (e.type === "text") {
+      if (source === "live") answerText.current[m] = (answerText.current[m] ?? "") + String(e.delta);
       update((bs) => {
         const last = bs[bs.length - 1];
         return last?.kind === "text"
           ? [...bs.slice(0, -1), { ...last, text: last.text + String(e.delta) }]
           : [...bs, { kind: "text", text: String(e.delta) }];
       });
-    else if (e.type === "tool")
+    } else if (e.type === "tool")
       update((bs) => [...bs, { kind: "tool", id: String(e.id), name: String(e.name), input: (e.input as Record<string, unknown>) ?? {} }]);
     else if (e.type === "tool_result")
       update((bs) => bs.map((b) => (b.kind === "tool" && b.id === e.id ? { ...b, ok: !!e.ok, result: String(e.text ?? "") } : b)));
@@ -597,6 +611,7 @@ export default function AgentPanel() {
       ],
     }));
     abort.current = new AbortController();
+    answerText.current[m] = "";
     const context = {
       files: ctx.files.map((f) => ({ name: f.name, code: f.code })),
       title: ctx.title,
@@ -628,12 +643,21 @@ export default function AgentPanel() {
     } catch (e) {
       onEvent(m, { type: "error", message: String(e instanceof Error ? e.message : e) });
     } finally {
+      publishAgentAnswer({ target: m, message, text: answerText.current[m] ?? "" });
       setBusy(null);
       setProgress(null);
       abort.current = null;
       setDropSel(null);
     }
   }
+  // a message another page asked to send: once an agent is connected and free (until then it waits in the box)
+  useEffect(() => {
+    if (!pendingSend || !canType || busy) return;
+    const text = pendingSend;
+    setPendingSend(null);
+    void send(text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingSend, canType, busy]);
 
   if (!ctx) return null; // only the Problems and Research pages publish a context
 

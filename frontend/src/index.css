@@ -85,3 +85,6 @@
   border-radius: 4px; color: white; font: 700 10px/1 ui-sans-serif, system-ui, sans-serif; cursor: pointer;
 }
 .cm-step-line.cm-step-active { filter: saturate(2.2) brightness(0.97); }
+/* linking text and code by hand (research/linkMarks.ts): a click on a line ties or unties it */
+.cm-linking .cm-content, .cm-linking .cm-gutters { cursor: pointer; }
+.cm-linking .cm-line:hover { background-color: rgba(15, 118, 110, 0.08); }

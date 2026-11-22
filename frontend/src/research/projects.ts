@@ -8,13 +8,20 @@ import { useCallback, useEffect, useState } from "react";
 import type { LeanFile } from "../runner";
 import { runnerReady, useRunner } from "../RunnerPanel";
 import { RESEARCH } from "../routes";
-import { exportZip, readZip, type Meta } from "./model";
+import { exportZip, importZip, readZip, type Meta } from "./model";
 import { browserStore, diskStore, FREE_PROJECTS, fork, newId, rename, type ProjectInfo, type Store } from "./store";
-import { TEMPLATES, type Template } from "./templates";
+import { templateLinks, TEMPLATES, type Template } from "./templates";
 
 type L = readonly [string, string];
 export type Pick = (v: L) => string;
-export type Listed = ProjectInfo & { where: Store["kind"]; progress?: Meta["progress"] };
+export type Listed = ProjectInfo & {
+  where: Store["kind"];
+  progress?: Meta["progress"];
+  /** with `withProgress`: the files and each declaration's status at the last check (the project panel's tree) */
+  files?: LeanFile[];
+  statuses?: Meta["statuses"];
+  main?: string;
+};
 
 /** Open a research project (or, with no id, the research home) on the Problems page. */
 export const openProject = (id?: string | null) => go("problems", RESEARCH, id ?? null);
@@ -37,8 +44,10 @@ export function download(bytes: Uint8Array, name: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-/** A demo's starting meta, in the reader's language. */
-export function templateMeta(t: Template, pick: Pick): Meta {
+/** A demo's starting meta, in the reader's language, with its hand-written text ↔ code links placed in `files`
+ *  (the finished files for a showcase; a started copy keeps the links whose lines are already there). */
+export function templateMeta(t: Template, pick: Pick, files: LeanFile[] = t.files): Meta {
+  const which = pick(["en", "zh"]) === "zh" ? 1 : 0;
   return {
     title: pick(t.title),
     main: t.main,
@@ -47,7 +56,38 @@ export function templateMeta(t: Template, pick: Pick): Meta {
     next: {},
     template: t.id,
     lastVisit: Date.now(),
+    links: templateLinks(t, which, files),
   };
+}
+
+// --- the workspace and the project panel talk through window events (both are on screen at once)
+
+const CHANGED = "formalizer:research-changed";
+const FOCUS = "formalizer:research-focus";
+/** The open project was saved: the project panel reloads its tree. */
+export const notifyProjectsChanged = () => window.dispatchEvent(new Event(CHANGED));
+let focusRequest: { id: string; decl: string } | null = null;
+/** Open a project at one declaration (a lemma picked in the project panel's tree). */
+export function focusDecl(id: string, decl: string) {
+  focusRequest = { id, decl };
+  openProject(id);
+  window.dispatchEvent(new Event(FOCUS));
+}
+/** The declaration asked for this project (kept a moment, so a load that runs twice, as React's strict mode does,
+ *  sees it both times). */
+export function takeFocusDecl(id: string): string | null {
+  const req = focusRequest;
+  if (req?.id !== id) return null;
+  setTimeout(() => focusRequest === req && (focusRequest = null), 1000);
+  return req.decl;
+}
+export function onFocusDecl(id: string, go: (decl: string) => void): () => void {
+  const l = () => {
+    const d = takeFocusDecl(id);
+    if (d) go(d);
+  };
+  window.addEventListener(FOCUS, l);
+  return () => window.removeEventListener(FOCUS, l);
 }
 
 /** Start a project from a demo (its lemmas open) where projects are kept now; false when the free tier is full. */
@@ -56,6 +96,7 @@ export async function startTemplate(t: Template, pick: Pick, ready: boolean): Pr
   if (disk.length + (await browserStore.list()).length >= FREE_PROJECTS) return null;
   const id = newId(t.id === "empty" ? "project" : t.id);
   await (ready ? diskStore : browserStore).put(id, t.files, templateMeta(t, pick));
+  notifyProjectsChanged();
   openProject(id);
   return id;
 }
@@ -87,14 +128,31 @@ export function useProjects({ withProgress = false } = {}) {
       ];
       if (withProgress)
         all = await Promise.all(
-          all.map(async (p) => ({ ...p, progress: (await storeOf(p).load(p.id).catch(() => null))?.meta.progress })),
+          all.map(async (p) => {
+            const got = await storeOf(p).load(p.id).catch(() => null);
+            return { ...p, progress: got?.meta.progress, files: got?.files, statuses: got?.meta.statuses, main: got?.meta.main };
+          }),
         );
+      all.sort((a, b) => (b.updated ?? 0) - (a.updated ?? 0)); // most recently worked on first
       if (alive) setProjects(all);
     })();
     return () => {
       alive = false;
     };
   }, [ready, reload, withProgress]);
+  // the open project was saved (its statuses, files, title): show it
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const l = () => {
+      clearTimeout(t);
+      t = setTimeout(() => setReload((n) => n + 1), 300);
+    };
+    window.addEventListener(CHANGED, l);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener(CHANGED, l);
+    };
+  }, []);
 
   // the free tier keeps FREE_PROJECTS research projects: starting, importing or forking another waits for a delete
   const full = (projects?.length ?? 0) >= FREE_PROJECTS;
@@ -110,7 +168,7 @@ export function useProjects({ withProgress = false } = {}) {
     } catch (e) {
       setError(String(e));
     }
-    setReload((n) => n + 1);
+    notifyProjectsChanged(); // every list on screen (the project panel, the research home, the site home)
   }, []);
 
   async function start(t: Template): Promise<string | null> {
@@ -131,22 +189,19 @@ export function useProjects({ withProgress = false } = {}) {
   /** An export (.zip) or .lean files, as a new project. */
   async function importFiles(list: FileList | null) {
     if (!list?.length) return;
-    let files: LeanFile[] = [];
-    let meta: Partial<Meta> & { order?: string[] } = {};
+    // an export (this layout or an older one: model.ts importZip), or plain .lean files
+    const entries: { name: string; text: string }[] = [];
     for (const f of Array.from(list)) {
-      if (f.name.endsWith(".zip")) {
-        for (const e of readZip(new Uint8Array(await f.arrayBuffer()))) {
-          if (e.name === "formalizer.json") meta = JSON.parse(e.text);
-          else if (e.name.endsWith(".lean")) files.push({ name: e.name.split("/").pop()!, code: e.text });
-        }
-      } else if (f.name.endsWith(".lean")) files.push({ name: f.name, code: await f.text() });
+      if (f.name.endsWith(".zip")) entries.push(...readZip(new Uint8Array(await f.arrayBuffer())));
+      else if (f.name.endsWith(".lean")) entries.push({ name: f.name, text: await f.text() });
     }
     if (full) return setError(limitNote);
-    if (!files.length) return setError(pick(["No .lean files found in what you chose.", "選取的檔案裡沒有 .lean 檔。"]));
-    if (meta.order)
-      files = [...meta.order.flatMap((n) => files.filter((f) => f.name === n)), ...files.filter((f) => !meta.order!.includes(f.name))];
+    const got = importZip(entries);
+    if (!got) return setError(pick(["No .lean files found in what you chose.", "選取的檔案裡沒有 .lean 檔。"]));
+    const { files, meta } = got;
     const title = meta.title ?? files[files.length - 1].name.replace(/\.lean$/, "");
     const imported: Meta = {
+      ...meta,
       title,
       main: meta.main ?? "",
       statements: meta.statements ?? [],
@@ -156,13 +211,14 @@ export function useProjects({ withProgress = false } = {}) {
     };
     const id = newId(title);
     await store.put(id, files, imported);
+    notifyProjectsChanged();
     openProject(id);
   }
 
   /** Download a project as a zip (its .lean files and formalizer.json). */
   async function exportProject(p: Listed) {
     const got = await storeOf(p).load(p.id);
-    if (got) download(exportZip(got.files, got.meta), `${p.id}.zip`);
+    if (got) download(exportZip(got.files, got.meta, p.id, pick(["en", "zh-Hant"])), `${p.id}.zip`);
   }
 
   return {
