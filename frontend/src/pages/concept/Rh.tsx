@@ -467,8 +467,8 @@ export default function RhConcept({ section }: { section: string | null }) {
       <Section page={PAGE} id="more" n={5} title={SECTIONS[4].title}>
         <P
           t={[
-            '3Blue1Brown asked mathematicians "What if AI solved the Riemann Hypothesis?" (video, 22 November 2026). Their answers range from running the comparator and two or three independent kernels, to wanting a human idea and a picture, to finding inscrutable proofs fascinating. One of them put the theme of this page in five words: "a proof is not static". The views page groups those answers into six positions.',
-            "3Blue1Brown 問數學家：「如果 AI 解決了黎曼猜想呢？」（影片，2026 年 11 月 22 日）。他們的回答從「先跑 comparator，再用兩三個獨立核心」，到「想要一個人的想法、一張圖」，到「覺得難以理解的證明很迷人」都有。其中一位把本頁的主題濃縮成一句：「證明不是靜止的」。觀點頁把這些回答整理成六種立場。",
+            '3Blue1Brown asked mathematicians "What if AI solved the Riemann Hypothesis?" (video, 22 November 2026). Their answers range from running the comparator and two or three independent kernels, to wanting a human idea and a picture, to finding inscrutable proofs fascinating. Leo de Moura, the creator of Lean, put the theme of this page in five words: "a proof is not static". The views page groups those answers into six positions.',
+            "3Blue1Brown 問數學家：「如果 AI 解決了黎曼猜想呢？」（影片，2026 年 11 月 22 日）。他們的回答從「先跑 comparator，再用兩三個獨立核心」，到「想要一個人的想法、一張圖」，到「覺得難以理解的證明很迷人」都有。Lean 的創造者 Leo de Moura 把本頁的主題濃縮成一句：「證明不是靜止的」。觀點頁把這些回答整理成六種立場。",
           ]}
         />
         <p className="flex flex-wrap gap-4">

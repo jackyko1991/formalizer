@@ -4,7 +4,9 @@
  * A honeycomb: the question in the centre, one hexagon per view; a hexagon zooms (FLIP: transform + clip-path from
  * the hexagon to the card) into a card with a larger picture, the arguments and quotes linked to their second in the
  * video. Reduced motion: a fade. Then the video itself, and where this site stands next to the mainstream view.
- * Quotes are verbatim from the video's automatic captions (… marks a cut); the captions name nobody, so neither do we.
+ * Quotes are verbatim from the video's automatic captions (… marks a cut). Speakers are named from the video's own
+ * on-screen name cards, each quote checked by face at its second; their photos are freely licensed ones from Wikimedia
+ * Commons (public/views/CREDITS.md), never frames of the video.
  * The grouping into six views is ours. Facts about the Riemann claim are as of 22 November 2026.
  */
 import { RichText, useLang } from "@learnkit/web";
@@ -26,15 +28,148 @@ const SECTIONS: SectionInfo[] = [
   { id: "stance", title: ["Where Formalizer stands", "Formalizer 的立場"] },
 ];
 
+interface Photo {
+  src: string;
+  author: string;
+  licence: string;
+  licenceUrl: string;
+  /** the Commons file page */
+  file: string;
+}
+
+interface Person {
+  name: L;
+  /** as on the video's name card */
+  title: L;
+  /** shorter, next to a quote */
+  short: L;
+  /** "Interview Recorded" on the name card: [year, month] */
+  recorded: [number, number];
+  /** a note after the date, e.g. where the interview comes from */
+  note?: L;
+  photo?: Photo;
+}
+
+const CC_BY_SA_3 = "https://creativecommons.org/licenses/by-sa/3.0/";
+const CC_BY_SA_4 = "https://creativecommons.org/licenses/by-sa/4.0/";
+const CC_BY_4 = "https://creativecommons.org/licenses/by/4.0/";
+const COMMONS = "https://commons.wikimedia.org/wiki/File:";
+
+/** The people quoted, named as on the video's own name cards. Photos: Wikimedia Commons only (public/views/CREDITS.md). */
+const PEOPLE = {
+  buzzard: {
+    name: ["Kevin Buzzard", "Kevin Buzzard"],
+    title: ["Professor, Imperial College London", "倫敦帝國學院教授"],
+    short: ["Imperial College London", "倫敦帝國學院"],
+    recorded: [2025, 6],
+    photo: { src: "views/buzzard.webp", author: "Paula Buzzard", licence: "CC BY-SA 3.0", licenceUrl: CC_BY_SA_3, file: `${COMMONS}Kevin_buzzard_in_2007.jpg` },
+  },
+  ono: {
+    name: ["Ken Ono", "Ken Ono"],
+    title: ["Founding Mathematician, Axiom; University of Virginia", "Axiom 創始數學家；維吉尼亞大學"],
+    short: ["Axiom; University of Virginia", "Axiom；維吉尼亞大學"],
+    recorded: [2025, 8],
+    photo: { src: "views/ono.webp", author: "AllenS", licence: "Public domain", licenceUrl: "https://commons.wikimedia.org/wiki/Template:PD-self", file: `${COMMONS}Ken_Ono_Washington_2009.jpg` },
+  },
+  glazer: {
+    name: ["Elliot Glazer", "Elliot Glazer"],
+    title: ["Lead Mathematician, FrontierMath Benchmark", "FrontierMath 基準首席數學家"],
+    short: ["FrontierMath", "FrontierMath"],
+    recorded: [2025, 8],
+  },
+  ellenberg: {
+    name: ["Jordan Ellenberg", "Jordan Ellenberg"],
+    title: ["Vilas Distinguished Professor, University of Wisconsin–Madison", "威斯康辛大學麥迪遜分校 Vilas 傑出教授"],
+    short: ["University of Wisconsin–Madison", "威斯康辛大學麥迪遜分校"],
+    recorded: [2026, 10],
+    photo: { src: "views/ellenberg.webp", author: "Mats Rudels / Jordan Ellenberg", licence: "CC BY-SA 4.0", licenceUrl: CC_BY_SA_4, file: `${COMMONS}Jordan_Ellenberg.jpg` },
+  },
+  deMoura: {
+    name: ["Leo de Moura", "Leo de Moura"],
+    title: ["Creator of Lean", "Lean 的創造者"],
+    short: ["creator of Lean", "Lean 的創造者"],
+    recorded: [2026, 5],
+    photo: { src: "views/de-moura.webp", author: "David Monniaux", licence: "CC BY-SA 4.0", licenceUrl: CC_BY_SA_4, file: `${COMMONS}Leo_de_Moura_P1210629.jpg` },
+  },
+  patel: {
+    name: ["Dwarkesh Patel", "Dwarkesh Patel"],
+    title: ["From Dwarkesh Patel's podcast, used with his permission", "取自 Dwarkesh Patel 的 Podcast，經他同意使用"],
+    short: ["podcast host", "Podcast 主持人"],
+    recorded: [2026, 3],
+    photo: { src: "views/patel.webp", author: "TechCrunch", licence: "CC BY 4.0", licenceUrl: CC_BY_4, file: `${COMMONS}Dwarkesh_Patel_2025_(cropped).jpg` },
+  },
+  tao: {
+    name: ["Terence Tao", "陶哲軒"],
+    title: ["Professor, UCLA", "加州大學洛杉磯分校（UCLA）教授"],
+    short: ["UCLA", "UCLA"],
+    recorded: [2026, 3],
+    note: ["on Dwarkesh Patel's podcast", "Dwarkesh Patel 的 Podcast"],
+    photo: {
+      src: "views/tao.webp",
+      author: "Institute for Pure & Applied Mathematics",
+      licence: "CC BY 4.0",
+      licenceUrl: CC_BY_4,
+      file: `${COMMONS}Terence_Tao_at_IPAM%27s_Fireside_Chat_2026_(50m16s)_(cropped).jpg`,
+    },
+  },
+  litt: {
+    name: ["Daniel Litt", "Daniel Litt"],
+    title: ["Assistant Professor, University of Toronto", "多倫多大學助理教授"],
+    short: ["University of Toronto", "多倫多大學"],
+    recorded: [2025, 8],
+  },
+  brown: {
+    name: ["Adam Brown", "Adam Brown"],
+    title: ["Science Lead, Google DeepMind; Stanford University", "Google DeepMind 科學負責人；史丹佛大學"],
+    short: ["Google DeepMind; Stanford", "Google DeepMind；史丹佛大學"],
+    recorded: [2026, 5],
+  },
+  kontorovich: {
+    name: ["Alex Kontorovich", "Alex Kontorovich"],
+    title: ["Distinguished Professor, Rutgers University", "羅格斯大學傑出教授"],
+    short: ["Rutgers University", "羅格斯大學"],
+    recorded: [2025, 8],
+    photo: {
+      src: "views/kontorovich.webp",
+      author: "Katrin Schmid",
+      licence: "CC BY-SA 2.0 de",
+      licenceUrl: "https://creativecommons.org/licenses/by-sa/2.0/de/deed.en",
+      file: `${COMMONS}Kontorovich_2011.jpg`,
+    },
+  },
+  schmitt: {
+    name: ["Johannes Schmitt", "Johannes Schmitt"],
+    title: ["Assistant Professor, Stanford University", "史丹佛大學助理教授"],
+    short: ["Stanford University", "史丹佛大學"],
+    recorded: [2025, 8],
+  },
+  moitra: {
+    name: ["Ankur Moitra", "Ankur Moitra"],
+    title: ["Professor, MIT", "麻省理工學院（MIT）教授"],
+    short: ["MIT", "MIT"],
+    recorded: [2026, 9],
+  },
+  lichtman: {
+    name: ["Jared Duker Lichtman", "Jared Duker Lichtman"],
+    title: ["Szegő Assistant Professor, Stanford University", "史丹佛大學 Szegő 助理教授"],
+    short: ["Stanford University", "史丹佛大學"],
+    recorded: [2026, 5],
+  },
+} satisfies Record<string, Person>;
+
+type Who = keyof typeof PEOPLE;
+
 interface Quote {
   /** seconds into the video */
   t: number;
+  /** the speaker, checked by face at this second against the video's name cards */
+  by: Who;
+  /** when this speaker has more than one interview: the one quoted, [year, month] */
+  recorded?: [number, number];
   /** verbatim from the captions */
   en: string;
   /** a translation */
   zh: string;
-  /** the speaker's own description of themselves, when they give one */
-  who?: L;
 }
 
 interface View {
@@ -47,6 +182,8 @@ interface View {
   ink: string;
   points: L[];
   quotes: Quote[];
+  /** the interviewer who asked the question these quotes answer */
+  asker?: { by: Who; t: number };
   link?: { to: [string, string?, string?]; label: L };
 }
 
@@ -64,27 +201,30 @@ const VIEWS: View[] = [
         "從一個 **大家審過的陳述** 出發：在任何證明出現之前，就已經有人讀過、同意過的黎曼猜想 Lean 陳述。接著證明要通過幾道關卡：陳述說的是不是我們的意思、程式能不能編譯、它是否只用一般的公理證出 *那個* 陳述（`lake comparator`），以及它有沒有利用某一個核心的 bug（再用兩三個獨立的核心檢查）。",
       ],
       [
-        "Passing is where the work starts, not where it ends. \"A proof is not static\": with high confidence that it is correct, people would invest the time to break it apart, isolate fragments, rewrite them and understand them.",
-        "通過檢查是工作的開始，不是結束。「證明不是靜止的」：一旦很有把握它是對的，大家就會願意花時間把它拆開、抽出片段、重寫、弄懂。",
+        "Passing is where the work starts, not where it ends. \"A proof is not static\", says Leo de Moura, the creator of Lean: with high confidence that it is correct, people would invest the time to break it apart, isolate fragments, rewrite them and understand them.",
+        "通過檢查是工作的開始，不是結束。Lean 的創造者 Leo de Moura 說「證明不是靜止的」：一旦很有把握它是對的，大家就會願意花時間把它拆開、抽出片段、重寫、弄懂。",
       ],
       [
-        "And it would matter at once: hundreds, if not thousands, of papers are written assuming the Riemann hypothesis, so a checked proof turns their conditional results into results.",
-        "而且影響立刻就有：成百上千篇論文都假設黎曼猜想成立，所以一份檢查過的證明，會讓那些有條件的結果變成無條件的結果。",
+        "And it would matter at once, as Ken Ono points out: hundreds, if not thousands, of papers are written assuming the Riemann hypothesis, so a checked proof turns their conditional results into results.",
+        "而且影響立刻就有，Ken Ono 指出：成百上千篇論文都假設黎曼猜想成立，所以一份檢查過的證明，會讓那些有條件的結果變成無條件的結果。",
       ],
     ],
     quotes: [
       {
         t: 143,
+        by: "deMoura",
         en: "First good news. We have a curated statement of the Riemann hypothesis. So the first thing we would do is run the comparator … Suppose the comparator says, yes, this is a proof for the Riemann hypothesis, and I checked it with two, three different kernels. They all agree. This is amazing.",
         zh: "第一個好消息：我們有一個審訂過的黎曼猜想陳述。所以我們第一件事就是跑比對器（comparator）……假設比對器說：是的，這是黎曼猜想的證明，而我又用兩三個不同的核心檢查過，它們全部一致。那就太驚人了。",
       },
       {
         t: 169,
+        by: "deMoura",
         en: "Like I said, a proof is not static. … people would invest a lot of time trying to understand these objects. If they have high confidence that the proof is correct, they will spend time trying to understand it.",
         zh: "就像我說的，證明不是靜止的。……大家會投入很多時間去理解這些東西。只要他們很有把握這個證明是對的，就會花時間去理解它。",
       },
       {
         t: 40,
+        by: "ono",
         en: "Hundreds, if not thousands of papers are written assuming the Riemann hypothesis is true. And that's a brand new toolkit.",
         zh: "就算沒有上千篇，也有好幾百篇論文是假設黎曼猜想成立而寫的。那就是一整套全新的工具。",
       },
@@ -100,42 +240,46 @@ const VIEWS: View[] = [
     ink: "text-violet-800",
     points: [
       [
-        "Proving and understanding have travelled together through the history of mathematics. Now they may arrive separately: \"scrolls of ancient wisdom\" that tell us *that* something is true, not *why*.",
-        "在數學史上，證明與理解一向一起出現。現在它們可能分開抵達：「古老智慧的卷軸」只告訴我們某件事 *成立*，卻不說 *為什麼*。",
+        "Proving and understanding have travelled together through the history of mathematics. Now, says Adam Brown, they may arrive separately: \"scrolls of ancient wisdom\" that tell us *that* something is true, not *why*.",
+        "在數學史上，證明與理解一向一起出現。Adam Brown 說，現在它們可能分開抵達：「古老智慧的卷軸」只告訴我們某件事 *成立*，卻不說 *為什麼*。",
       ],
       [
-        "One speaker separates two cases. If the proof is *intrinsically* beyond us (reading it would take more than a lifetime), it adds little: confidence in the Riemann hypothesis goes from 99.9% to 100%. If it is merely *poorly exposited*, that is a huge deal: many would drop everything to translate it into something human-readable.",
-        "有一位受訪者分成兩種情況。如果證明 *本質上* 超出人的能力（讀完要花超過一輩子），它帶來的不多：對黎曼猜想的信心從 99.9% 變成 100%。如果它只是 *寫得很糟*，那就是大事：很多人會放下手邊一切，把它翻譯成人讀得懂的東西。",
+        "Daniel Litt separates two cases. If the proof is *intrinsically* beyond us (reading it would take more than a lifetime), it adds little: confidence in the Riemann hypothesis goes from 99.9% to 100%. If it is merely *poorly exposited*, that is a huge deal: many would drop everything to translate it into something human-readable.",
+        "Daniel Litt 分成兩種情況。如果證明 *本質上* 超出人的能力（讀完要花超過一輩子），它帶來的不多：對黎曼猜想的信心從 99.9% 變成 100%。如果它只是 *寫得很糟*，那就是大事：很多人會放下手邊一切，把它翻譯成人讀得懂的東西。",
       ],
       [
-        "And the translators need not be only human. The hope: models that are superhuman at producing proofs will also be superhuman at explaining them. A physicist already uses them as a patient, non-judgmental tutor for things he \"should know but doesn't\".",
-        "而翻譯的人不一定只有人類。期待是：在產生證明上超越人類的模型，在解釋證明上也會超越人類。一位物理學家已經把它們當成有耐心、不評判的家教，問那些他「應該知道卻不知道」的事。",
+        "And the translators need not be only human. The hope: models that are superhuman at producing proofs will also be superhuman at explaining them. Brown, a professional physicist, already uses them as a patient, non-judgmental tutor for things he \"should know but doesn't\".",
+        "而翻譯的人不一定只有人類。期待是：在產生證明上超越人類的模型，在解釋證明上也會超越人類。身為職業物理學家的 Brown，已經把它們當成有耐心、不評判的家教，問那些他「應該知道卻不知道」的事。",
       ],
     ],
     quotes: [
       {
         t: 402,
+        by: "brown",
         en: "we have a notion that it's useful to understand something and typically in the history of mathematics those two things have gone together and now we're the state where they may come separately, where we may receive scrolls of ancient wisdom, that we may receive like, you know, notes from the Gods telling us that things are true without really being very clear at all on why they're true.",
         zh: "我們認為理解一件事是有用的，而在數學史上，這兩件事（證明與理解）通常一起出現；現在我們到了它們可能分開來的階段：我們可能收到古老智慧的卷軸，收到來自眾神的筆記，告訴我們哪些事是真的，卻完全說不清楚為什麼是真的。",
       },
       {
         t: 352,
+        by: "litt",
         en: "Raising that confidence from, you know, 99% or 99.9% to 100% is a little bit of information. Would it like change my life as a mathematician? Not super much.",
         zh: "把信心從 99% 或 99.9% 提高到 100%，是一點點資訊。它會改變我身為數學家的生活嗎？不太會。",
       },
       {
         t: 363,
+        by: "litt",
         en: "On the other hand, if you're in this weaker situation where the AI produces like lean proof that's like poorly exposited or not exposited like but not intrinsically impossible to understand, that would be a huge deal, right?",
         zh: "另一方面，如果是比較弱的情況：AI 產生的 Lean 證明寫得很糟、或根本沒有說明，但本質上並不是不可能理解，那就是大事了，對吧？",
       },
       {
         t: 448,
+        by: "brown",
         en: "These things, as well as being superhuman provers, will also be superhuman explainers.",
         zh: "這些東西除了是超人般的證明者，也會是超人般的解說者。",
       },
       {
         t: 459,
-        who: ["a professional physicist", "一位職業物理學家"],
+        by: "brown",
         en: "I'm a professional physicist and there are things that I sort of should know but don't. … I can ask these large language models and they very non-judgmentally and patiently explain all of these things that I should know to me",
         zh: "我是職業物理學家，有些事我算是應該知道卻不知道。……我可以問這些大型語言模型，它們會毫不評判、很有耐心地把這些我該知道的事講給我聽。",
       },
@@ -150,42 +294,46 @@ const VIEWS: View[] = [
     ink: "text-rose-800",
     points: [
       [
-        "The romantic answer: a machine proof would be \"horrible\". A human should be involved, the proof should be beautiful, and the search for a beautiful conceptual proof would be no less important afterwards.",
-        "浪漫派的回答：機器證明會很「可怕」。應該要有人參與，證明應該是美的；就算有了機器證明，尋找一個美而有概念的證明也一點都不會變得比較不重要。",
+        "Ken Ono's answer, as a self-described romantic: a machine proof would be \"horrible\". A human should be involved, the proof should be beautiful, and the search for a beautiful conceptual proof would be no less important afterwards.",
+        "Ken Ono 自稱數學上的浪漫派，他的回答是：機器證明會很「可怕」。應該要有人參與，證明應該是美的；就算有了機器證明，尋找一個美而有概念的證明也一點都不會變得比較不重要。",
       ],
       [
-        "A sharper version: a 20-billion-token Lean proof that nobody can read \"is not a proof of the Riemann hypothesis\" in the sense that matters. Not dangerous, just not the thing wanted; the big problem would shift to understanding that stream, or to finding the proof some other way. Another speaker: \"Tell me. I have to understand.\"",
-        "更尖銳的版本：一份 200 億個 token、沒人讀得懂的 Lean 證明，在真正重要的意義上「不是黎曼猜想的證明」。不危險，只是不是大家要的東西；大問題會變成去理解那串文字，或是用別的方法找到證明。另一位受訪者：「告訴我。我必須理解。」",
+        "Jordan Ellenberg's sharper version: a 20-billion-token Lean proof that nobody can read \"is not a proof of the Riemann hypothesis\" in the sense that matters. Not dangerous, just not the thing wanted; the big problem would shift to understanding that stream, or to finding the proof some other way. Alex Kontorovich: \"Tell me. I have to understand.\"",
+        "Jordan Ellenberg 的版本更尖銳：一份 200 億個 token、沒人讀得懂的 Lean 證明，在真正重要的意義上「不是黎曼猜想的證明」。不危險，只是不是大家要的東西；大問題會變成去理解那串文字，或是用別的方法找到證明。Alex Kontorovich：「告訴我。我必須理解。」",
       ],
       [
-        "Why insist on rigorous proof at all, then? Because intuition has burned us: fake proofs of 1 = 0, mistakes in Euclid's *Elements*. Proof is the mechanism for *checking* understanding; it is not understanding itself, which may live in a picture. (The picture here: the odd numbers 1, 3, 5, 7 fit together into a 4 × 4 square.)",
-        "那為什麼還要堅持嚴謹的證明？因為直覺讓我們吃過虧：1 = 0 的假證明、歐幾里得《幾何原本》裡的錯誤。證明是 *檢查* 理解的機制，但它本身不是理解；理解可能在一張圖裡。（這裡的圖：奇數 1、3、5、7 拼成一個 4 × 4 的正方形。）",
+        "Why insist on rigorous proof at all, then? Kontorovich again: because intuition has burned us: fake proofs of 1 = 0, mistakes in Euclid's *Elements*. Proof is the mechanism for *checking* understanding; it is not understanding itself, which may live in a picture. (The picture here: the odd numbers 1, 3, 5, 7 fit together into a 4 × 4 square.)",
+        "那為什麼還要堅持嚴謹的證明？Kontorovich 接著說：因為直覺讓我們吃過虧：1 = 0 的假證明、歐幾里得《幾何原本》裡的錯誤。證明是 *檢查* 理解的機制，但它本身不是理解；理解可能在一張圖裡。（這裡的圖：奇數 1、3、5、7 拼成一個 4 × 4 的正方形。）",
       ],
     ],
     quotes: [
       {
         t: 53,
-        who: ["a self-described romantic", "一位自稱浪漫派的數學家"],
+        by: "ono",
         en: "As a romantic in terms of mathematics, what you describe would be horrible. I would want a human being involved in the proof and I'd like to believe that the proof is beautiful",
         zh: "以數學上的浪漫派來說，你描述的情況會很可怕。我會希望證明裡有人參與，我也想相信證明是美的。",
       },
       {
         t: 91,
+        by: "ellenberg",
         en: "if there's a lean proof of the Riemann hypothesis that's like, you know, 20 billion tokens long and nobody can read it, that's not a proof of the Riemann hypothesis and I just don't care that that exists. … So I wouldn't consider that dangerous.",
         zh: "如果有一份黎曼猜想的 Lean 證明，長達 200 億個 token，而且沒人讀得懂，那就不是黎曼猜想的證明，我也根本不在乎它存在。……所以我不會覺得那很危險。",
       },
       {
         t: 508,
+        by: "kontorovich",
         en: "So if an AI system spits out, you know, a million token proof of the Riemann hypothesis and says, I got it, I don't go, yay, okay, let's move on. I go, what's the answer? How do you do it? Tell me. I have to understand.",
         zh: "所以如果一個 AI 系統吐出一份一百萬個 token 的黎曼猜想證明，說：我搞定了；我不會說：耶，好，下一個。我會說：答案是什麼？你怎麼做到的？告訴我。我必須理解。",
       },
       {
         t: 548,
+        by: "kontorovich",
         en: "is because we've been burned so long on intuitive arguments. And you probably know a thousand different, you know, fake proofs of 1=0 and mistakes in Euclid's Elements.",
         zh: "（證明之所以成為我們認識真理的機制，）是因為我們長久以來被直覺式的論證害過。你大概知道上千種 1=0 的假證明，還有歐幾里得《幾何原本》裡的錯誤。",
       },
       {
         t: 575,
+        by: "kontorovich",
         en: "we need to have rigorous proof within an axiomatic system as a mechanism for checking our understanding. But that's not understanding itself. You know, you can understand a proof in a picture. … But the understanding happens somewhere else.",
         zh: "我們需要在公理系統裡的嚴謹證明，作為檢查我們理解的機制。但那不是理解本身。你可以在一張圖裡理解一個證明。……理解發生在別的地方。",
       },
@@ -200,12 +348,12 @@ const VIEWS: View[] = [
     ink: "text-amber-800",
     points: [
       [
-        "Picture the button: a billion-line proof that only says *let A be this function, let B be this function, let C be this number*, pages and pages with no word on why any of them is used. Absurd enough to be funny.",
-        "想像那個按鈕：一份十億行的證明，只寫著 *令 A 為這個函數、令 B 為這個函數、令 C 為這個數*，一頁又一頁，完全不說為什麼要用它們。荒謬到好笑。",
+        "Kevin Buzzard pictures the button: a billion-line proof that only says *let A be this function, let B be this function, let C be this number*, pages and pages with no word on why any of them is used. Absurd enough to be funny.",
+        "Kevin Buzzard 想像那個按鈕：一份十億行的證明，只寫著 *令 A 為這個函數、令 B 為這個函數、令 C 為這個數*，一頁又一頁，完全不說為什麼要用它們。荒謬到好笑。",
       ],
       [
-        "A logician who works in metamathematics takes \"a very sick enjoyment\" in the idea. Metamathematics treats proofs themselves as mathematical objects, so an inscrutable but valid proof is something to study from the outside: how long it is, how it is built, what it depends on.",
-        "一位研究後設數學的邏輯學家，對這個想法有「一種病態的樂趣」。後設數學把證明本身當成數學對象，所以一份難以理解但有效的證明，正好可以從外面研究：它有多長、怎麼搭起來、依賴什麼。",
+        "Elliot Glazer, a logician who works in metamathematics, takes \"a very sick enjoyment\" in the idea. Metamathematics treats proofs themselves as mathematical objects, so an inscrutable but valid proof is something to study from the outside: how long it is, how it is built, what it depends on.",
+        "研究後設數學的邏輯學家 Elliot Glazer，對這個想法有「一種病態的樂趣」。後設數學把證明本身當成數學對象，所以一份難以理解但有效的證明，正好可以從外面研究：它有多長、怎麼搭起來、依賴什麼。",
       ],
       [
         "Lean already reads a proof from the outside in small ways: `#print axioms` lists what a theorem depends on without anyone reading the proof.",
@@ -215,17 +363,19 @@ const VIEWS: View[] = [
     quotes: [
       {
         t: 12,
+        by: "buzzard",
         en: "Tee hee! That's a great question! Because it appeals to my sense of humor, that idea, that a computer just, you press a button and you get this billion line long proof of the Riemann hypothesis",
         zh: "嘻嘻！好問題！因為它很對我的幽默感：那個想法，電腦就這樣，你按一個按鈕，就得到一份十億行長的黎曼猜想證明。",
       },
       {
         t: 24,
+        by: "buzzard",
         en: "it's just like, let A be this function, let B be this function, let C be this number, let D be this function. It's just like pages and pages but like no explanation of why any of these things are being used. … That would be funny.",
         zh: "它就像是：令 A 為這個函數，令 B 為這個函數，令 C 為這個數，令 D 為這個函數。一頁又一頁，卻完全不解釋為什麼要用這些東西。……那會很好笑。",
       },
       {
         t: 73,
-        who: ["a logician working in metamathematics", "一位研究後設數學的邏輯學家"],
+        by: "glazer",
         en: "Well, I personally would get like a very sick enjoyment out of that. I'm a logician whose research tends to be in metamathematics, so I find the idea of inscrutable proofs like kind of a fascinating concept.",
         zh: "嗯，我個人會從中得到一種很病態的樂趣。我是邏輯學家，研究多半在後設數學，所以我覺得「難以理解的證明」這個想法很迷人。",
       },
@@ -238,10 +388,11 @@ const VIEWS: View[] = [
     tint: "bg-sky-50",
     edge: "bg-sky-400",
     ink: "text-sky-800",
+    asker: { by: "patel", t: 195 },
     points: [
       [
-        "Some problems have been solved by brute force: the four colour theorem was split into a great many cases, each checked by computer, and there is still no conceptually elegant proof. Some problems may only be solvable that way.",
-        "有些問題是靠暴力解決的：四色定理被拆成非常多種情況，每一種都交給電腦檢查，至今仍沒有概念上優雅的證明。有些問題也許只能這樣解。",
+        "Terence Tao, asked by Dwarkesh Patel on his podcast: some problems have been solved by brute force; the four colour theorem was split into a great many cases, each checked by computer, and there is still no conceptually elegant proof. Some problems may only be solvable that way.",
+        "陶哲軒在 Dwarkesh Patel 的 Podcast 上回答：有些問題是靠暴力解決的；四色定理被拆成非常多種情況，每一種都交給電腦檢查，至今仍沒有概念上優雅的證明。有些問題也許只能這樣解。",
       ],
       [
         "The Riemann hypothesis is prized because people expect it to need a new kind of mathematics, or a new connection between areas never linked before. It does not feel like a case check. (One exception: if it were false, one computed zero off the critical line would settle it, which would be \"very disappointing\".)",
@@ -255,26 +406,31 @@ const VIEWS: View[] = [
     quotes: [
       {
         t: 226,
+        by: "tao",
         en: "I mean, some problems have been basically solved by pure brute force. The four color theorem is a famous example. We have still not found a conceptually elegant proof of this theorem.",
         zh: "有些問題基本上是靠純粹的暴力解決的。四色定理就是著名的例子。我們至今還沒找到這個定理在概念上優雅的證明。",
       },
       {
         t: 254,
+        by: "tao",
         en: "a new type of mathematics has to be created or a new connection between two previously unconnected areas of mathematics has to be discovered",
         zh: "必須創造出一種新的數學，或是在兩個先前毫無關聯的數學領域之間發現新的連結。",
       },
       {
         t: 277,
+        by: "tao",
         en: "I mean, it could be false actually. … there is an unlikely scenario that the hypothesis is false and that you can just compute, oh, here's a zero off the line and a massive computer calculation verifies it. That would be very disappointing.",
         zh: "其實它也可能是錯的。……有一個不太可能的情境：猜想是錯的，你只要算出「喏，這裡有一個不在線上的零點」，再由大規模的電腦計算驗證。那會非常令人失望。",
       },
       {
         t: 291,
+        by: "tao",
         en: "I do feel that fully autonomous one-shot approaches are not the right approach.",
         zh: "我確實覺得，完全自主、一次到位的做法不是正確的做法。",
       },
       {
         t: 305,
+        by: "tao",
         en: "I can see one of these problems being solved by smart humans assisted by some extremely powerful AI tools, but the exact dynamic may be very different from what we envision right now. I mean, it could be a collaboration of a type that just doesn't exist yet.",
         zh: "我可以想像這類問題之一，由聰明的人在極強大的 AI 工具協助下解決，但確切的互動方式可能和我們現在想像的很不一樣。它可能是一種現在還不存在的合作。",
       },
@@ -289,46 +445,52 @@ const VIEWS: View[] = [
     ink: "text-indigo-800",
     points: [
       [
-        "Cheering them on, and against early scepticism: wait and see, give them a few more months. But if progress is very fast, will the models keep acting in our best interest? Capable models have been caught lying. (For a proof, the kernel catches a lie in the proof; the statement and the checkers still have to be trusted, which is why the first view starts there.)",
-        "為它們加油，也反對太早下結論的懷疑：再等等看，再給它們幾個月。但如果進展非常快，這些模型會一直以我們的最大利益行事嗎？能力很強的模型已經被抓到說謊。（對證明來說，證明裡的謊話會被核心抓到；但陳述和檢查器本身仍然必須可信，所以第一種觀點從那裡開始。）",
+        "Johannes Schmitt is cheering them on, against early scepticism: wait and see, give them a few more months. But if progress is very fast, will the models keep acting in our best interest? Capable models have been caught lying. (For a proof, the kernel catches a lie in the proof; the statement and the checkers still have to be trusted, which is why the first view starts there.)",
+        "Johannes Schmitt 為它們加油，也反對太早下結論的懷疑：再等等看，再給它們幾個月。但如果進展非常快，這些模型會一直以我們的最大利益行事嗎？能力很強的模型已經被抓到說謊。（對證明來說，證明裡的謊話會被核心抓到；但陳述和檢查器本身仍然必須可信，所以第一種觀點從那裡開始。）",
       ],
       [
-        "When something becomes cheap, what we value moves in an orthogonal direction. Certain kinds of problem solving will become cheaper and be valued a little less; landmark problems may still survive.",
-        "當某樣東西變便宜，我們珍視的東西就會往正交的方向移動。某些類型的解題會變便宜、比較不被看重；里程碑式的問題也許仍會留下來。",
+        "Ankur Moitra: when something becomes cheap, what we value moves in an orthogonal direction. Certain kinds of problem solving will become cheaper and be valued a little less; landmark problems may still survive.",
+        "Ankur Moitra：當某樣東西變便宜，我們珍視的東西就會往正交的方向移動。某些類型的解題會變便宜、比較不被看重；里程碑式的問題也許仍會留下來。",
       ],
       [
-        "AlphaGo's move 37 against Lee Sedol (2016) was the moment a machine played what top humans would not. The mathematical equivalent might be a machine proof of the Riemann hypothesis or another millennium problem, or a deep theory that synthesises different fields in one sweep. And a solution is not an end: what we learn from it generates new problems.",
-        "AlphaGo 在 2016 年對李世乭下出的第 37 手，是機器下出頂尖人類不會下的一步的時刻。數學的對應，可能是機器證明黎曼猜想或其他千禧年難題，或是一套一舉整合不同領域的深刻理論。而解答不是終點：從中學到的東西會產生新的問題。",
+        "AlphaGo's move 37 against Lee Sedol (2016) was the moment a machine played what top humans would not. The mathematical equivalent might be a machine proof of the Riemann hypothesis or another millennium problem, or a deep theory that synthesises different fields in one sweep (Jared Duker Lichtman). And a solution is not an end, says Ken Ono: what we learn from it generates new problems.",
+        "AlphaGo 在 2016 年對李世乭下出的第 37 手，是機器下出頂尖人類不會下的一步的時刻。數學的對應，可能是機器證明黎曼猜想或其他千禧年難題，或是一套一舉整合不同領域的深刻理論（Jared Duker Lichtman）。而 Ken Ono 說，解答不是終點：從中學到的東西會產生新的問題。",
       ],
     ],
     quotes: [
       {
         t: 600,
+        by: "schmitt",
         en: "On the one hand, I am kind of excited to see what these models can really do. And I think I'm certainly, I'm kind of cheering on them.",
         zh: "一方面，我很期待看看這些模型到底能做到什麼。我確實有點在為它們加油。",
       },
       {
         t: 631,
+        by: "schmitt",
         en: "On the other hand, I am somewhat concerned about kind of if this progress is actually extremely fast. Then there's all these questions, will these models really continue to act in our best interest or will they kind of start to veer off, do some misaligned things? Because we already see that many of the most capable models like O3, for example, was a very notorious liar.",
         zh: "另一方面，如果進展真的極快，我有點擔心。那就會有一堆問題：這些模型會繼續以我們的最大利益行事，還是會開始偏離、做出一些沒對齊的事？因為我們已經看到，許多最強的模型，例如 o3，就是出了名的愛說謊。",
       },
       {
         t: 659,
+        by: "moitra",
         en: "Historically, when something becomes cheap or commoditized in society, the things we value become orthogonalized",
         zh: "從歷史上看，當社會上某樣東西變得便宜或商品化，我們珍視的東西就會變得與之正交。",
       },
       {
         t: 688,
+        by: "moitra",
         en: "And it does seem to me that certain types of problem solving are going to become cheaper. … So maybe these amazing landmark problems will all still survive, who knows?",
         zh: "在我看來，某些類型的解題確實會變得更便宜。……所以也許這些了不起的里程碑問題都還會留下來，誰知道呢？",
       },
       {
         t: 750,
+        by: "lichtman",
         en: "a theory that really synthesizes all these different fields in one fell swoop. I would consider that to be maybe a move 37 for mathematics.",
         zh: "一套真正一舉整合所有這些不同領域的理論。我會認為那也許就是數學的「第 37 手」。",
       },
       {
         t: 757,
+        by: "ono", recorded: [2026, 6],
         en: "Every time that a theorem or open problem is solved, to be good mathematics, the solution isn't the end. … what we learn from solved problems will be used to generate new problems and new conjectures and the pursuit of knowledge about integers and primes will go on.",
         zh: "每當一個定理或開放問題被解決，要算是好的數學，解答就不是終點。……我們從解決的問題中學到的，會被用來產生新問題、新猜想，而對整數與質數的知識追求會繼續下去。",
       },
@@ -449,27 +611,131 @@ function Honeycomb({ onOpen, open, hexRefs }: { onOpen: (i: number) => void; ope
   );
 }
 
+/** "▶ 2:23": opens the video at that second. */
+function TimeLink({ t }: { t: number }) {
+  const { pick } = useLang();
+  return (
+    <a
+      href={`https://www.youtube.com/watch?v=${VIDEO}&t=${t}s`}
+      target="_blank"
+      rel="noreferrer"
+      className="font-medium whitespace-nowrap text-(--lk-accent) hover:underline"
+      aria-label={pick([`Watch at ${mmss(t)} on YouTube (new tab)`, `在 YouTube 從 ${mmss(t)} 開始看（新分頁）`])}
+    >
+      ▶ {mmss(t)}
+    </a>
+  );
+}
+
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
 function QuoteBlock({ q, edge }: { q: Quote; edge: string }) {
   const { pick, index } = useLang();
   const zh = index === 1;
+  const who: Person = PEOPLE[q.by];
   return (
     <blockquote className="relative rounded-r-md bg-white/80 py-2 pr-3 pl-4">
       <span className={`absolute inset-y-0 left-0 w-1 rounded-full ${edge}`} aria-hidden />
       <p className="text-[13.5px] leading-relaxed text-gray-800">“{zh ? q.zh : q.en}”</p>
       {zh && <p className="mt-1 text-[11.5px] leading-snug text-gray-500 italic">原文：“{q.en}”</p>}
       <p className="mt-1 flex flex-wrap items-center gap-x-2 text-[11.5px] text-gray-500">
-        {q.who && <span>— {pick(q.who)}</span>}
-        <a
-          href={`https://www.youtube.com/watch?v=${VIDEO}&t=${q.t}s`}
-          target="_blank"
-          rel="noreferrer"
-          className="font-medium text-(--lk-accent) hover:underline"
-          aria-label={pick([`Watch at ${mmss(q.t)} on YouTube (new tab)`, `在 YouTube 從 ${mmss(q.t)} 開始看（新分頁）`])}
-        >
-          ▶ {mmss(q.t)}
-        </a>
+        <span>
+          — <span className="font-medium text-gray-700">{pick(who.name)}</span>
+          {zh ? "，" : ", "}
+          {pick(who.short)}
+        </span>
+        <TimeLink t={q.t} />
       </p>
     </blockquote>
+  );
+}
+
+/** A round photo from Wikimedia Commons, or the initials on a teal circle. */
+function Avatar({ p }: { p: Person }) {
+  const { pick } = useLang();
+  const cls = "h-12 w-12 shrink-0 rounded-full";
+  if (p.photo)
+    return (
+      <img
+        src={`${import.meta.env.BASE_URL}${p.photo.src}`}
+        alt={pick(p.name)}
+        title={`${p.photo.author} · ${p.photo.licence} · Wikimedia Commons`}
+        width={48}
+        height={48}
+        loading="lazy"
+        className={`${cls} bg-gray-200 object-cover`}
+      />
+    );
+  const words = p.name[0].split(" ");
+  const initials = words[0][0] + words[words.length - 1][0];
+  return (
+    <span className={`${cls} flex items-center justify-center bg-teal-600 text-sm font-semibold text-white`} aria-hidden>
+      {initials}
+    </span>
+  );
+}
+
+/** "Who said it": each speaker quoted in a card (and the interviewer who asked), with the seconds they are quoted at. */
+function WhoSaidIt({ v }: { v: View }) {
+  const { pick, index } = useLang();
+  const zh = index === 1;
+  const rows: { by: Who; rec: [number, number]; ts: number[]; asks?: boolean }[] = [];
+  for (const q of v.quotes) {
+    const rec = q.recorded ?? PEOPLE[q.by].recorded;
+    const row = rows.find((r) => r.by === q.by && r.rec[0] === rec[0] && r.rec[1] === rec[1]);
+    if (row) row.ts.push(q.t);
+    else rows.push({ by: q.by, rec, ts: [q.t] });
+  }
+  if (v.asker) rows.unshift({ by: v.asker.by, rec: PEOPLE[v.asker.by].recorded, ts: [v.asker.t], asks: true });
+  return (
+    <>
+      <h4 className="mt-5 text-xs font-semibold tracking-wide text-gray-500 uppercase">{pick(["Who said it", "說話的人"])}</h4>
+      <ul className="mt-2 grid gap-2 sm:grid-cols-2" data-testid="views-who">
+        {rows.map((r) => {
+          const p: Person = PEOPLE[r.by];
+          const [y, m] = r.rec;
+          return (
+            <li key={`${r.by}-${y}-${m}`} className="flex min-w-0 gap-3 rounded-lg bg-white/70 p-2.5">
+              <Avatar p={p} />
+              <div className="min-w-0 flex-1 text-[12px] leading-snug text-gray-600">
+                <p className="text-[13px] font-semibold text-gray-900">
+                  {pick(p.name)}
+                  {r.asks && (
+                    <span className="ml-1.5 rounded bg-gray-200 px-1.5 py-px align-[1px] text-[10.5px] font-medium text-gray-600">{pick(["asks", "提問"])}</span>
+                  )}
+                </p>
+                <p>{pick(p.title)}</p>
+                <p className="text-gray-500">
+                  {zh ? `訪談錄於 ${y} 年 ${m} 月` : `Interview recorded ${MONTHS[m - 1]} ${y}`}
+                  {p.note && (zh ? `（${p.note[1]}）` : `, ${p.note[0]}`)}
+                </p>
+                <p className="mt-0.5 flex flex-wrap gap-x-2">
+                  {r.ts.map((t) => (
+                    <TimeLink key={t} t={t} />
+                  ))}
+                </p>
+                {p.photo && (
+                  <p className="mt-0.5 text-[10.5px] text-gray-400">
+                    {pick(["Photo: ", "照片："])}
+                    <a href={p.photo.file} target="_blank" rel="noreferrer" className="hover:underline">
+                      {p.photo.author}
+                    </a>
+                    {" · "}
+                    <a href={p.photo.licenceUrl} target="_blank" rel="noreferrer" className="hover:underline">
+                      {p.photo.licence}
+                    </a>
+                    {" · "}
+                    <a href={p.photo.file} target="_blank" rel="noreferrer" className="hover:underline">
+                      Wikimedia Commons
+                    </a>
+                  </p>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </>
   );
 }
 
@@ -636,12 +902,13 @@ function ViewCard({ index, hex, onStep, onClosed }: { index: number; hex: () => 
               </p>
             )}
           </div>
-          <h4 className="mt-5 text-xs font-semibold tracking-wide text-gray-500 uppercase">{pick(["In their words", "他們的原話"])}</h4>
+          <h4 className="mt-5 text-xs font-semibold tracking-wide text-gray-500 uppercase">{pick(["The mathematicians' words", "數學家的原話"])}</h4>
           <div className="mt-2 space-y-2">
             {v.quotes.map((q) => (
               <QuoteBlock key={q.t} q={q} edge={v.edge} />
             ))}
           </div>
+          <WhoSaidIt v={v} />
           <div className="mt-5 flex items-center justify-between border-t border-black/5 pt-3 text-sm">
             <button onClick={() => onStep(-1)} className="rounded-md px-2 py-1 text-gray-600 hover:bg-white hover:text-gray-900">
               ← {pick(VIEWS[(index + 5) % 6].title)}
