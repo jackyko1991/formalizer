@@ -5,7 +5,7 @@
  * of the same day (Masullo's all-human GRH proposal), and where the site stands next to the mainstream view (a timeline).
  * Fast-moving facts are dated "as of 22 November 2026"; sources were fetched that day. Pictures: RhFigures.tsx.
  */
-import { RichText, useLang } from "@learnkit/web";
+import { RelatedProblems, RichText, useLang } from "@learnkit/web";
 import { lazy, Suspense } from "react";
 import { Callout, Figure, List, P, Page, Section, SiteLink, Sources, Table, type L, type SectionInfo } from "../kit";
 import {
@@ -577,6 +577,8 @@ export default function RhConcept({ section }: { section: string | null }) {
 
       {/* ------------------------------------------------------------------------------------------------ 6 */}
       <Section page={PAGE} id="more" n={6} title={SECTIONS[5].title}>
+        {/* the same question on a sister site: Tensorizer's computation of the zeros (learnkit interlinks.ts) */}
+        <RelatedProblems site="formalizer" id="concept/rh" />
         <P
           t={[
             '3Blue1Brown asked mathematicians "What if AI solved the Riemann Hypothesis?" (video, 22 November 2026). Their answers range from running the comparator and two or three independent kernels, to wanting a human idea and a picture, to finding inscrutable proofs fascinating. Leo de Moura, the creator of Lean, put the theme of this page in five words: "a proof is not static". The views page groups those answers into six positions.',

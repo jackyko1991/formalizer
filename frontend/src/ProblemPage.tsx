@@ -7,7 +7,7 @@
  * The left column has a second tab, Research (like Tensorizer's Workspace): the research projects, opened in the main
  * area at #/problems/research/<project>.
  */
-import { go, plainText, ProblemPicture, RichText, useLang, type Localized } from "@learnkit/web";
+import { go, plainText, ProblemPicture, RelatedProblems, RichText, useLang, type Localized } from "@learnkit/web";
 import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -469,6 +469,8 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
           />
           <ProblemMeta problem={problem} />
           <CollectionNav problemId={problem.id} onSelect={onSelect} />
+          {/* the same idea on a sister site (learnkit interlinks.ts; nothing is drawn when there is none) */}
+          <RelatedProblems site="formalizer" id={problem.id} />
         </div>
 
         <div className="space-y-4 bg-gray-50/60 p-5 xl:min-h-0 xl:flex-1 xl:overflow-y-auto">
