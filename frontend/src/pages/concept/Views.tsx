@@ -19,8 +19,8 @@ const PAGE = "views";
 const VIDEO = "zqzk43bSdDI";
 
 const SECTIONS: SectionInfo[] = [
+  { id: "video", title: ["Video summary", "影片摘要"] },
   { id: "honeycomb", title: ["Six views on a proof nobody can read", "沒人讀得懂的證明：六種觀點"] },
-  { id: "video", title: ["Asked before it came true", "成真之前就問過的問題"] },
   { id: "sceptic", title: ["The sceptic's case: Michael Harris", "懷疑者的論點：Michael Harris"] },
   { id: "two-problems", title: ["Two different problems", "兩道不同的題"] },
   { id: "stance", title: ["Where Formalizer stands", "Formalizer 的立場"] },
@@ -683,27 +683,16 @@ export default function ViewsConcept({ section }: { section: string | null }) {
       focus={section}
       title={["What if AI proved it? Six views from mathematicians", "如果是 AI 證明的呢？數學家的六種觀點"]}
       intro={[
-        "3Blue1Brown has been asking mathematicians what it would mean if an AI produced a proof of the Riemann hypothesis that nobody could read. On 20 November 2026 the question stopped being hypothetical: a claimed Lean proof of 17,374,215 lines, made with Claude, still being checked as of 22 November 2026. The answers in the video fall into six views.",
-        "3Blue1Brown 一直在問數學家：如果 AI 產生了一份沒人讀得懂的黎曼猜想證明，那代表什麼？2026 年 11 月 20 日，這個問題不再只是假設：一份宣稱的 Lean 證明，共 17,374,215 行，與 Claude 合作完成，截至 2026 年 11 月 22 日仍在檢查中。影片裡的回答可以分成六種觀點。",
+        "Is a proof nobody can read still a proof? On 20 November 2026 that stopped being a thought experiment: a claimed Lean proof of the Riemann hypothesis, 17,374,215 lines made with Claude, still under review as of 22 November 2026. This page gathers what mathematicians say: the interviews, six views, the sceptic's case, and where Formalizer stands.",
+        "一份沒人讀得懂的證明，還算證明嗎？2026 年 11 月 20 日，這不再只是思想實驗：一份宣稱的黎曼猜想 Lean 證明，共 17,374,215 行，與 Claude 合作完成，截至 2026 年 11 月 22 日仍在審查中。本頁整理數學家怎麼看：訪談、六種觀點、懷疑者的論點，以及 Formalizer 的立場。",
       ]}
     >
       <style>{PAGE_CSS}</style>
-      <Section page={PAGE} id="honeycomb" n={1} title={SECTIONS[0].title}>
+      <Section page={PAGE} id="video" n={1} title={SECTIONS[0].title}>
         <P
           t={[
-            "Choose a hexagon to open a view: a picture, the argument in short, and the speakers' own words, each linked to its moment in the video. The answers were given to the hypothetical question (the video's title: *Since last year, we asked…*), not to the November claim itself. The grouping into six is ours.",
-            "點一個六角形打開一種觀點：一張圖、論點摘要，以及受訪者的原話，每一句都連到影片裡的那一刻。這些回答針對的是假設性的問題（影片標題：*Since last year, we asked…*，「從去年起我們就在問……」），不是針對 11 月的這份宣稱本身。分成六類是我們的整理。",
-          ]}
-        />
-        <Honeycomb onOpen={setOpen} open={open} hexRefs={hexRefs} />
-        {open !== null && <ViewCard key="card" index={open} hex={hex} onStep={(d) => setOpen((i) => (i === null ? i : (i + d + 6) % 6))} onClosed={onClosed} />}
-      </Section>
-
-      <Section page={PAGE} id="video" n={2} title={SECTIONS[1].title}>
-        <P
-          t={[
-            "Since last year, the YouTube channel 3Blue1Brown has been interviewing mathematicians about a hypothetical: what if an AI proved the Riemann hypothesis and nobody could read the proof? Their answers read like a prophecy, because the question has now arrived: a claimed Lean proof was posted on 20 November 2026 (still under review as of 22 November 2026). The timestamps in the cards above open the interviews at that second.",
-            "從去年起，YouTube 頻道 3Blue1Brown 就在訪問數學家一個假設性的問題：如果 AI 證明了黎曼猜想，卻沒有人讀得懂這份證明，會怎樣？這些回答讀起來像一則預言，因為這個問題如今成真了：2026 年 11 月 20 日，一份宣稱的 Lean 證明公開了（截至 2026 年 11 月 22 日仍在審查中）。上面卡片裡的時間連結，會從訪談中對應的那一秒開始播放。",
+            "Since last year, the YouTube channel 3Blue1Brown has been asking mathematicians one question: what if an AI proved the Riemann hypothesis and nobody could read the proof? Their answers range from \"verify it, then take it apart\" to \"understanding is the whole point\". Asked as a hypothetical, they now read like a prophecy.",
+            "從去年起，YouTube 頻道 3Blue1Brown 就在問數學家同一個問題：如果 AI 證明了黎曼猜想，卻沒有人讀得懂這份證明，會怎樣？回答從「先驗證，再拆開來讀」到「理解才是重點」都有。當初問的是假設，如今讀起來像一則預言。",
           ]}
         />
         <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-gray-900">
@@ -726,6 +715,17 @@ export default function ViewsConcept({ section }: { section: string | null }) {
             {pick(["Watch on YouTube", "在 YouTube 觀看"])} ↗
           </a>
         </p>
+      </Section>
+
+      <Section page={PAGE} id="honeycomb" n={2} title={SECTIONS[1].title}>
+        <P
+          t={[
+            "The answers fall into six views; the grouping is ours. Choose a hexagon to open one: a picture, the argument in short, and the speakers' own words, each opening the video above at that second. They answered the hypothetical question, not the November claim itself.",
+            "這些回答可以分成六種觀點，分類是我們的整理。點一個六角形打開一種：一張圖、論點摘要，以及受訪者的原話，每一句都會從上面影片的那一秒開始播放。他們回答的是假設性的問題，不是 11 月這份宣稱本身。",
+          ]}
+        />
+        <Honeycomb onOpen={setOpen} open={open} hexRefs={hexRefs} />
+        {open !== null && <ViewCard key="card" index={open} hex={hex} onStep={(d) => setOpen((i) => (i === null ? i : (i + d + 6) % 6))} onClosed={onClosed} />}
       </Section>
 
       <Section page={PAGE} id="sceptic" n={3} title={SECTIONS[2].title}>
