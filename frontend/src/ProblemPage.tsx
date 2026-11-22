@@ -846,7 +846,10 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
           </aside>
         </div>
 
-        <div className={`flex flex-col border-t border-gray-200 xl:min-h-0 xl:flex-1 xl:flex-row ${onPhone("result", "xl:flex")}`}>
+        {/* with the map open, this row takes most of the column so the map is in view, not under the fold */}
+        <div
+          className={`flex flex-col border-t border-gray-200 xl:min-h-0 xl:flex-row ${resultTab === "map" ? "xl:flex-[2.4]" : "xl:flex-1"} ${onPhone("result", "xl:flex")}`}
+        >
           {/* Goals: what Lean still wants, as the terminal is in Tensorizer */}
           <section
             {...coachBox(1)}
@@ -921,7 +924,7 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
           {/* Result: the verdict, errors, notes, axioms */}
           <section
             {...coachBox(3)}
-            className={`flex min-w-0 flex-col border-t border-gray-200 bg-white xl:min-h-0 xl:flex-1 xl:border-t-0 xl:border-l ${coachBox(3).className}`}
+            className={`flex min-w-0 flex-col border-t border-gray-200 bg-white xl:min-h-0 xl:border-t-0 xl:border-l ${resultTab === "map" ? "xl:flex-[2.2]" : "xl:flex-1"} ${coachBox(3).className}`}
             aria-live="polite"
             data-testid="result"
           >
