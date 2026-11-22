@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="An example satisfying the hypothesis: (a, b, c, d) = (11, 9, 5, 1), where ac + bd = 64 = 16 · 4. Bars show ab + cd = 104 > ac + bd = 64 > ad + bc = 56; ac + bd divides (ab + cd)(ad + bc), and here 104 = 8 · 13 is not prime." font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="11" fill="#111827">
+  <rect width="320" height="180" rx="8" fill="#ffffff"/>
+  <text x="16" y="28" font-family="Source Code Pro, ui-monospace, monospace" font-size="12">(a, b, c, d) = (11, 9, 5, 1)</text>
+  <text x="16" y="50" font-family="Source Code Pro, ui-monospace, monospace">ac+bd = (a+b−c+d)(−a+b+c+d)</text>
+  <text x="304" y="50" font-family="Source Code Pro, ui-monospace, monospace" fill="#6b7280" text-anchor="end">64 = 16 · 4</text>
+  <text x="16" y="75" font-family="Source Code Pro, ui-monospace, monospace" fill="#d97706">ab+cd</text>
+  <rect x="66" y="64" width="208" height="15" rx="2" fill="#fef3c7" stroke="#d97706" stroke-width="1"/>
+  <text x="280" y="75" font-family="Source Code Pro, ui-monospace, monospace" fill="#d97706">104</text>
+  <text x="16" y="97" font-family="Source Code Pro, ui-monospace, monospace" fill="#0f766e">ac+bd</text>
+  <rect x="66" y="86" width="128" height="15" rx="2" fill="#ccfbf1" stroke="#0f766e" stroke-width="1"/>
+  <text x="200" y="97" font-family="Source Code Pro, ui-monospace, monospace" fill="#0f766e">64</text>
+  <text x="16" y="119" font-family="Source Code Pro, ui-monospace, monospace" fill="#0369a1">ad+bc</text>
+  <rect x="66" y="108" width="112" height="15" rx="2" fill="#e0f2fe" stroke="#0369a1" stroke-width="1"/>
+  <text x="184" y="119" font-family="Source Code Pro, ui-monospace, monospace" fill="#0369a1">56</text>
+  <text x="16" y="148" font-family="Source Code Pro, ui-monospace, monospace">ac+bd ∣ (ab+cd)(ad+bc)</text>
+  <text x="304" y="148" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="end">64 ∣ 104 · 56 <tspan fill="#059669">✓</tspan></text>
+  <text x="16" y="170" font-family="Source Code Pro, ui-monospace, monospace" font-size="12"><tspan fill="#d97706">104 = 8 · 13</tspan></text>
+  <text x="304" y="170" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="end">¬Prime (ab+cd) <tspan fill="#059669">✓</tspan></text>
+</svg>

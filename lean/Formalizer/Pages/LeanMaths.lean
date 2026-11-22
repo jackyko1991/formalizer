@@ -97,6 +97,20 @@ theorem oddSum_eq (n : Nat) : oddSum n = n * n := by
 #eval (7 : Nat) / 0   -- 0   (division by zero is defined to be 0)
 
 example : (3 : Nat) - 5 + 5 = 5 := rfl   -- not 3!
+-- snippet: three-lines
+-- The same sums on Nat and on Int (ℝ needs Mathlib, shown in the picture only).
+#eval (2 : Nat) - 3    -- 0    (stops at zero)
+#eval (2 : Int) - 3    -- -1
+#eval (1 : Nat) / 2    -- 0    (rounded down)
+#eval (1 : Int) / 2    -- 0
+#eval (-7 : Int) / 2   -- -4   (-7 = 2 * (-4) + 1: the remainder is never negative)
+#eval (-7 : Int) % 2   -- 1
+#eval (5 : Nat) / 0    -- 0    (a junk value: x / 0 = 0)
+#eval (5 : Int) / 0    -- 0
+
+example : (2 : Nat) - 3 = 0 := by decide
+example : (-7 : Int) / 2 = -4 := by decide
+example : (5 : Int) / 0 = 0 := by decide
 -- snippet: term-vs-tactic
 -- a term proof: write the proof down directly
 theorem swap_term (P Q : Prop) (h : P ∧ Q) : Q ∧ P :=

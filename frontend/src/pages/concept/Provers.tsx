@@ -6,7 +6,16 @@
  */
 import { useLang } from "@learnkit/web";
 import { Callout, Figure, List, P, Page, Section, SiteLink, Sources, Table, type SectionInfo } from "../kit";
-import { DivideConquer, LearningLoop, ProposeCheck, ProverSpectrum, SearchStrategies } from "./ProverFigures";
+import {
+  DivideConquer,
+  HelperVsProver,
+  LearningLoop,
+  LeanSearchMap,
+  PassAtK,
+  ProposeCheck,
+  ProverSpectrum,
+  SearchStrategies,
+} from "./ProverFigures";
 
 const PAGE = "provers";
 
@@ -78,6 +87,14 @@ export default function ProversConcept({ section }: { section: string | null }) 
             "Lean 本來就會幫你搜尋，不用 AI，也不會有任何東西離開你的電腦。把下面其中一個放在 `sorry` 的位置；Lean 會回一個建議，點一下就能插入。",
           ]}
         />
+        <Figure
+          caption={[
+            "Four searches, one picture. Each looks in the library for a lemma of a particular shape against your goal `⊢ P`, Lean tries each candidate, and you get back the line that worked. No model is involved.",
+            "四種搜尋，一張圖。每一種都針對你的目標 `⊢ P`，在函式庫裡找某種形狀的引理；Lean 試過每個候選，把成功的那一行還給你。完全不用模型。",
+          ]}
+        >
+          <LeanSearchMap />
+        </Figure>
         <Table
           head={[
             ["Write", "寫"],
@@ -291,6 +308,14 @@ export default function ProversConcept({ section }: { section: string | null }) 
             "大型證明器想一口氣證完整個定理。學習時，小一點的工具常常更好：在你卡住的地方建議 *下一個戰術*，思考留給你自己。",
           ]}
         />
+        <Figure
+          caption={[
+            "Two kinds of help. A helper proposes a few next steps and Lean keeps those that run (✓); you choose and stay in charge of the idea. A prover returns a whole proof that Lean accepts; it is correct, and understanding it is your job. (Schematic: real suggestions depend on the goal.)",
+            "兩種幫助。助手提出幾個下一步，Lean 留下能執行的（✓）；由你選擇，想法仍掌握在你手上。證明器交回一份 Lean 接受的完整證明；它是對的，而讀懂它是你的事。（示意圖：實際建議取決於目標。）",
+          ]}
+        >
+          <HelperVsProver />
+        </Figure>
         <Table
           head={[
             ["Tool", "工具"],
@@ -331,6 +356,14 @@ export default function ProversConcept({ section }: { section: string | null }) 
             "**miniF2F** 不是模型，而是一套測驗題：488 道競賽題（AMC、AIME、IMO，以及 MATH 資料集），一半當驗證集、244 道當測試集，全部寫成形式陳述（最早有 Lean 3、Metamath 與 Isabelle 版本，現在有 Lean 4 版）。它由 Kunhao Zheng、Jesse Michael Han 與 Stanislas Polu 在 2021 年發表，從此成為標準量尺。",
           ]}
         />
+        <Figure
+          caption={[
+            "Why the budget matters. If each try succeeds independently with probability $p$, the chance that at least one of $k$ tries succeeds is $1 - (1 - p)^k$. A problem a model solves once in a thousand tries is almost never solved at $k = 32$ (about 3%) and almost always at $k = 8192$ (about 99.97%). Hover to read values; dashed lines mark $k = 32$ and $k = 8192$.",
+            "為什麼預算很重要。如果每次嘗試各自獨立、成功機率為 $p$，那麼 $k$ 次嘗試中至少成功一次的機率是 $1 - (1 - p)^k$。一道模型一千次才成功一次的題目，在 $k = 32$ 時幾乎解不出來（約 3%），在 $k = 8192$ 時幾乎一定解得出來（約 99.97%）。滑過圖可讀數值；虛線標出 $k = 32$ 與 $k = 8192$。",
+          ]}
+        >
+          <PassAtK />
+        </Figure>
         <List
           items={[
             [

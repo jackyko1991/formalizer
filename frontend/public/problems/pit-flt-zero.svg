@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="Left, in red: the statement for all natural a, b, c and n ≥ 3, aⁿ + bⁿ ≠ cⁿ, is false at a = b = c = 0, since 0³ + 0³ = 0³. Right, in green: with 0 &lt; a, b, c &lt; 10 the corrected statement a³ + b³ ≠ c³ holds, shown by cubes of sides 6, 8 and 9 with 6³ + 8³ = 728 ≠ 729 = 9³." font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="11" fill="#111827">
+  <rect width="320" height="180" rx="8" fill="#ffffff"/>
+  <rect x="12" y="12" width="142" height="156" rx="6" fill="#fef2f2" stroke="#fecaca" stroke-width="1"/>
+  <rect x="166" y="12" width="142" height="156" rx="6" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="1"/>
+  <text x="83" y="32" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="middle">∀ a b c n, n ≥ 3</text>
+  <text x="83" y="48" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="middle">aⁿ + bⁿ ≠ cⁿ</text>
+  <text x="83" y="80" font-family="Source Code Pro, ui-monospace, monospace" fill="#dc2626" text-anchor="middle">a = b = c = 0</text>
+  <text x="83" y="110" font-family="Source Code Pro, ui-monospace, monospace" font-size="14" text-anchor="middle" font-weight="bold">0³ + 0³ = 0³</text>
+  <text x="83" y="154" font-size="24" fill="#dc2626" text-anchor="middle">✗</text>
+  <text x="237" y="32" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="middle">0 &lt; a, b, c &lt; 10</text>
+  <text x="237" y="48" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="middle">a³ + b³ ≠ c³</text>
+  <path d="M178,86.4 l6.24,-6.24 h15.6 l-6.24,6.24 z" fill="#ccfbf1" stroke="#0f766e"/>
+  <path d="M193.6,86.4 l6.24,-6.24 v15.6 l-6.24,6.24 z" fill="#99f6e4" stroke="#0f766e"/>
+  <rect x="178" y="86.4" width="15.6" height="15.6" fill="#ffffff" stroke="#0f766e"/>
+  <path d="M218,81.2 l8.32,-8.32 h20.8 l-8.32,8.32 z" fill="#ccfbf1" stroke="#0f766e"/>
+  <path d="M238.8,81.2 l8.32,-8.32 v20.8 l-8.32,8.32 z" fill="#99f6e4" stroke="#0f766e"/>
+  <rect x="218" y="81.2" width="20.8" height="20.8" fill="#ffffff" stroke="#0f766e"/>
+  <path d="M264,78.6 l9.36,-9.36 h23.4 l-9.36,9.36 z" fill="#ccfbf1" stroke="#0f766e"/>
+  <path d="M287.4,78.6 l9.36,-9.36 v23.4 l-9.36,9.36 z" fill="#99f6e4" stroke="#0f766e"/>
+  <rect x="264" y="78.6" width="23.4" height="23.4" fill="#ffffff" stroke="#0f766e"/>
+  <text x="208" y="92" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle">+</text>
+  <text x="255" y="92" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle">≠</text>
+  <text x="185.8" y="118" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="middle">6³</text>
+  <text x="228.4" y="118" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="middle">8³</text>
+  <text x="275.7" y="118" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="middle">9³</text>
+  <text x="237" y="136" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" font-weight="bold">728 ≠ 729</text>
+  <text x="237" y="158" font-size="22" fill="#059669" text-anchor="middle">✓</text>
+</svg>

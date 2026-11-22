@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="On a grid, u = (4, 1) followed by v = (1, 3), and v followed by u, are the two sides of a parallelogram; both paths end at the same corner (5, 4), so u + v = v + u.">
+<defs><marker id="ah-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#0f766e"/></marker><marker id="ah-amb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#d97706"/></marker><marker id="ah-sky" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#0369a1"/></marker></defs>
+<g font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#111827">
+<line x1="28" y1="158" x2="28" y2="38" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="52" y1="158" x2="52" y2="38" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="76" y1="158" x2="76" y2="38" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="100" y1="158" x2="100" y2="38" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="124" y1="158" x2="124" y2="38" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="148" y1="158" x2="148" y2="38" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="172" y1="158" x2="172" y2="38" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="28" y1="158" x2="172" y2="158" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="28" y1="134" x2="172" y2="134" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="28" y1="110" x2="172" y2="110" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="28" y1="86" x2="172" y2="86" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="28" y1="62" x2="172" y2="62" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="28" y1="38" x2="172" y2="38" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="28" y1="158" x2="28" y2="38" stroke="#9ca3af" stroke-width="1.2"/>
+<line x1="28" y1="158" x2="172" y2="158" stroke="#9ca3af" stroke-width="1.2"/>
+<polygon points="28,158 124,134 148,62 52,86" fill="#ccfbf1" stroke="none" stroke-width="0" fill-opacity="0.6"/>
+<line x1="28" y1="158" x2="124" y2="134" stroke="#0f766e" stroke-width="2.4" marker-end="url(#ah-teal)"/>
+<line x1="124" y1="134" x2="148" y2="62" stroke="#d97706" stroke-width="2.4" marker-end="url(#ah-amb)" stroke-dasharray="5 3"/>
+<line x1="28" y1="158" x2="52" y2="86" stroke="#d97706" stroke-width="2.4" marker-end="url(#ah-amb)"/>
+<line x1="52" y1="86" x2="148" y2="62" stroke="#0f766e" stroke-width="2.4" marker-end="url(#ah-teal)" stroke-dasharray="5 3"/>
+<line x1="28" y1="158" x2="148" y2="62" stroke="#0369a1" stroke-width="2.6" marker-end="url(#ah-sky)"/>
+<circle cx="28" cy="158" r="3" fill="#374151"/>
+<text x="80" y="162" font-size="14" fill="#0f766e" font-weight="600" font-style="italic">u</text>
+<text x="30" y="126" font-size="14" fill="#d97706" text-anchor="end" font-weight="600" font-style="italic">v</text>
+<text x="146" y="102" font-size="14" fill="#d97706" font-weight="600" font-style="italic">v</text>
+<text x="100" y="65" font-size="14" fill="#0f766e" text-anchor="middle" font-weight="600" font-style="italic">u</text>
+<text x="156" y="58" font-size="11" fill="#0369a1" font-family="Source Code Pro, ui-monospace, monospace">(5, 4)</text>
+<text x="214" y="54" font-size="12" fill="#111827" font-family="Source Code Pro, ui-monospace, monospace"><tspan fill="#0f766e">u</tspan> = (4, 1)</text>
+<text x="214" y="74" font-size="12" fill="#111827" font-family="Source Code Pro, ui-monospace, monospace"><tspan fill="#d97706">v</tspan> = (1, 3)</text>
+<text x="214" y="110" font-size="13" fill="#111827" font-family="Source Code Pro, ui-monospace, monospace" font-weight="600"><tspan fill="#0f766e">u</tspan> + <tspan fill="#d97706">v</tspan></text>
+<text x="214" y="132" font-size="13" fill="#111827" font-family="Source Code Pro, ui-monospace, monospace" font-weight="600">= <tspan fill="#d97706">v</tspan> + <tspan fill="#0f766e">u</tspan></text>
+<text x="214" y="154" font-size="12" fill="#111827" font-family="Source Code Pro, ui-monospace, monospace">= <tspan fill="#0369a1">(5, 4)</tspan></text>
+</g>
+</svg>

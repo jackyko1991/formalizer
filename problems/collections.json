@@ -43,5 +43,41 @@
       "分好幾步完成的證明：每一步都留下更小的目標，直到什麼都不剩。"
     ],
     "items": ["rewrite-chain", "le-chain", "even-sum", "cases-or", "induction-double", "calc-chain", "geo-shift"]
+  },
+  {
+    "id": "pythagoras",
+    "title": ["Pythagoras, three ways", "畢氏定理的三種寫法"],
+    "summary": [
+      "One example by computation, the algebra for perpendicular vectors, then the theorem itself in Mathlib's Euclidean geometry.",
+      "先用計算看一個例子，再證垂直向量的代數，最後是 Mathlib 歐氏幾何中的定理本身。"
+    ],
+    "items": ["geo-pythagoras", "geo-perpendicular", "geo-pythagoras-vectors", "geo-pythagoras-euclid"]
+  },
+  {
+    "id": "imo-classics",
+    "title": ["IMO problems, proved in Lean", "用 Lean 證明的 IMO 題目"],
+    "summary": [
+      "Olympiad problems with complete Lean proofs from compfiles (Apache-2.0), from 1959 to 2005. They need Mathlib: read the proofs on the Lite runner, run them on a Full runner.",
+      "1959 到 2005 年的奧林匹亞題目，附 compfiles（Apache-2.0）的完整 Lean 證明。它們需要 Mathlib：在 Lite 執行器上閱讀證明，在 Full 執行器上執行。"
+    ],
+    "items": [
+      "imo-1959-p1",
+      "imo-1984-p2",
+      "imo-1964-p1",
+      "imo-1963-p4",
+      "imo-1972-p4",
+      "imo-1977-p6",
+      "imo-2001-p6",
+      "imo-2005-p3"
+    ]
+  },
+  {
+    "id": "lean-says-no",
+    "title": ["When Lean says no", "當 Lean 說不"],
+    "summary": [
+      "A wrong statement, a false conjecture and a proof with a gap: three different ways for mathematics on paper to go wrong, each caught by a check Lean can run.",
+      "一個寫錯的陳述、一個錯的猜想、一個有漏洞的證明：紙上數學出錯的三種不同方式，每一種都被 Lean 能做的檢查抓到。"
+    ],
+    "items": ["pit-flt-zero", "pit-fermat-641", "pit-horses"]
   }
 ]

@@ -25,8 +25,8 @@
     ],
     "steps": [],
     "hint": [
-      "`rfl` says \"both sides compute to the same thing\": Lean works out `2 + 2` and gets `4`. `decide` asks Lean to check the claim by computation. (`norm_num` lives in Mathlib, so the Lite runner says it needs the Full runner.)",
-      "`rfl` 的意思是「兩邊算出來一樣」：Lean 會算出 `2 + 2` 等於 `4`。`decide` 則請 Lean 用計算檢查這個命題。（`norm_num` 屬於 Mathlib，所以 Lite 執行器會說需要 Full 執行器。）"
+      "`rfl` says \"both sides compute to the same thing\": Lean works out `2 + 2` and gets `4`. `decide` asks Lean to check the claim by computation. (`norm_num` lives in Mathlib: on the Lite runner, which has no Mathlib, Lean answers `unknown tactic`. That is expected, not your mistake.)",
+      "`rfl` 的意思是「兩邊算出來一樣」：Lean 會算出 `2 + 2` 等於 `4`。`decide` 則請 Lean 用計算檢查這個命題。（`norm_num` 屬於 Mathlib：Lite 執行器沒有 Mathlib，Lean 會回答 `unknown tactic`（不認得的戰術）。這是正常的，不是你寫錯。）"
     ],
     "solution": "theorem hello : 2 + 2 = 4 := by\n  rfl\n"
   },

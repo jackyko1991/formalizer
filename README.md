@@ -13,14 +13,32 @@ the test and Lean's kernel is the grader**: a problem is a fixed Lean statement 
 and a solution counts only when [Comparator](https://github.com/leanprover/comparator) confirms it proves exactly
 that statement with the standard axioms (`propext`, `Quot.sound`, `Classical.choice`).
 
+The checker is checked too. Every check runs a row of **independent checkers**, test-driven: the frozen statement is
+the test, the checkers are the test runner, and a proof goes from red to green only when they all agree.
+
+| Checker | Tier | Runs on | Catches |
+|---|---|---|---|
+| Static scan | Lite (free) | any OS, no Lean needed | `sorry`, `axiom`, `native_decide`, `unsafe`…, notation or instances that change the statement |
+| Kernel + axioms | Lite | any OS | a step Lean's kernel rejects; axioms beyond the standard three |
+| Statement match | Lite | any OS | a solution that proves a different statement (the elaborated types and the definitions they use are compared with the challenge's, so `^` quietly meaning 37 is caught) |
+| leanchecker | Lite, opt-in | any OS | environment hacking: replays the compiled declarations in a fresh process |
+| Comparator (`--paranoid`) | Full (Research, paid) | Linux / WSL / cloud runner | the whole judge in a sandbox: challenge vs solution, axioms, kernel replay |
+| nanoda | Full | Linux / WSL / cloud runner | a bug in Lean's kernel: a second kernel, written independently in Rust |
+| Lean4Lean | Full | Linux / WSL / cloud runner | a kernel written in Lean (derived from the C++ one, so not fully independent) |
+
+Every problem's reference proof passes at least the static scan; every Lite problem passes all three default Lite
+checkers (tested in `tests/test_checkers.py`). On Windows the Full checkers report "not available on this OS".
+
 ## Status
 
 | Part | Status |
 |---|---|
-| Concept ▸ History (Automath to the 2026 Lean certificates), en + zh-Hant | ready |
-| Problems: hello world, tutorial levels L1–L3, the Navier–Stokes and Euler challenges, 30 research challenges from openai/math | in progress |
-| Local Lean runner (Docker, Mathlib prebuilt; Lite and Full images), goal view, proof dependency graph | in progress |
-| Concept, Coding Skills, Further reading, AI agent (Skills, MCP) | in progress |
+| Concept: from statement to proof, the Feynman technique, Lean maths, how Lean checks, **checking the checker**, limits of proofs, AI provers, **AI + human: the Riemann case**, **six views on an unreadable proof** (with the 3Blue1Brown video), History; en + zh-Hant, illustrated | ready |
+| Coding Skills: tactics, finding lemmas, **Mathlib map** (search a theorem, its module and its dependency graph down to the axioms, in 3D), structuring a proof, errors, verifying | ready |
+| Problems: tutorial L1–L3, geometry (with Pythagoras as a Lite vector lemma and as Mathlib's Euclidean theorem), linear algebra, research showcase, **IMO problems** ported from compfiles (read-only on Lite, runnable on Full), **When Lean says no** (Buzzard's careless FLT, Fermat's 2^32 + 1, the "all horses are one colour" induction) | ready |
+| Independent checkers (Lite in Problems; Lite + Full picker in Research) | Lite ready; Full adapters tested with stand-ins |
+| Local Lean runner (Lite: core Lean; Full: Mathlib), goal view, proof dependency graph | in progress |
+| Further reading, AI agent (Skills, MCP) | in progress |
 
 Lean runs **on your own computer** (a Docker runner, or a Lean toolchain for developers); the site never sends
 your proofs to a hosted server.
@@ -36,6 +54,11 @@ pixi run lean-build   # builds the Lean project and the REPL (the first time tak
 pixi run runner       # the runner on http://localhost:8790
 pixi run dev          # developing: the runner and the site together, http://localhost:5180
 ```
+
+On Windows the runner is the Lite one (core Lean) with the Lite checkers. The Full runner (Mathlib) and the Full
+checkers run on Linux, WSL or the cloud runner: start it with `FORMALIZER_RUNNER=full`, and point the checkers at their
+programs with `FORMALIZER_COMPARATOR_BIN`, `FORMALIZER_NANODA_BIN`, `FORMALIZER_LEAN4LEAN_BIN` if they are not on
+`PATH` (`/api/health` lists which checkers this runner has, and why the others are missing).
 
 Then open https://jackyko1991.github.io/formalizer/: the chip at the top right turns green when the site finds the
 runner. Nothing is sent anywhere else.
@@ -62,6 +85,15 @@ npm run links     # every History source answers
 ```
 
 The shared layer `vendor/learnkit` is a **private** submodule: a clone without access to it can't build the site.
+A clone made without `--recurse-submodules` has an empty `vendor/learnkit` and a blank page; `pixi run dev` checks it
+out for you, or run `git submodule update --init`. learnkit also holds the sites' shared type
+(`web/src/fonts.css`: Noto Sans for text, Source Code Pro for code).
+
+```sh
+pixi run test     # backend, problems and checkers; the Lean tests run when elan's lake is on PATH
+FORMALIZER_MATHLIB=~/mathproj pixi run test   # also compile the Full (Mathlib) problems, in a Lake project with Mathlib
+python scripts/mathlib_graph/generate.py      # regenerate the Mathlib map's data (Lean + Mathlib in WSL, ~7 min)
+```
 
 ## CI setup (once, by the owner)
 
@@ -82,4 +114,6 @@ Code: Apache-2.0 (see `LICENSE`). Problem statements come from
 [openai/NavierStokesAndEuler](https://github.com/openai/NavierStokesAndEuler),
 [openai/math](https://github.com/openai/math) and
 [Google DeepMind's Formal Conjectures](https://github.com/google-deepmind/formal-conjectures), under their own
-licences (see `NOTICE`).
+licences (see `NOTICE`). The IMO problems and their proofs are ported from
+[compfiles](https://github.com/dwrensha/compfiles) (Apache-2.0; authors named on each problem and in `NOTICE`). The
+Six views page embeds 3Blue1Brown's video from YouTube; quotes link to their moment in it.

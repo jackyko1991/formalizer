@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="Two teal dots plus two sky-blue dots join into one group of four dots: 2 + 2 = 4, checked.">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#374151"/></marker><marker id="aht" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0f766e"/></marker><marker id="ahs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0369a1"/></marker></defs>
+<rect width="320" height="180" fill="#ffffff"/>
+<circle cx="36" cy="74" r="9" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.5"/>
+<circle cx="60" cy="74" r="9" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.5"/>
+<text x="86" y="80" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="20" text-anchor="middle" fill="#374151">+</text>
+<circle cx="112" cy="74" r="9" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<circle cx="136" cy="74" r="9" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<text x="164" y="80" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="20" text-anchor="middle" fill="#374151">=</text>
+<rect x="186" y="56" width="112" height="36" rx="10" fill="none" stroke="#6b7280" stroke-dasharray="3 3"/>
+<circle cx="206" cy="74" r="9" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.5"/>
+<circle cx="230" cy="74" r="9" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.5"/>
+<circle cx="254" cy="74" r="9" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<circle cx="278" cy="74" r="9" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<text x="48" y="118" font-family="Source Code Pro, ui-monospace, monospace" font-size="15" text-anchor="middle" fill="#0f766e" font-weight="600">2</text>
+<text x="124" y="118" font-family="Source Code Pro, ui-monospace, monospace" font-size="15" text-anchor="middle" fill="#0369a1" font-weight="600">2</text>
+<text x="242" y="118" font-family="Source Code Pro, ui-monospace, monospace" font-size="15" text-anchor="middle" fill="#111827" font-weight="600">4</text>
+<text x="150" y="160" font-family="Source Code Pro, ui-monospace, monospace" font-size="15" text-anchor="middle" fill="#111827" font-weight="600">2 + 2 = 4</text>
+<text x="212" y="160" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="16" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+</svg>

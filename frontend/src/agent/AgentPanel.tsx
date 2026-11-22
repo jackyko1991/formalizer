@@ -26,7 +26,7 @@ import {
   type Conversation,
   type FoundAgent,
 } from "./api";
-import { applyAgentFiles, getAgentContext, subscribeAgentContext, type FilesEvent } from "./bus";
+import { AGENT_OPEN_EVENT, applyAgentFiles, getAgentContext, subscribeAgentContext, takeAgentOpen, type FilesEvent } from "./bus";
 import { suggestQuestions } from "./suggest";
 
 type L = readonly [string, string];
@@ -196,36 +196,49 @@ function useBlink(): boolean {
 
 /** The agent's face: Formalizer's F (the green tile, edge to edge) with a friendly face; it blinks, and looks up with
  *  a "…" while the agent works. */
-function Mascot({ thinking = false, className = "" }: { thinking?: boolean; className?: string }) {
+/**
+ * The agent: Formalizer's F (from favicon.svg: the stem, a top branch and the ⊢ bar, each ending in a node) with a
+ * face. `circle` draws it as a teal disc holding only the F and the face (the floating Ask AI button); otherwise as the
+ * rounded-square tile of the logo. It blinks every few seconds and shows three dots while thinking.
+ */
+function Mascot({ thinking = false, circle = false, className = "" }: { thinking?: boolean; circle?: boolean; className?: string }) {
   const shut = useBlink();
   const y = thinking ? 41 : 44;
   return (
-    <svg viewBox="2 2 60 60" className={className} aria-hidden="true">
-      <image href={`${import.meta.env.BASE_URL}favicon.svg`} x="0" y="0" width="64" height="64" />
-      {shut ? (
-        <g stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" data-testid="mascot-blink">
-          <path d="M26 44h8M40 44h8" />
-        </g>
-      ) : (
-        <>
-          <ellipse cx="30" cy="44" rx="4.2" ry="5" fill="#ffffff" />
-          <ellipse cx="44" cy="44" rx="4.2" ry="5" fill="#ffffff" />
-          <circle cx={thinking ? 31 : 30.5} cy={y} r="2.2" fill="#111827" />
-          <circle cx={thinking ? 45 : 44.5} cy={y} r="2.2" fill="#111827" />
-        </>
-      )}
-      {thinking ? (
-        <ellipse cx="37" cy="54" rx="2.4" ry="1.8" fill="#111827" />
-      ) : (
-        <path d="M31 52 Q37 58 43 52" fill="none" stroke="#ffffff" strokeWidth="2.4" strokeLinecap="round" />
-      )}
-      {thinking && (
-        <g fill="#fbbf24">
-          <circle cx="47" cy="8" r="2.2" />
-          <circle cx="52.5" cy="8" r="2.2" />
-          <circle cx="58" cy="8" r="2.2" />
-        </g>
-      )}
+    <svg viewBox={circle ? "0 0 64 64" : "2 2 60 60"} className={className} aria-hidden="true">
+      {circle ? <circle cx="32" cy="32" r="32" fill="#0f766e" /> : <rect x="2" y="2" width="60" height="60" rx="14" fill="#0f766e" />}
+      {/* in the disc the F and the face are drawn a little smaller and centred on their own bounding box (x 17–48.5,
+          y 11–56, mouth included), so the space to the rim is even all round */}
+      <g transform={circle ? "translate(32 32) scale(0.78) translate(-32.75 -33.5)" : undefined}>
+        <path d="M20 14v36M20 16h22M20 33h14" stroke="#ffffff" strokeWidth="6" strokeLinecap="round" />
+        <circle cx="44" cy="16" r="4.5" fill="#99f6e4" />
+        <circle cx="36" cy="33" r="4.5" fill="#99f6e4" />
+        {shut ? (
+          <g stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" data-testid="mascot-blink">
+            <path d="M26 44h8M40 44h8" />
+          </g>
+        ) : (
+          <>
+            <ellipse cx="30" cy="44" rx="4.2" ry="5" fill="#ffffff" />
+            <ellipse cx="44" cy="44" rx="4.2" ry="5" fill="#ffffff" />
+            <circle cx={thinking ? 31 : 30.5} cy={y} r="2.2" fill="#111827" />
+            <circle cx={thinking ? 45 : 44.5} cy={y} r="2.2" fill="#111827" />
+          </>
+        )}
+        {thinking ? (
+          <ellipse cx="37" cy="54" rx="2.4" ry="1.8" fill="#111827" />
+        ) : (
+          <path d="M31 52 Q37 58 43 52" fill="none" stroke="#ffffff" strokeWidth="2.4" strokeLinecap="round" />
+        )}
+        {thinking && (
+          // top right on the tile; top centre in the disc, where they stay inside the circle
+          <g fill="#fbbf24">
+            {(circle ? [26, 32, 38] : [47, 52.5, 58]).map((x) => (
+              <circle key={x} cx={x} cy={circle ? 5 : 8} r="2.2" />
+            ))}
+          </g>
+        )}
+      </g>
     </svg>
   );
 }
@@ -312,6 +325,19 @@ export default function AgentPanel() {
   const restoring = useRef(new Set<string>());
   const bottom = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLElement | null>(null);
+
+  // a request to open from elsewhere (the home's "Ask AI to set one up"), made before or after this panel appeared
+  useEffect(() => {
+    const take = () => {
+      const d = takeAgentOpen();
+      if (d === null) return;
+      setOpen(true);
+      if (d) setDraft(d);
+    };
+    take();
+    window.addEventListener(AGENT_OPEN_EVENT, take);
+    return () => window.removeEventListener(AGENT_OPEN_EVENT, take);
+  }, []);
 
   const setChoice = (c: AgentChoice) => (setChoiceState(c), saveJson(CHOICE, c));
   const setFound = (f: FoundAgent[]) => (setFoundState(f), saveJson(FOUND, f));
@@ -644,9 +670,9 @@ export default function AgentPanel() {
         aria-label={pick(["Ask AI", "問 AI"])}
         aria-expanded={open}
         data-testid="agent-open"
-        className="group fixed right-4 bottom-10 z-40 h-16 w-16 rounded-[15px] shadow-lg transition hover:scale-105 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-teal-300 focus-visible:outline-none"
+        className="group fixed right-4 bottom-10 z-40 h-16 w-16 rounded-full shadow-lg transition hover:scale-105 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-teal-300 focus-visible:ring-offset-2 focus-visible:outline-none"
       >
-        <Mascot thinking={busy !== null} className="h-full w-full" />
+        <Mascot thinking={busy !== null} circle className="h-full w-full" />
         <span className="pointer-events-none absolute top-1/2 right-full mr-2 -translate-y-1/2 rounded-full bg-teal-700 px-3 py-1 text-xs font-medium whitespace-nowrap text-white opacity-0 shadow transition group-hover:opacity-100 group-focus-visible:opacity-100">
           {pick(["Ask AI", "問 AI"])}
         </span>

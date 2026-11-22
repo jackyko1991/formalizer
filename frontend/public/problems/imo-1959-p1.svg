@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="The fraction 21n+4 over 14n+3, and Euclid's algorithm: gcd(21n+4, 14n+3) = gcd(14n+3, 7n+1) = gcd(7n+1, 1) = 1. Below, bars for n = 1: 25 is 17 plus 8, 17 is 8 plus 8 plus 1, and 8 is eight 1s, so the gcd is 1." font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="11" fill="#111827">
+  <rect width="320" height="180" rx="8" fill="#ffffff"/>
+  <text x="60" y="40" font-family="Source Code Pro, ui-monospace, monospace" font-size="15" text-anchor="middle">21n + 4</text>
+  <line x1="22" y1="48" x2="98" y2="48" stroke="#111827" stroke-width="1.5"/>
+  <text x="60" y="68" font-family="Source Code Pro, ui-monospace, monospace" font-size="15" text-anchor="middle">14n + 3</text>
+  <text x="60" y="88" font-family="Source Code Pro, ui-monospace, monospace" fill="#6b7280" text-anchor="middle">n : ℕ</text>
+  <text x="137" y="32" font-family="Source Code Pro, ui-monospace, monospace">gcd(21n+4, <tspan fill="#0f766e">14n+3</tspan>)</text>
+  <text x="124" y="52" font-family="Source Code Pro, ui-monospace, monospace">= gcd(<tspan fill="#0f766e">14n+3</tspan>, <tspan fill="#d97706">7n+1</tspan>)</text>
+  <text x="124" y="72" font-family="Source Code Pro, ui-monospace, monospace">= gcd(<tspan fill="#d97706">7n+1</tspan>, <tspan fill="#059669">1</tspan>) = 1 <tspan fill="#059669">✓</tspan></text>
+  <line x1="16" y1="96" x2="304" y2="96" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="52" y="116" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="end">25</text>
+  <rect x="60" y="104" width="102" height="16" fill="#ccfbf1" stroke="#0f766e" stroke-width="1"/>
+  <text x="111" y="116" font-family="Source Code Pro, ui-monospace, monospace" fill="#0f766e" text-anchor="middle">17</text>
+  <rect x="162" y="104" width="48" height="16" fill="#fef3c7" stroke="#d97706" stroke-width="1"/>
+  <text x="186" y="116" font-family="Source Code Pro, ui-monospace, monospace" fill="#d97706" text-anchor="middle">8</text>
+  <text x="304" y="116" font-family="Source Code Pro, ui-monospace, monospace" fill="#6b7280" text-anchor="end">n = 1</text>
+  <text x="52" y="138" font-family="Source Code Pro, ui-monospace, monospace" fill="#0f766e" text-anchor="end">17</text>
+  <rect x="60" y="126" width="48" height="16" fill="#fef3c7" stroke="#d97706" stroke-width="1"/>
+  <text x="84" y="138" font-family="Source Code Pro, ui-monospace, monospace" fill="#d97706" text-anchor="middle">8</text>
+  <rect x="108" y="126" width="48" height="16" fill="#fef3c7" stroke="#d97706" stroke-width="1"/>
+  <text x="132" y="138" font-family="Source Code Pro, ui-monospace, monospace" fill="#d97706" text-anchor="middle">8</text>
+  <rect x="156" y="126" width="6" height="16" fill="#d1fae5" stroke="#059669" stroke-width="1"/>
+  <text x="168" y="138" font-family="Source Code Pro, ui-monospace, monospace" fill="#059669">1</text>
+  <text x="52" y="160" font-family="Source Code Pro, ui-monospace, monospace" fill="#d97706" text-anchor="end">8</text>
+  <rect x="60" y="148" width="6" height="16" fill="#d1fae5" stroke="#059669" stroke-width="1"/>
+  <rect x="66" y="148" width="6" height="16" fill="#d1fae5" stroke="#059669" stroke-width="1"/>
+  <rect x="72" y="148" width="6" height="16" fill="#d1fae5" stroke="#059669" stroke-width="1"/>
+  <rect x="78" y="148" width="6" height="16" fill="#d1fae5" stroke="#059669" stroke-width="1"/>
+  <rect x="84" y="148" width="6" height="16" fill="#d1fae5" stroke="#059669" stroke-width="1"/>
+  <rect x="90" y="148" width="6" height="16" fill="#d1fae5" stroke="#059669" stroke-width="1"/>
+  <rect x="96" y="148" width="6" height="16" fill="#d1fae5" stroke="#059669" stroke-width="1"/>
+  <rect x="102" y="148" width="6" height="16" fill="#d1fae5" stroke="#059669" stroke-width="1"/>
+  <text x="118" y="160" font-family="Source Code Pro, ui-monospace, monospace">→ gcd = 1 <tspan fill="#059669">✓</tspan></text>
+</svg>

@@ -1,6 +1,7 @@
 /** Coding Skills ▸ Verifying a proof (#/skills/verify[/<section>]). Lean code: lean/Formalizer/Pages/Verify.lean. */
 import { useLang } from "@learnkit/web";
 import { Callout, Figure, Lean, List, P, Page, Section, SiteLink, snippet, Sources, Table, TryIn, type L } from "../kit";
+import { AxiomTree, CheckerLadder, VerdictFlow } from "./VerifyFigures";
 
 const PAGE = "verify";
 
@@ -170,6 +171,14 @@ export default function VerifySkill({ section }: { section: string | null }) {
             "在幕後，`sorry` 也是一個公理：`sorryAx`，它能「證明」任何東西。所以未完成的證明會出現在清單裡：",
           ]}
         />
+        <Figure
+          caption={[
+            "`#print axioms` walks down the proof through every lemma it uses and reports what it finds at the leaves. Switch `helper` between `sorry` and a real proof: the answer for `main` changes, though `main` itself never changed. Both answers are what Lean v4.34.1 prints.",
+            "`#print axioms` 沿著證明往下走，經過它用到的每一條引理，回報在葉子上找到的東西。把 `helper` 在 `sorry` 與真正的證明之間切換：`main` 的答案跟著變，雖然 `main` 本身一個字都沒改。兩個答案都是 Lean v4.34.1 實際印出的。",
+          ]}
+        >
+          <AxiomTree />
+        </Figure>
         <Lean code={snippet("Verify", "print-sorry")} />
         <Output text="'later' depends on axioms: [sorryAx]" />
         <P
@@ -232,6 +241,14 @@ export default function VerifySkill({ section }: { section: string | null }) {
             "在 Formalizer 裡，**陳述就是測試，核心就是閱卷人**。按下執行時，你電腦上的執行器會這樣做：",
           ]}
         />
+        <Figure
+          caption={[
+            "Five gates. Failing one stops there with its verdict; passing all five is ✓ Proved.",
+            "五道關卡。卡在哪一關，就在那裡給出判定；五關都過，就是 ✓ 已證明。",
+          ]}
+        >
+          <VerdictFlow />
+        </Figure>
         <List
           ordered
           items={[
@@ -380,6 +397,17 @@ export default function VerifySkill({ section }: { section: string | null }) {
             "Lean 語言參考手冊描述了一道檢查的階梯。每往上一階，防得越多，代價也越高；需要哪一階，取決於這個證明是誠實的嘗試，還是可能想騙你。",
           ]}
         />
+        <Figure
+          caption={[
+            "Formalizer's two checkers at a glance. Lite runs on any computer and covers honest mistakes and the usual tricks; Full adds Comparator's sandbox and two independent kernels, and needs Linux (WSL on Windows, or the cloud).",
+            "Formalizer 的兩種檢查器一覽。Lite 在任何電腦上都能跑，涵蓋誠實的錯誤與常見的取巧；Full 再加上 Comparator 的沙盒與兩個獨立核心，需要 Linux（Windows 上用 WSL，或用雲端）。",
+          ]}
+        >
+          <CheckerLadder />
+        </Figure>
+        <p>
+          <SiteLink to={["concept", "checkers"]} label={["Concept ▸ Checking the checker", "概念 ▸ 檢查檢查者"]} />
+        </p>
         <Table
           head={[
             ["Check", "檢查"],

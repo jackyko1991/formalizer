@@ -5,7 +5,8 @@ An AI coding agent on the same computer connects with one URL (http://localhost:
     runner_status   which runner is up (lite | full), the Lean version, whether the pool is ready
     list_problems   the problem bank: id, topic, level, title
     get_problem     one problem's statement, starting file and hint (never the reference solution)
-    check_proof     check Lean code with the same rules as the site: statement unchanged, no sorry, axioms listed
+    check_proof     check Lean code with the same rules as the site: statement unchanged, no sorry, axioms listed,
+                    plus the independent checkers asked for (static, kernel+axioms, statement-match, leanchecker, …)
 
 The protocol part is small on purpose (initialize, ping, tools/list, tools/call): no sessions, no streaming, no
 resources. Nothing here leaves the computer; requests from web pages on other sites are refused (Origin check).
@@ -82,7 +83,9 @@ TOOLS: list[dict] = [
         "unchanged and its theorems' axioms are reported. The verdict is proved (no sorry, no errors), incomplete "
         "(a sorry is left; the open goals are listed), error, or needs-runner (imports this runner lacks, e.g. "
         "Mathlib on the Lite runner). Accept a proof only when the verdict is proved and the axioms are among "
-        "propext, Quot.sound and Classical.choice.",
+        "propext, Quot.sound and Classical.choice. `checks` has one {id, verdict: pass|fail|unavailable|error, message} "
+        "per independent checker (default: static, kernel+axioms, statement-match; runner_status lists them all): "
+        "a proof is done when every one of them passes.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -92,6 +95,23 @@ TOOLS: list[dict] = [
                     "type": "array",
                     "items": {"type": "string"},
                     "description": "theorems whose axioms to report (without problem_id)",
+                },
+                "checkers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "static",
+                            "kernel+axioms",
+                            "statement-match",
+                            "leanchecker",
+                            "comparator",
+                            "nanoda",
+                            "lean4lean",
+                        ],
+                    },
+                    "description": "the independent checkers to run (leanchecker takes seconds; comparator, nanoda "
+                    "and lean4lean need a Full runner on Linux)",
                 },
             },
             "required": ["code"],
@@ -187,9 +207,14 @@ class Mcp:
             if not isinstance(code, str):
                 raise ValueError("code must be the Lean file as a string")
             body: dict = {"code": code, "theorems": list(args.get("theorems") or [])}
+            if args.get("checkers") is not None:
+                body["checkers"] = list(args["checkers"])
             if args.get("problem_id"):
                 p = self._problem(args["problem_id"])
                 body["theorems"], body["statements"] = p["theorems"], p["statements"]
+                # the challenge: the problem's own files, then its starting file (as the page joins them)
+                files = [f["code"] if f["code"].endswith("\n") else f["code"] + "\n" for f in p.get("files") or []]
+                body["challenge"] = "".join(files) + p["start"]
             result = await self.check(body)
             result.pop("infos", None)  # the dependency graph's raw output; `graph` has it parsed
             return result

@@ -1,11 +1,12 @@
 /** Coding Skills ▸ Structuring a proof (#/skills/structure[/<section>]). Lean code: lean/Formalizer/Pages/Structure.lean. */
-import { Callout, Lean, List, P, Page, Section, SiteLink, Sources, Table, TryIn, snippet, type SectionInfo } from "../kit";
+import { Callout, Figure, Lean, List, P, Page, Section, SiteLink, Sources, Table, TryIn, snippet, type SectionInfo } from "../kit";
+import { CalcChain, HaveSuffices, ProofTree } from "./StructureFigures";
 
 const PAGE = "structure";
 
 const SECTIONS: SectionInfo[] = [
   { id: "plan", title: ["A proof is a plan with steps", "證明是一份分步驟的計畫"] },
-  { id: "have", title: ["`have`: prove a stepping stone first", "`have`：先證一塊墊腳石"] },
+  { id: "have", title: ["`have` and `suffices`: forwards and backwards", "`have` 與 `suffices`：往前推與往回推"] },
   { id: "show", title: ["`show`: say what the goal is, in your words", "`show`：用你的寫法說出目標"] },
   { id: "obtain", title: ["`obtain` / `rcases`: unpack what you know", "`obtain`／`rcases`：拆開已知的東西"] },
   { id: "cases", title: ["`cases`: one proof per case", "`cases`：每個情況各一個證明"] },
@@ -91,10 +92,19 @@ export default function StructureSkill({ section }: { section: string | null }) 
       <Section page={PAGE} id="have" n={2} title={SECTIONS[1].title}>
         <P
           t={[
-            "`have name : statement := proof` proves an intermediate fact and adds it to what you know, under that name. The main goal does not change. Here two facts are proved, then combined:",
-            "`have 名字 : 陳述 := 證明` 先證一個中間事實，並以這個名字加入已知。主要目標不變。這裡先證兩個事實，再把它們組合起來：",
+            "`have name : statement := proof` proves an intermediate fact and adds it to what you know, under that name. The main goal does not change. `suffices` does the same step in the other direction:",
+            "`have 名字 : 陳述 := 證明` 先證一個中間事實，並以這個名字加入已知。主要目標不變。`suffices` 則是同一步反方向走：",
           ]}
         />
+        <Figure
+          caption={[
+            "The same proof built forwards and backwards. `have` proves the stepping stone `hlen` first, and it appears above the line (green) for `omega`. `suffices` first says *it is enough to show `hlen`*, closes the main goal with `omega` assuming it, and leaves `hlen` as the goal. Goal panels as Lean v4.34.1 shows them.",
+            "同一個證明，往前推與往回推。`have` 先證墊腳石 `hlen`，它出現在橫線上方（綠色）給 `omega` 用。`suffices` 先說「*只要證出 `hlen` 就夠了*」，假設它並用 `omega` 關掉主目標，再把 `hlen` 留作目標。目標面板為 Lean v4.34.1 實際顯示的內容。",
+          ]}
+        >
+          <HaveSuffices />
+        </Figure>
+        <P t={["With `have`, here two facts are proved, then combined:", "用 `have`，這裡先證兩個事實，再把它們組合起來："]} />
         <Lean code={snippet("Structure", "have")} />
         <P
           t={[
@@ -103,6 +113,13 @@ export default function StructureSkill({ section }: { section: string | null }) 
           ]}
         />
         <Lean code={snippet("Structure", "have-by")} />
+        <P
+          t={[
+            "`suffices` is the same step read backwards, as in *it suffices to show that …*. Write the fact you want, then after `by` the proof that it finishes the goal; the fact itself becomes the next goal. Use it when the end of the proof is clear and the stepping stone is the hard part: the main line stays on top.",
+            "`suffices` 是同一步反過來讀，就像「*只需證明……即可*」。寫下你想要的事實，在 `by` 後面寫出它如何完成目標；這個事實本身就成為下一個目標。當證明的結尾很清楚、墊腳石才是難處時就用它：主線留在最上面。",
+          ]}
+        />
+        <Lean code={snippet("Structure", "suffices")} />
         <Callout kind="tip" title={["Why bother", "為什麼要這樣做"]}>
           <P
             t={[
@@ -244,6 +261,14 @@ export default function StructureSkill({ section }: { section: string | null }) 
             "`calc` 像在紙上一樣寫出一串 $a < b \\le c < c + 1$：每行一步，每一步在 `:=` 後面附上自己的理由。`_` 代表上一行的右邊。Lean 會把各步組合起來（這裡 `<` 接 `≤` 得到 `<`）：",
           ]}
         />
+        <Figure
+          caption={[
+            "A `calc` chain is a row of links. Each link carries its own reason after `:=`, and Lean composes the relations into one fact.",
+            "`calc` 鏈是一排環節。每一環在 `:=` 後面帶著自己的理由，Lean 把這些關係組合成一個事實。",
+          ]}
+        >
+          <CalcChain />
+        </Figure>
         <Lean code={snippet("Structure", "calc")} />
         <P
           t={[
@@ -332,6 +357,21 @@ export default function StructureSkill({ section }: { section: string | null }) 
             "**命題：** 對每個自然數 $n$，$n^2 + n$ 是偶數。**紙上的計畫：** $n^2 + n = n(n+1)$，是兩個連續數的乘積；其中一個是偶數。要證「其中一個是偶數」得分奇偶情況，所以改用歸納法證 $n(n+1)$ 是偶數：由 $m(m+1) = 2k$ 得 $(m+1)(m+2) = m(m+1) + 2(m+1) = 2k + 2(m+1)$。",
           ]}
         />
+        <P
+          t={[
+            "Nobody writes such a proof top to bottom. It is built like a house: the frame first, with `sorry` for every room, then one room at a time. Step through how this one was built; each stage is a file Lean accepts, with the open goals it shows.",
+            "沒有人從頭到尾一口氣寫出這樣的證明。它像蓋房子：先搭骨架，每個房間先放 `sorry`，再一間一間完成。逐步看看這個證明是怎麼蓋起來的；每個階段都是 Lean 接受的檔案，旁邊是它顯示的未完成目標。",
+          ]}
+        />
+        <Figure
+          caption={[
+            "Proof architecture: a tree of goals. Amber holes are `sorry`s; a tactic like `induction` or `calc` replaces one hole by several smaller ones; the proof is done when every node is green. The code of every stage is compiled by CI.",
+            "證明的架構：一棵目標樹。琥珀色的洞是 `sorry`；像 `induction` 或 `calc` 這樣的戰術把一個洞換成幾個較小的洞；每個節點都變綠時，證明就完成了。每個階段的程式碼都由 CI 編譯。",
+          ]}
+        >
+          <ProofTree />
+        </Figure>
+        <P t={["The finished proof:", "完成的證明："]} />
         <Lean code={snippet("Structure", "worked")} />
         <List
           ordered

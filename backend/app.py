@@ -1,7 +1,8 @@
 """Formalizer's local runner: checks Lean files for the site, on the user's own computer.
 
 GET  /api/health   runner kind (lite | full), Lean version, pool state (warming | ready | failed)
-POST /api/check    {code, theorems, statements} → {verdict, errors, warnings, infos, goals, axioms, ms}
+POST /api/check    {code, theorems, statements, checkers?, challenge?} → {verdict, errors, warnings, infos, goals, axioms,
+                   ms, checks}: checks = one {id, verdict, message, ms} per checker asked (see checkers.py)
 GET|PUT|POST /api/projects…  research projects in ~/Formalizer (see projects.py)
 POST /api/jobs     the same check as a detached job (long proofs): GET /api/jobs[/{id}[/events?from=N]], cancel
 POST /mcp          the same checks for an AI agent on this computer (MCP; see mcp.py)
@@ -16,6 +17,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -24,7 +26,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
-from . import agent
+from . import agent, checkers
 from .check import axioms_request, decls_request, depgraph_request, imports, summarize, without_imports
 from .jobs import JobLimit, JobManager, visitor_hash
 from .lean_pool import LeanCrash, LeanPool, LeanTimeout, WorkerConfig
@@ -43,7 +45,11 @@ CHECK_TIMEOUT_S = float(os.environ.get("FORMALIZER_CHECK_TIMEOUT_S", "10"))
 # the in-page agent's checks share the site's pool, with a longer limit than a quick check
 AGENT_CHECK_TIMEOUT_S = float(os.environ.get("FORMALIZER_AGENT_CHECK_TIMEOUT_S", "60"))
 JOB_TIMEOUT_S = float(os.environ.get("FORMALIZER_JOB_TIMEOUT_S", str(7 * 86400))) or 10**9
-REPL = os.environ.get("FORMALIZER_REPL", ".lake/packages/REPL/.lake/build/bin/repl")
+# absolute: `lake env` on Windows does not find a relative path (and needs the .exe)
+REPL = os.environ.get(
+    "FORMALIZER_REPL",
+    (LEAN_DIR / ".lake/packages/REPL/.lake/build/bin/repl").as_posix() + (".exe" if os.name == "nt" else ""),
+)
 # What each runner can import. Lite has only Lean's own libraries.
 PROVIDES = {"lite": ("Init", "Std", "Lean"), "full": ("Init", "Std", "Lean", "Mathlib")}
 ORIGINS = [
@@ -98,7 +104,15 @@ app.include_router(agents_router(ORIGINS, VERSION))
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"runner": RUNNER, "lean": VERSION, "provides": PROVIDES[RUNNER], **pool.status(), "error": pool.error}
+    return {
+        "runner": RUNNER,
+        "lean": VERSION,
+        "provides": PROVIDES[RUNNER],
+        **pool.status(),
+        "error": pool.error,
+        "os": sys.platform,
+        "checkers": checkers.status(RUNNER),
+    }
 
 
 class CheckRequest(BaseModel):
@@ -109,6 +123,10 @@ class CheckRequest(BaseModel):
     statements: list[str] = Field(default_factory=list, max_length=20)
     # also list every declaration with its status (the research workspace's blueprint)
     decls: bool = False
+    # the checkers to run (checkers.py; none named: checkers.DEFAULT); each answers in `checks`
+    checkers: list[str] | None = Field(default=None, max_length=10)
+    # the problem's starting file, with `sorry` (statement-match and comparator compare against it)
+    challenge: str | None = Field(default=None, max_length=200_000)
 
 
 _SPACE = re.compile(r"\s+")
@@ -123,61 +141,130 @@ async def check(req: CheckRequest) -> dict:
     return await run_check(req, pool, CHECK_TIMEOUT_S)
 
 
+def _early(verdict: str, message: str) -> dict:
+    """A result Lean never saw (needs another runner, or the statement was changed)."""
+    return {
+        "verdict": verdict,
+        "errors": [{"line": 0, "column": 0, "message": message}],
+        "warnings": [],
+        "infos": [],
+        "goals": [],
+        "graph": None,
+        "axioms": {},
+        "ms": 0,
+    }
+
+
+# statement-match's fingerprints of a challenge, by (runner, challenge, theorems): a problem's challenge never changes
+_CHALLENGES: dict[tuple, dict] = {}
+
+
+async def _challenge_fingerprints(lean: LeanPool, challenge: str, names: list[str], timeout_s: float) -> dict | str:
+    """The challenge's fingerprints, or why there are none (a message)."""
+    key = (RUNNER, challenge, tuple(names))
+    if key in _CHALLENGES:
+        return _CHALLENGES[key]
+    wanted = [m for m in imports(challenge) if not m.startswith(PROVIDES[RUNNER])]
+    if wanted:
+        return f"the challenge imports {', '.join(wanted)}: this runner ({RUNNER}) can't"
+    command, nonce = checkers.fingerprint_command(names)
+    reply = await lean.check(without_imports(challenge), timeout_s, then=command)
+    errors = [str(m.get("data", ""))[:200] for m in reply.get("messages", []) if m.get("severity") == "error"]
+    if errors:
+        return f"the challenge does not compile on its own: {errors[0]}"
+    found = checkers.parse_fingerprints(reply.get("then"), nonce)
+    if len(_CHALLENGES) > 200:
+        _CHALLENGES.pop(next(iter(_CHALLENGES)))
+    _CHALLENGES[key] = found
+    return found
+
+
 async def run_check(req: CheckRequest, lean: LeanPool, timeout_s: float) -> dict:
-    """The check behind /api/check (quick, the site's pool) and behind jobs (long, the job pool)."""
+    """The check behind /api/check (quick, the site's pool) and behind jobs (long, the job pool), with the checkers
+    asked for (checkers.py) in `checks`."""
     for name in req.theorems:
         if not re.fullmatch(r"[A-Za-z_][\w.'₀-₉]*", name):
             raise HTTPException(422, f"not a theorem name: {name!r}")
+    try:
+        asked = checkers.resolve(req.checkers)
+    except ValueError as e:
+        raise HTTPException(422, str(e)) from None
+    checks: dict[str, dict] = {}
+    if "static" in asked:
+        checks["static"] = checkers.static_scan(req.code, req.statements, req.challenge)
+    in_lean = [c for c in asked if c != "static"]
+
+    def done(result: dict) -> dict:
+        return {**result, "checks": [checks[c] for c in asked]}
+
     wanted = [m for m in imports(req.code) if not m.startswith(PROVIDES[RUNNER])]
     if wanted:
-        return {
-            "verdict": "needs-runner",
-            "errors": [
-                {
-                    "line": 0,
-                    "column": 0,
-                    "message": f"this runner ({RUNNER}) can't import {', '.join(wanted)}: start the Full runner",
-                }
-            ],
-            "warnings": [],
-            "infos": [],
-            "goals": [],
-            "graph": None,
-            "axioms": {},
-            "ms": 0,
-        }
+        message = f"this runner ({RUNNER}) can't import {', '.join(wanted)}: start the Full runner"
+        checks.update({c: checkers.result(c, "unavailable", message) for c in in_lean})
+        return done(_early("needs-runner", message))
     code = _norm(req.code)
     changed = [s for s in req.statements if _norm(s) not in code]
     if changed:
-        return {
-            "verdict": "error",
-            "errors": [
-                {
-                    "line": 0,
-                    "column": 0,
-                    "message": "the problem's statement was changed: keep it exactly as given and only replace `sorry`",
-                }
-            ],
-            "warnings": [],
-            "infos": [],
-            "goals": [],
-            "graph": None,
-            "axioms": {},
-            "ms": 0,
-        }
+        message = "the problem's statement was changed: keep it exactly as given and only replace `sorry`"
+        checks.update({c: checkers.result(c, "unavailable", "not run: the statement was changed") for c in in_lean})
+        if "kernel+axioms" in checks:
+            checks["kernel+axioms"] = checkers.result("kernel+axioms", "fail", message)
+        return done(_early("error", message))
+
+    names = req.theorems or checkers.statement_names(req.statements)
+    command = nonce = None
+    if "statement-match" in asked:
+        if names:
+            command, nonce = checkers.fingerprint_command(names)
+        else:
+            checks["statement-match"] = checkers.result("statement-match", "unavailable", "no theorem to compare")
+    challenge = req.challenge or (checkers.challenge_from_statements(req.statements) if req.statements else None)
+    if command and not challenge:
+        checks["statement-match"] = checkers.result("statement-match", "unavailable", "no statement or challenge file")
+        command = None
+    programs = [c for c in asked if c in ("leanchecker", *checkers.FULL)]
+
     body = without_imports(req.code)
     started = time.monotonic()
-    try:
-        reply = await lean.check(
+    main = asyncio.ensure_future(
+        lean.check(
             body + axioms_request(req.theorems) + depgraph_request(req.theorems) + decls_request(req.decls),
             timeout_s,
+            then=command,
         )
-    except LeanTimeout as e:
-        raise HTTPException(408, str(e)) from None
-    except LeanCrash as e:
-        raise HTTPException(503, str(e)) from None
+    )
+    side = asyncio.ensure_future(_challenge_fingerprints(lean, challenge, names, timeout_s)) if command else None
+    external = asyncio.ensure_future(
+        checkers.run_programs(programs, req.code, req.challenge, names, LEAN_DIR, timeout_s=checkers.EXTERNAL_TIMEOUT_S)
+    )
+    try:
+        reply = await main
+    except (LeanTimeout, LeanCrash) as e:
+        for task in (side, external):
+            if task is not None:
+                task.cancel()
+        raise HTTPException(408 if isinstance(e, LeanTimeout) else 503, str(e)) from None
+    ms = (time.monotonic() - started) * 1000
+    then = reply.pop("then", None)
     result = summarize(reply, len(body.split("\n")), req.theorems, body)
-    return {**result, "ms": round((time.monotonic() - started) * 1000)}
+    if "kernel+axioms" in asked:
+        checks["kernel+axioms"] = checkers.kernel_axioms(result, ms)
+    if side is not None:
+        try:
+            theirs = await side
+        except (LeanTimeout, LeanCrash) as e:
+            theirs = f"the challenge could not be checked: {e}"
+        side_ms = (time.monotonic() - started) * 1000
+        if isinstance(theirs, str):
+            if not req.challenge:
+                theirs += " (send the problem's starting file as `challenge`)"
+            checks["statement-match"] = checkers.result("statement-match", "unavailable", theirs, side_ms)
+        else:
+            mine = checkers.parse_fingerprints(then, nonce or "")
+            checks["statement-match"] = checkers.compare_fingerprints(theirs, mine, names, side_ms)
+    for r in await external:
+        checks[r["id"]] = r
+    return done({**result, "ms": round(ms)})
 
 
 async def agent_check(code: str, theorems: list[str], statements: list[str], decls: bool) -> dict:

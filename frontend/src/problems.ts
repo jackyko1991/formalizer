@@ -1,6 +1,7 @@
 /**
- * The tutorial track's problems (Lite runner: core Lean, no Mathlib), from problems/tutorial.json: the same file CI
- * checks with real Lean (tests/test_tutorial.py: the start is open, the reference solution and the chips prove it).
+ * The problem library, one file per topic in problems/ (tutorial, geometry, linear-algebra, research, imo, pitfalls). CI
+ * checks every Lite problem with real Lean (tests/test_problems.py: the start is open, the reference solution and the
+ * chips prove it); Full problems (Mathlib) are checked statically there and compiled against Mathlib when it is set up.
  * Text is [English, Traditional Chinese].
  */
 import type { Localized } from "@learnkit/web";
@@ -8,13 +9,15 @@ import type { LeanFile } from "./runner";
 import geometry from "../../problems/geometry.json" with { type: "json" };
 import linearAlgebra from "../../problems/linear-algebra.json" with { type: "json" };
 import research from "../../problems/research.json" with { type: "json" };
+import imo from "../../problems/imo.json" with { type: "json" };
+import pitfalls from "../../problems/pitfalls.json" with { type: "json" };
 import collections from "../../problems/collections.json" with { type: "json" };
 import tutorial from "../../problems/tutorial.json" with { type: "json" };
 
 export type Level = "L1" | "L2" | "L3";
 export const LEVELS: Level[] = ["L1", "L2", "L3"];
 
-export type Category = "tutorial" | "geometry" | "linalg" | "research";
+export type Category = "tutorial" | "geometry" | "linalg" | "research" | "imo" | "pitfalls";
 
 /** Topics of the library, in order. The research showcase starts with Lite-runner problems; the openai/math results and
  *  the Navier–Stokes challenge join it with the Full runner (Mathlib). */
@@ -31,7 +34,24 @@ export const CATEGORIES: { id: Category; icon: string; title: Localized; empty?:
       "即將推出：30 個來自 openai/math 的研究成果，以及 Navier–Stokes 挑戰（需要含 Mathlib 的 Full 執行器）。",
     ],
   },
+  { id: "imo", icon: "★", title: ["IMO problems", "IMO 題目"] },
+  { id: "pitfalls", icon: "✗", title: ["When Lean says no", "當 Lean 說不"] },
 ];
+
+/** Where a problem was taken from (an imported, licensed proof): shown with a link on its page. */
+export interface ProblemSource {
+  /** the project, e.g. "compfiles" */
+  name: string;
+  /** the exact file, at a pinned commit */
+  url: string;
+  /** SPDX identifier, e.g. "Apache-2.0" */
+  licence: string;
+  authors: string;
+  /** where the source itself took the proof from (e.g. Mathlib's Archive) */
+  via?: string;
+  /** what was changed in porting (RichText) */
+  changes?: Localized;
+}
 
 export interface Problem {
   id: string;
@@ -57,6 +77,10 @@ export interface Problem {
   solution: string;
   /** extra files checked before Proof.lean, left to right (e.g. a read-only library for a long proof) */
   files?: LeanFile[];
+  /** short labels, e.g. ["IMO 1959 P1", "IMO 1959 第 1 題"] or a topic */
+  tags?: Localized[];
+  /** an imported proof: its project, file, licence and authors */
+  source?: ProblemSource;
 }
 
 /** One file per topic in problems/, all checked the same way by tests/test_problems.py. */
@@ -65,6 +89,8 @@ const FILES: [Category, unknown[]][] = [
   ["geometry", geometry],
   ["linalg", linearAlgebra],
   ["research", research],
+  ["imo", imo],
+  ["pitfalls", pitfalls],
 ];
 export const PROBLEMS: Problem[] = FILES.flatMap(([category, list]) =>
   (list as Omit<Problem, "category">[]).map((p) => ({ ...p, category })),
@@ -79,6 +105,11 @@ export interface Collection {
   items: string[];
 }
 export const COLLECTIONS = collections as Collection[];
+
+/** A Full-runner problem (it imports Mathlib) can't run on the Lite runner or with no runner: the page then shows its
+ *  reference proof read-only. */
+export const readOnlyOn = (problem: Pick<Problem, "runner">, runner: "lite" | "full" | null) =>
+  problem.runner === "full" && runner !== "full";
 
 /** The collections a problem belongs to, with its position in each. */
 export const collectionsOf = (id: string) =>

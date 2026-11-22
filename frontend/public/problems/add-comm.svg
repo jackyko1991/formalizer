@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="A row of a teal blocks followed by b blue blocks, and below it b blue blocks followed by a teal blocks; both rows end at the same place, so a + b = b + a.">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#374151"/></marker><marker id="aht" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0f766e"/></marker><marker id="ahs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0369a1"/></marker></defs>
+<rect width="320" height="180" fill="#ffffff"/>
+<rect x="71" y="48" width="20" height="22" rx="4" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.5"/>
+<rect x="93" y="48" width="20" height="22" rx="4" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.5"/>
+<rect x="115" y="48" width="20" height="22" rx="4" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.5"/>
+<rect x="137" y="48" width="20" height="22" rx="4" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<rect x="159" y="48" width="20" height="22" rx="4" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<rect x="181" y="48" width="20" height="22" rx="4" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<rect x="203" y="48" width="20" height="22" rx="4" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<rect x="225" y="48" width="20" height="22" rx="4" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<rect x="71" y="112" width="20" height="22" rx="4" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<rect x="93" y="112" width="20" height="22" rx="4" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<rect x="115" y="112" width="20" height="22" rx="4" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<rect x="137" y="112" width="20" height="22" rx="4" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<rect x="159" y="112" width="20" height="22" rx="4" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<rect x="181" y="112" width="20" height="22" rx="4" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.5"/>
+<rect x="203" y="112" width="20" height="22" rx="4" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.5"/>
+<rect x="225" y="112" width="20" height="22" rx="4" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.5"/>
+<text x="103.0" y="40" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="14" text-anchor="middle" fill="#0f766e" font-weight="600" font-style="italic">a</text>
+<text x="191.0" y="40" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="14" text-anchor="middle" fill="#0369a1" font-weight="600" font-style="italic">b</text>
+<text x="125.0" y="152" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="14" text-anchor="middle" fill="#0369a1" font-weight="600" font-style="italic">b</text>
+<text x="213.0" y="152" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="14" text-anchor="middle" fill="#0f766e" font-weight="600" font-style="italic">a</text>
+<text x="14" y="64" font-family="Source Code Pro, ui-monospace, monospace" font-size="13" text-anchor="start" fill="#111827">a + b</text>
+<text x="14" y="128" font-family="Source Code Pro, ui-monospace, monospace" font-size="13" text-anchor="start" fill="#111827">b + a</text>
+<line x1="67" y1="40" x2="67" y2="142" stroke="#6b7280" stroke-dasharray="3 3"/>
+<line x1="249" y1="40" x2="249" y2="142" stroke="#6b7280" stroke-dasharray="3 3"/>
+<text x="282" y="100" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="22" text-anchor="middle" fill="#374151">=</text>
+<text x="300" y="100" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="16" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+</svg>

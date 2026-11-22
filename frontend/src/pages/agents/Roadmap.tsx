@@ -108,7 +108,7 @@ export default function RoadmapAgent({ section }: { section: string | null }) {
           ]}
         />
         <p className="flex flex-wrap gap-4">
-          <SiteLink to={["research"]} label={["Research workspace", "研究工作區"]} />
+          <SiteLink to={["problems", "research"]} label={["Research workspace", "研究工作區"]} />
           <SiteLink to={["agents", "skills"]} label={["Agent skill", "代理 Skill"]} />
           <SiteLink to={["agents", "mcp"]} label={["MCP server", "MCP 伺服器"]} />
         </p>
@@ -203,7 +203,7 @@ export default function RoadmapAgent({ section }: { section: string | null }) {
             ],
           ]}
         />
-        <SiteLink to={["research"]} label={["Research workspace: the three demos", "研究工作區：三個範例"]} />
+        <SiteLink to={["problems", "research"]} label={["Research workspace: the three demos", "研究工作區：三個範例"]} />
       </Section>
 
       <Section page={PAGE} id="principles" n={5} title={SECTIONS[4].title}>

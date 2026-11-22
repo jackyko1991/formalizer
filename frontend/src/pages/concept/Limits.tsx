@@ -1,6 +1,7 @@
 /** Concept ▸ Limits of proofs (#/concept/limits[/<section>]). Lean code: lean/Formalizer/Pages/Limits.lean. */
 import { useLang } from "@learnkit/web";
 import { Callout, Figure, Lean, List, P, Page, Section, SiteLink, snippet, Sources, Table, TryIn, type SectionInfo } from "../kit";
+import { EmptyPromise, GodelMap, JunkGrid, VerdictFlow } from "./LimitsFigures";
 
 const SECTIONS: SectionInfo[] = [
   { id: "as-written", title: ["A proof checks the statement as written", "證明只檢查寫下來的陳述"] },
@@ -161,6 +162,14 @@ export default function LimitsConcept({ section }: { section: string | null }) {
             "最容易寫出太弱的陳述的方式，是放一個**永遠不可能成立的前提**。「如果 $n < n$，那麼 $n$ 等於一百萬」是真的，因為沒有數會小於自己，「如果」根本不會發生。Lean 接受它，但它對一百萬什麼也沒說。",
           ]}
         />
+        <Figure
+          caption={[
+            "The hypothesis `h : n < n` picks out the natural numbers smaller than themselves: there are none. A promise about every member of an empty region is kept without ever being tested, so the theorem is true and says nothing about a million.",
+            "前提 `h : n < n` 挑出「小於自己」的自然數：一個都沒有。對空區域裡每個成員的承諾，從來不必兌現就算守住了，所以這個定理是真的，卻對一百萬什麼也沒說。",
+          ]}
+        >
+          <EmptyPromise />
+        </Figure>
         <Lean code={snippet("Limits", "vacuous")} />
         <Callout kind="warn" title={["Read the hypotheses", "讀一讀前提"]}>
           <P
@@ -224,6 +233,14 @@ export default function LimitsConcept({ section }: { section: string | null }) {
             "在 Lean 裡，每個函數對每個輸入都必須給出答案。那麼在自然數（0、1、2、…，沒有負數）裡，`2 - 3` 是多少？`5 / 0` 又是多少？Lean 對兩者的答案都是 **0**。這些叫做**垃圾值**（junk value）：沒有人真的會拿來用的答案，只是為了讓函數處處有定義而填上的。",
           ]}
         />
+        <Figure
+          caption={[
+            "`a - b` on `Nat` for $0 \\le a, b \\le 6$; click a cell. In the green cells ($b \\le a$) subtraction is the school one and `a - b + b = a`. In the grey cells ($b > a$) the answer is the junk value 0, and `a - b + b = b`, not `a`. The green line is the hypothesis `b ≤ a`: the library theorem only speaks about the green side.",
+            "$0 \\le a, b \\le 6$ 時 `Nat` 上的 `a - b`；點一個格子。綠色格子（$b \\le a$）裡，減法就是學校教的那種，而且 `a - b + b = a`。灰色格子（$b > a$）裡，答案是垃圾值 0，而 `a - b + b = b`，不是 `a`。綠線就是前提 `b ≤ a`：函式庫的定理只談綠色那一邊。",
+          ]}
+        >
+          <JunkGrid />
+        </Figure>
         <Lean code={snippet("Limits", "junk")} />
         <P
           t={[
@@ -264,6 +281,14 @@ export default function LimitsConcept({ section }: { section: string | null }) {
             "`sorry` 可以不經證明就關掉任何目標。Formalizer 的每一題都是這樣開始的：陳述已經寫好，`sorry` 標出你的證明該放的位置。Lean 會接受含有 `sorry` 的檔案，就算陳述是**錯的**也一樣，但它會印出警告，並默默記下一個叫 `sorryAx` 的公理。",
           ]}
         />
+        <Figure
+          caption={[
+            "Left: what Formalizer's runner looks at, in this order, and the verdict each answer gives. Right: why a `sorry` cannot hide: every theorem that uses a sorried one, directly or through others, lists `sorryAx` too (the axiom lists are what `#print axioms` prints for the examples below).",
+            "左邊：Formalizer 執行器依序檢查的項目，以及每個答案對應的結果。右邊：為什麼 `sorry` 藏不住：任何直接或間接用到含 `sorry` 定理的定理，也都會列出 `sorryAx`（公理清單就是下面例子中 `#print axioms` 印出的內容）。",
+          ]}
+        >
+          <VerdictFlow />
+        </Figure>
         <Lean
           code={snippet("Limits", "sorry-false")}
           note={["Lean warns: declaration uses `sorry`.", "Lean 警告：declaration uses `sorry`。"]}
@@ -497,6 +522,14 @@ export default function LimitsConcept({ section }: { section: string | null }) {
             "還有一個任何工具都消除不了的限度。1931 年，哥德爾（Kurt Gödel）證明了：任何不自相矛盾、又強到能做一般算術的公理系統，都有**真的卻證不出來的陳述**，而且這樣的系統無法證明自己不矛盾。Lean 就是這樣的系統，所以有些關於數的真命題在 Lean 裡沒有證明。",
           ]}
         />
+        <Figure
+          caption={[
+            "Statements about natural numbers. If Lean's axioms prove only true statements (soundness), the provable ones sit inside the true ones. Gödel's first theorem gives a statement $G$ such that neither $G$ nor $\\neg G$ is provable; one of them is true, and it is shown here as $G$. His second theorem: if Lean is consistent, the statement “Lean is consistent”, written Con(Lean), is true and not provable in Lean.",
+            "關於自然數的陳述。如果 Lean 的公理只證得出真的陳述（可靠性），可證的陳述就落在真的陳述之內。哥德爾第一定理給出一個陳述 $G$，使 $G$ 和 $\\neg G$ 都證不出來；兩者之中有一個是真的，圖中把它畫成 $G$。他的第二定理：如果 Lean 不矛盾，那麼「Lean 不矛盾」這個陳述，記作 Con(Lean)，是真的，但在 Lean 中證不出來。",
+          ]}
+        >
+          <GodelMap />
+        </Figure>
         <P
           t={[
             "In practice this almost never gets in the way. The statements Gödel's theorem produces are specially constructed, and the mathematics people actually work on, including every problem on this site, is far inside what Lean's axioms can reach. When a proof is hard to find, the reason is that it is hard, not that it does not exist.",

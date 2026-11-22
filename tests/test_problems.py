@@ -1,10 +1,13 @@
-"""Every problem file in problems/ (one per topic: tutorial.json, geometry.json, linear-algebra.json, research.json): each problem is
-well formed, and with real Lean its starting file is incomplete, its reference solution is proved, and pressing its
-chips in order (as the page does) reaches a proof. The Lean part is skipped when the toolchain or the built REPL is
-missing; CI builds both."""
+"""Every problem file in problems/ (one per topic: tutorial, geometry, linear-algebra, research, imo, pitfalls): each
+problem is well formed, and with real Lean a Lite problem's starting file is incomplete, its reference solution is
+proved, and pressing its chips in order (as the page does) reaches a proof. The Lean part is skipped when the toolchain
+or the built REPL is missing; CI builds both. Full problems (they import Mathlib) are checked statically here, and
+compiled with Mathlib when FORMALIZER_MATHLIB names a Lake project that has it (e.g. ~/fz/mathproj)."""
 
 import json
+import os
 import re
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -13,12 +16,19 @@ from tests.test_runner import REPL, client  # noqa: F401 (the shared runner fixt
 
 ROOT = Path(__file__).resolve().parents[1]
 FILES = {
-    f.stem: json.loads(f.read_text()) for f in sorted((ROOT / "problems").glob("*.json")) if f.stem != "collections"
+    f.stem: json.loads(f.read_text(encoding="utf-8"))
+    for f in sorted((ROOT / "problems").glob("*.json"))
+    if f.stem != "collections"
 }
-COLLECTIONS = json.loads((ROOT / "problems" / "collections.json").read_text())
+COLLECTIONS = json.loads((ROOT / "problems" / "collections.json").read_text(encoding="utf-8"))
 PROBLEMS = [p for problems in FILES.values() for p in problems]
 IDS = [p["id"] for p in PROBLEMS]
+LITE = [p for p in PROBLEMS if p["runner"] == "lite"]
+FULL = [p for p in PROBLEMS if p["runner"] == "full"]
 SORRY = re.compile(r"\bsorry\b")
+# words a reference solution may not contain: it must be a real proof, with no escape hatch
+FORBIDDEN = re.compile(r"\b(sorry|admit|axiom|native_decide|implemented_by|extern|unsafe)\b")
+MATHLIB = os.environ.get("FORMALIZER_MATHLIB")
 
 
 def insert_chip(code: str, chip: str, step: bool) -> str:
@@ -33,25 +43,44 @@ def insert_chip(code: str, chip: str, step: bool) -> str:
 
 
 def test_problems_are_well_formed():
-    assert set(FILES) == {"tutorial", "geometry", "linear-algebra", "research"}, (
+    assert set(FILES) == {"tutorial", "geometry", "linear-algebra", "research", "imo", "pitfalls"}, (
         "a new topic also needs frontend/src/problems.ts"
     )
     assert len(IDS) == len(set(IDS)) and len(FILES["tutorial"]) >= 15
     for p in PROBLEMS:
         assert re.fullmatch(r"[a-z0-9-]+", p["id"]), p["id"]
-        assert p["level"] in ("L1", "L2", "L3") and p["runner"] == "lite"
+        assert p["level"] in ("L1", "L2", "L3") and p["runner"] in ("lite", "full")
         for key in ("title", "summary", "hint"):
             assert len(p[key]) == 2 and all(s.strip() for s in p[key]), f"{p['id']}: {key} needs en + zh-Hant"
         assert SORRY.search(p["start"]) and not SORRY.search(p["solution"]), p["id"]
         for s in p["statements"]:
             assert s in p["start"] and s in p["solution"], f"{p['id']}: statement missing"
         assert set(p["steps"]) <= set(p["tactics"]), p["id"]
-        assert "import" not in p["start"], f"{p['id']}: the Lite track is core Lean only"
+        assert not FORBIDDEN.search(p["solution"]), f"{p['id']}: the reference solution must be a real proof"
+        if p["runner"] == "lite":
+            assert "import" not in p["start"], f"{p['id']}: the Lite track is core Lean only"
+        else:
+            assert p["start"].startswith("import Mathlib\n") and p["solution"].startswith("import Mathlib\n"), p["id"]
+        for tag in p.get("tags", []):
+            assert len(tag) == 2 and all(s.strip() for s in tag), f"{p['id']}: a tag needs en + zh-Hant"
     for name, problems in FILES.items():
         levels = [p["level"] for p in problems]
         assert levels == sorted(levels), f"{name}: problems are listed level by level"
     for level in ("L1", "L2", "L3"):
         assert [p["level"] for p in FILES["tutorial"]].count(level) >= 3, level
+
+
+def test_imported_problems_name_their_source():
+    """The IMO problems are ported from compfiles (Apache-2.0): each names the exact file at a pinned commit, its
+    licence and authors, and NOTICE credits the project."""
+    assert len(FILES["imo"]) >= 5
+    notice = (ROOT / "NOTICE").read_text(encoding="utf-8")
+    url = re.compile(r"https://github\.com/dwrensha/compfiles/blob/[0-9a-f]{40}/Compfiles/Imo\d{4}P\d\.lean")
+    for p in FILES["imo"]:
+        src = p["source"]
+        assert p["runner"] == "full" and p["tags"][0][0].startswith("IMO "), p["id"]
+        assert url.fullmatch(src["url"]) and src["licence"] == "Apache-2.0" and src["authors"].strip(), p["id"]
+        assert src["name"] in notice and len(src["changes"]) == 2, p["id"]
 
 
 def test_collections_are_well_formed():
@@ -74,7 +103,7 @@ def check(client, p, code):  # noqa: F811
 
 
 @pytest.mark.skipif(not REPL.exists(), reason="needs `pixi run lean-build`")
-@pytest.mark.parametrize("p", PROBLEMS, ids=IDS)
+@pytest.mark.parametrize("p", LITE, ids=[p["id"] for p in LITE])
 def test_start_is_open_and_the_solution_is_proved(client, p):  # noqa: F811
     start = check(client, p, p["start"])
     assert start["verdict"] == "incomplete" and start["goals"], start
@@ -84,7 +113,7 @@ def test_start_is_open_and_the_solution_is_proved(client, p):  # noqa: F811
 
 
 @pytest.mark.skipif(not REPL.exists(), reason="needs `pixi run lean-build`")
-@pytest.mark.parametrize("p", PROBLEMS, ids=IDS)
+@pytest.mark.parametrize("p", LITE, ids=[p["id"] for p in LITE])
 def test_the_chips_in_order_reach_a_proof(client, p):  # noqa: F811
     """A learner pressing the chips left to right: a chip that Lean rejects is undone (some are there to show an
     error), the others must keep the file compiling until one finishes the proof."""
@@ -99,6 +128,24 @@ def test_the_chips_in_order_reach_a_proof(client, p):  # noqa: F811
         if result["verdict"] == "proved":
             return
     pytest.fail(f"the chips never finish the proof; last file:\n{code}")
+
+
+def lean_with_mathlib(tmp_path, code):
+    f = tmp_path / "Check.lean"
+    f.write_text(code, encoding="utf-8")
+    cmd = ["lake", "env", "lean", str(f)]
+    r = subprocess.run(cmd, cwd=MATHLIB, capture_output=True, text=True, timeout=1800, check=False)
+    return r.returncode, r.stdout + r.stderr
+
+
+@pytest.mark.skipif(not MATHLIB, reason="set FORMALIZER_MATHLIB to a Lake project with Mathlib")
+@pytest.mark.parametrize("p", FULL, ids=[p["id"] for p in FULL])
+def test_full_problems_compile_with_mathlib(tmp_path, p):
+    """A Full problem's start compiles with only `sorry` left; its reference solution compiles with none."""
+    code, out = lean_with_mathlib(tmp_path, p["start"])
+    assert code == 0 and "declaration uses `sorry`" in out, out
+    code, out = lean_with_mathlib(tmp_path, p["solution"])
+    assert code == 0 and "sorry" not in out, out
 
 
 # --- the dependency graph (lean/Formalizer/DepGraph.lean, pruned by backend/check.py) ---

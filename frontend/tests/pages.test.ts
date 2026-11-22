@@ -1,11 +1,12 @@
 // Concept and Coding Skills pages: every snippet("File", "name") a page shows exists in lean/Formalizer/Pages/File.lean
 // (those files are compiled by CI, so the code on the site is checked). Run: npm test
+import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 import { parseSnippets } from "../src/pages/snippets.ts";
 
-const here = new URL(".", import.meta.url).pathname;
+const here = fileURLToPath(new URL(".", import.meta.url));
 const pages = ["concept", "skills"].flatMap((dir) =>
   readdirSync(`${here}../src/pages/${dir}`).map((f) => `${here}../src/pages/${dir}/${f}`),
 );

@@ -1,6 +1,7 @@
 /** Concept ▸ The Feynman technique (#/concept/feynman[/<section>]). Lean code: lean/Formalizer/Pages/Feynman.lean. */
 import { useLang } from "@learnkit/web";
 import { Callout, Figure, Lean, List, P, Page, Section, SiteLink, snippet, Sources, Table, TryIn, type L } from "../kit";
+import { GoalStepper, OddBadLine, SockPairs, TwoListeners } from "./FeynmanFigures";
 
 const PAGE = "feynman";
 
@@ -33,8 +34,8 @@ function StepCycle() {
     { title: ["3 · Find the gaps", "3 · 找出漏洞"], lean: ["errors, goals, sorry", "錯誤、目標、sorry"] },
     { title: ["4 · Simplify", "4 · 簡化"], lean: ["small lemmas, have, names", "小引理、have、命名"] },
   ];
-  const w = 140;
-  const x = (i: number) => 10 + i * 160;
+  const w = 146;
+  const x = (i: number) => 7 + i * 158;
   return (
     <svg
       viewBox="0 0 640 210"
@@ -61,7 +62,7 @@ function StepCycle() {
           <text x={x(i) + w / 2} y={62} textAnchor="middle" className="fill-gray-900 text-[13px] font-semibold">
             {pick(s.title)}
           </text>
-          <text x={x(i) + w / 2} y={90} textAnchor="middle" className="fill-gray-600 text-[11.5px]">
+          <text x={x(i) + w / 2} y={90} textAnchor="middle" className="fill-gray-600 text-[11px]">
             {pick(s.lean)}
           </text>
           {i < 3 && (
@@ -224,6 +225,14 @@ export default function FeynmanConcept({ section }: { section: string | null }) 
         />
         <Figure
           caption={[
+            "The same explanation of “odd plus odd is even”, with the third step skipped. A person walks over the missing plank without noticing; Lean stops there and shows exactly what is missing, as an unsolved goal.",
+            "同一段「奇數加奇數是偶數」的解釋，跳過了第三步。人會不知不覺地走過那塊缺掉的木板；Lean 則停在那裡，以一個未解決的目標精確指出缺了什麼。",
+          ]}
+        >
+          <TwoListeners />
+        </Figure>
+        <Figure
+          caption={[
             "The four steps as a loop. In Lean, step 3 is done for you: the checker points at every gap.",
             "四個步驟形成一個循環。在 Lean 裡，第 3 步由檢查器替你完成：它會指出每一個漏洞。",
           ]}
@@ -297,6 +306,14 @@ export default function FeynmanConcept({ section }: { section: string | null }) 
             "**第 1 步：選一個陳述，寫下你知道的。**「奇數加奇數是偶數。」例子：$3 + 5 = 8$、$7 + 7 = 14$、$1 + 9 = 10$。感覺理所當然。來看看我們能不能把它解釋給一位什麼都不肯輕信的聽眾。",
           ]}
         />
+        <Figure
+          caption={[
+            "Where this section is going: the finished proof, one line at a time: what you write, the goal panel Lean shows after it (copied from Lean), and the sentence of the paper explanation it stands for.",
+            "這一節要走到哪裡：完成的證明，一次一行：你寫了什麼、Lean 接著顯示的目標面板（照抄 Lean 的輸出），以及它對應的紙上解釋中的那句話。",
+          ]}
+        >
+          <GoalStepper />
+        </Figure>
         <P
           t={[
             'A first, hasty attempt: "the sum of `a` and `b` leaves remainder 0 when divided by 2", and ask Lean\'s arithmetic tactic `omega` to do it. Lean refuses, and it is right: with $a = 1$ and $b = 0$ the sum is $1$. The word "odd" was in my head, not on the page.',
@@ -355,6 +372,14 @@ export default function FeynmanConcept({ section }: { section: string | null }) 
             "第 4 步在紙上是更簡單的說法和一個類比。在 Lean 裡則是**結構**：把證明拆成小塊，小到每一塊都能用一句話說明，再給每一塊取個能說明意思的名字。關鍵那一步的類比是這樣的：每個奇數都是好幾雙襪子再加一隻落單的；把兩個奇數放在一起，兩隻落單的襪子剛好又湊成一雙。",
           ]}
         />
+        <Figure
+          caption={[
+            "The analogy drawn with $a = 2 \\cdot 2 + 1 = 5$ and $b = 2 \\cdot 3 + 1 = 7$. Each odd number is pairs plus one leftover; put together, the two leftovers are one more pair: $(2j + 1) + (2k + 1) = 2(j + k + 1)$, the lemma `two_ones_make_a_pair`.",
+            "用 $a = 2 \\cdot 2 + 1 = 5$ 與 $b = 2 \\cdot 3 + 1 = 7$ 把類比畫出來。每個奇數都是幾雙再加一隻落單的；放在一起，兩隻落單的又湊成一雙：$(2j + 1) + (2k + 1) = 2(j + k + 1)$，也就是引理 `two_ones_make_a_pair`。",
+          ]}
+        >
+          <SockPairs />
+        </Figure>
         <P
           t={[
             'The "socks" fact becomes its own small lemma, `two_ones_make_a_pair`. Inside the main proof, each `have` states one step in words you could read aloud: what the sum is, and why that is a pair count.',
@@ -403,6 +428,14 @@ export default function FeynmanConcept({ section }: { section: string | null }) 
             "**2.「Lean 檢查過了，所以它說的就是我的意思。」** Lean 檢查的是證明是否證出了這個*陳述*；陳述和定義是否說出你的本意，是你自己的責任。一個誘人的奇數定義「比偶數少 1」，在自然數上會出錯，因為自然數的減法減到 0 就停住：它讓 0 變成了奇數。在定義上試幾個小例子，就能抓到這種錯。",
           ]}
         />
+        <Figure
+          caption={[
+            "Which of $0, 1, \\dots, 9$ each definition calls odd. They agree everywhere except at $0$: with $k = 0$, `2 * 0 - 1` is `0` on `Nat`, so `IsOddBad 0` holds. One tiny example finds it.",
+            "兩個定義分別把 $0, 1, \\dots, 9$ 中的哪些數當成奇數。除了 $0$ 以外完全一致：取 $k = 0$，在 `Nat` 上 `2 * 0 - 1` 是 `0`，所以 `IsOddBad 0` 成立。一個小例子就能抓到。",
+          ]}
+        >
+          <OddBadLine />
+        </Figure>
         <Lean code={snippet("Feynman", "bad-definition")} />
         <P
           t={[

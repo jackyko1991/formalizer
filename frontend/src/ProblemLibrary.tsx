@@ -14,6 +14,21 @@ export const LEVEL_STYLE: Record<Level, { dot: string; text: string }> = {
 
 const fold = (text: string) => text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
 
+let INDEX: { p: Problem; text: string }[] | null = null;
+/** Problems matching every word of the query (titles and summaries in both languages, tactics, statements, tags, source,
+ *  slug; case and accents ignored); none for an empty query. Shared with the home's library search. */
+export function searchProblems(query: string): Problem[] {
+  const words = fold(query).split(/\s+/).filter(Boolean);
+  if (!words.length) return [];
+  INDEX ??= PROBLEMS.map((p) => ({
+    p,
+    text: fold(
+      [...p.title, ...p.summary, ...p.tactics, ...p.statements, ...(p.tags ?? []).flat(), p.source?.name ?? "", p.id.replace(/-/g, " ")].join(" "),
+    ),
+  }));
+  return INDEX.filter((e) => words.every((w) => e.text.includes(w))).map((e) => e.p);
+}
+
 export default function ProblemLibrary({ selected, onSelect }: { selected: string | null; onSelect: (id: string) => void }) {
   const { t, pick } = useLang();
   const selectedCategory = PROBLEMS.find((p) => p.id === selected)?.category;
@@ -31,19 +46,11 @@ export default function ProblemLibrary({ selected, onSelect }: { selected: strin
   // search: titles and summaries in both languages, the tactics, the statement and the slug; case and accents ignored
   const [query, setQuery] = useState("");
   const box = useRef<HTMLInputElement>(null);
-  const index = useMemo(
-    () =>
-      PROBLEMS.map((p) => ({
-        p,
-        text: fold([...p.title, ...p.summary, ...p.tactics, ...p.statements, p.id.replace(/-/g, " ")].join(" ")),
-      })),
-    [],
-  );
   const words = fold(query).split(/\s+/).filter(Boolean);
   // collections: chosen under the search box, they list their problems in order
   const [collection, setCollection] = useState<string | null>(null);
   const current = COLLECTIONS.find((c) => c.id === collection) ?? null;
-  const hits = words.length ? index.filter((e) => words.every((w) => e.text.includes(w))).map((e) => e.p) : [];
+  const hits = useMemo(() => searchProblems(query), [query]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       const typing = (e.target as HTMLElement).closest("input, textarea, [contenteditable=true], .cm-editor");
@@ -75,6 +82,21 @@ export default function ProblemLibrary({ selected, onSelect }: { selected: strin
         {dot && <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${LEVEL_STYLE[p.level].dot}`} />}
         <span className="min-w-0">
           <RichText text={pick(p.title)} />
+          {/* the first tag (e.g. "IMO 1959 P1") and a mark for problems that need Mathlib */}
+          {(p.tags?.length || p.runner === "full") && (
+            <span className="mt-0.5 flex flex-wrap gap-1" data-testid="problem-tags">
+              {p.tags?.slice(0, 1).map((tag) => (
+                <span key={tag[0]} className="rounded bg-gray-100 px-1 text-[10px] font-normal text-gray-500">
+                  {pick(tag)}
+                </span>
+              ))}
+              {p.runner === "full" && (
+                <span className="rounded bg-indigo-50 px-1 text-[10px] font-normal text-indigo-700" title="Mathlib">
+                  Mathlib
+                </span>
+              )}
+            </span>
+          )}
         </span>
       </button>
     </li>

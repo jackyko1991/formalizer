@@ -94,4 +94,35 @@ example (a b : Nat) : a + b = b + a := by one_step
 example (xs : List Nat) : xs.reverse.reverse = xs := by one_step
 -- end
 
+-- snippet: step-intro
+example (p q : Prop) : p → q → p := by
+  intro hp hq
+  exact hp
+
+-- snippet: step-constructor
+example : 2 + 2 = 4 ∧ 3 < 5 := by
+  constructor
+  · rfl
+  · decide
+
+-- snippet: step-rw
+example (a b c : Nat) (h₁ : a = b) (h₂ : b = c) : a = c := by
+  rw [h₁]
+  rw [h₂]
+
+-- snippet: step-cases
+example (p q : Prop) (h : p ∨ q) : q ∨ p := by
+  cases h with
+  | inl hp => exact Or.inr hp
+  | inr hq => exact Or.inl hq
+
+-- snippet: step-induction
+theorem zero_add' (n : Nat) : 0 + n = n := by
+  induction n with
+  | zero => rfl
+  | succ m ih =>
+    rw [← Nat.add_assoc]
+    rw [ih]
+-- end
+
 end Formalizer.Pages.Tactics

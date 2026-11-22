@@ -13,6 +13,10 @@ export function suggestQuestions(c: AgentContext | null): Pair[] {
   const add = (p: Pair) => out.length < MAX && !out.some((q) => q[0] === p[0]) && out.push(p);
   const error = c.errors?.find((e) => e.line > 0);
   if (c.target.startsWith("problem/")) {
+    // the translator between the two sides of the proof: a paper step (in focus) into Lean, a Lean line into natural language
+    if (c.focus?.note?.trim()) add([`Translate this step into Lean: ${c.focus.name}.`, `把這一步翻成 Lean：${c.focus.name}。`]);
+    if (c.cursor?.file === "Proof.lean")
+      add([`Say line ${c.cursor.line} of Proof.lean in natural language.`, `用自然語言說 Proof.lean 第 ${c.cursor.line} 行。`]);
     if (!c.verdict) {
       add(["What does this statement say, in plain words?", "這個陳述用白話說是什麼意思？"]);
       add(["Give me a hint for the first step, not the answer.", "給我第一步的提示，不要直接給答案。"]);

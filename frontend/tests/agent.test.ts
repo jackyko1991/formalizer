@@ -89,3 +89,11 @@ test("edits reach only a page that takes them", () => {
   off();
   assert.equal(applyAgentFiles(e), false);
 });
+
+test("the translator questions: a paper step in focus into Lean, the cursor's Lean line into words", () => {
+  const en = (c: AgentContext) => suggestQuestions(c).map((q) => q[0]);
+  const both = en(problem({ focus: { name: "step 2", note: "Add one to both sides." }, cursor: { file: "Proof.lean", line: 2 } }));
+  assert.deepEqual(both.slice(0, 2), ["Translate this step into Lean: step 2.", "Say line 2 of Proof.lean in natural language."]);
+  assert.ok(both.length <= 4);
+  assert.ok(!en(problem()).some((q) => q.startsWith("Translate") || q.startsWith("Say line")));
+});

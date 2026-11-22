@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="On a grid, a segment from p to q and its copy from p′ to q′, where every point is slid by the same amount (a, b) along parallel dashed arrows; the copy has the same length, so dist2 p′ q′ = dist2 p q.">
+<defs><marker id="ah-mut" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#6b7280"/></marker></defs>
+<g font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#111827">
+<line x1="24" y1="156" x2="24" y2="36" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="44" y1="156" x2="44" y2="36" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="64" y1="156" x2="64" y2="36" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="84" y1="156" x2="84" y2="36" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="104" y1="156" x2="104" y2="36" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="124" y1="156" x2="124" y2="36" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="144" y1="156" x2="144" y2="36" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="164" y1="156" x2="164" y2="36" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="184" y1="156" x2="184" y2="36" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="24" y1="156" x2="184" y2="156" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="24" y1="136" x2="184" y2="136" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="24" y1="116" x2="184" y2="116" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="24" y1="96" x2="184" y2="96" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="24" y1="76" x2="184" y2="76" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="24" y1="56" x2="184" y2="56" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="24" y1="36" x2="184" y2="36" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="24" y1="156" x2="24" y2="36" stroke="#9ca3af" stroke-width="1.2"/>
+<line x1="24" y1="156" x2="184" y2="156" stroke="#9ca3af" stroke-width="1.2"/>
+<line x1="48.2" y1="131.8" x2="99.8" y2="80.2" stroke="#6b7280" stroke-width="1.4" marker-end="url(#ah-mut)" stroke-dasharray="4 3"/>
+<line x1="108.2" y1="111.8" x2="159.8" y2="60.2" stroke="#6b7280" stroke-width="1.4" marker-end="url(#ah-mut)" stroke-dasharray="4 3"/>
+<line x1="44" y1="136" x2="104" y2="116" stroke="#0f766e" stroke-width="2.5"/>
+<line x1="104" y1="76" x2="164" y2="56" stroke="#0f766e" stroke-width="2.5"/>
+<circle cx="44" cy="136" r="4" fill="#0f766e"/>
+<circle cx="104" cy="116" r="4" fill="#0f766e"/>
+<circle cx="104" cy="76" r="4" fill="#ffffff" stroke="#0f766e" stroke-width="1.5"/>
+<circle cx="164" cy="56" r="4" fill="#ffffff" stroke="#0f766e" stroke-width="1.5"/>
+<text x="36" y="140" font-size="13" fill="#111827" text-anchor="end" font-weight="600" font-style="italic">p</text>
+<text x="112" y="126" font-size="13" fill="#111827" font-weight="600" font-style="italic">q</text>
+<text x="96" y="78" font-size="13" fill="#111827" text-anchor="end" font-weight="600" font-style="italic">p′</text>
+<text x="172" y="60" font-size="13" fill="#111827" font-weight="600" font-style="italic">q′</text>
+<text x="66" y="108" font-size="11" fill="#6b7280" text-anchor="end" font-family="Source Code Pro, ui-monospace, monospace">(a, b)</text>
+<text x="202" y="44" font-size="11" fill="#374151" font-family="Source Code Pro, ui-monospace, monospace">p′ = shift p a b</text>
+<text x="202" y="62" font-size="11" fill="#374151" font-family="Source Code Pro, ui-monospace, monospace">q′ = shift q a b</text>
+<text x="202" y="104" font-size="12" fill="#111827" font-family="Source Code Pro, ui-monospace, monospace"><tspan fill="#0f766e">dist2 p′ q′</tspan></text>
+<text x="202" y="124" font-size="12" fill="#111827" font-family="Source Code Pro, ui-monospace, monospace">= <tspan fill="#0f766e">dist2 p q</tspan></text>
+</g>
+</svg>

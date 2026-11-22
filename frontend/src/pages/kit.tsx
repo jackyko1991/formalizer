@@ -9,6 +9,7 @@
  * runner) or that is meant to fail is written inline with `<Lean code=… runner="mathlib" | fails>` instead.
  */
 import { CodeBlock, go, PageToc, plainText, RichText, useLang } from "@learnkit/web";
+import { lean } from "../leanLanguage";
 import { isValidElement, useEffect, type ReactElement, type ReactNode } from "react";
 import { PROBLEMS } from "../problems";
 import { parseSnippets } from "./snippets";
@@ -141,6 +142,9 @@ const RUNNER_BADGE = {
  * Lean code. Prefer `code={snippet("Page", "name")}` (checked); otherwise pass the code inline and say why it isn't
  * checked: `runner="mathlib"` or `fails`.
  */
+/** Lean 4 colours for every snippet on the Concept and Coding Skills pages */
+const LEAN_COLOURS = lean();
+
 export function Lean({
   code,
   title,
@@ -158,7 +162,7 @@ export function Lean({
   const kind = fails ? "fails" : runner;
   return (
     <div className="space-y-1">
-      <CodeBlock code={code} title={title} />
+      <CodeBlock code={code} title={title} language={LEAN_COLOURS} />
       <p className="flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
         <span
           className={`rounded-full px-2 py-0.5 font-medium ${

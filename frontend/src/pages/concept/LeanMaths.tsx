@@ -1,6 +1,7 @@
 /** Concept ▸ Lean maths (#/concept/maths[/<section>]). Lean code: lean/Formalizer/Pages/LeanMaths.lean. */
 import { useLang } from "@learnkit/web";
 import { Callout, Figure, Lean, List, P, Page, Section, SiteLink, Sources, Table, TryIn, snippet, type SectionInfo } from "../kit";
+import { LogicMoves, NumberLines, PropBoxes, TypeBoxes } from "./LeanMathsFigures";
 
 const PAGE = "maths";
 
@@ -153,6 +154,14 @@ export default function LeanMathsConcept({ section }: { section: string | null }
             "在 Lean 裡，每個運算式都有一個**型別**，寫在冒號後面：`2 : Nat` 讀作「2 是一個自然數」。型別就像一張標籤，說明某個東西是哪一類，而 Lean 不會讓你不小心把不同類混在一起。`Nat` 是用來數數的 $0, 1, 2, \\dots$；`Int` 再加上負數；`String` 是文字。同一個符號 `2` 可以是 `Nat` 也可以是 `Int`，用 `(2 : Int)` 指定。",
           ]}
         />
+        <Figure
+          caption={[
+            "Think of a type as a labelled box. Every value lives in exactly one box: `(2 : Nat)` and `(2 : Int)` are different values, and the cast `↑` (which Lean inserts when a `Nat` is used where an `Int` is expected) carries one to the other. `-3` has no place in `Nat`. A function `Nat → Nat` takes a value from the `Nat` box and returns one in the `Nat` box.",
+            "把型別想成貼了標籤的盒子。每個值剛好住在一個盒子裡：`(2 : Nat)` 和 `(2 : Int)` 是不同的值，由轉型 `↑`（在需要 `Int` 的地方用了 `Nat` 時，Lean 會自動插入）把前者帶到後者。`-3` 在 `Nat` 裡沒有位置。型別為 `Nat → Nat` 的函數從 `Nat` 盒子拿一個值，還你 `Nat` 盒子裡的一個值。",
+          ]}
+        >
+          <TypeBoxes />
+        </Figure>
         <P
           t={[
             "Two commands let you ask Lean questions: `#check e` shows the type of `e`, and `#eval e` computes its value. The comments after `--` show what Lean answers.",
@@ -200,6 +209,14 @@ export default function LeanMathsConcept({ section }: { section: string | null }
             "像 `2 + 2 = 5` 這種錯誤的陳述，依然是一個合格的型別，只是它沒有任何值，所以誰也寫不出它的證明。`rfl`（「自反性」：兩邊算完之後一模一樣）就是 `2 + 2 = 4` 的一個證明。",
           ]}
         />
+        <Figure
+          caption={[
+            "The same boxes, for statements. A statement is a box; its elements are its proofs. `2 + 2 = 4` contains `rfl` (and `two_add_two`, which is defined as `rfl`); a proof of a “for every” statement is a function from `n` to a proof about `n`; `2 + 2 = 5` is a box with nothing in it. Proving a theorem means putting something in its box.",
+            "同樣的盒子，換成陳述。陳述是一個盒子，裡面的元素是它的證明。`2 + 2 = 4` 裡有 `rfl`（還有定義成 `rfl` 的 `two_add_two`）；「對所有」陳述的證明是一個函數，把 `n` 送到關於 `n` 的證明；`2 + 2 = 5` 是一個什麼都沒有的盒子。證明一個定理，就是往它的盒子裡放進一樣東西。",
+          ]}
+        >
+          <PropBoxes />
+        </Figure>
         <Lean code={snippet("LeanMaths", "props")} />
         <P
           t={[
@@ -238,6 +255,14 @@ export default function LeanMathsConcept({ section }: { section: string | null }
             "每個邏輯符號都是一種陳述，各自附帶兩套做法：當它是你的目標時，怎麼**證明**它；當它是你手上已有的前提時，怎麼**使用**它。做題時值得把這張表放在旁邊；`P`、`Q` 代表任意陳述，`h` 代表一個前提。",
           ]}
         />
+        <Figure
+          caption={[
+            "Each recipe below is a move on the goal panel. Pick a symbol: the panel before, the tactic, and the panel(s) Lean shows after (copied from Lean). Amber = what you are asked; green = what is left.",
+            "下表的每一種做法，都是目標面板上的一步。選一個符號：之前的面板、戰術，以及 Lean 之後顯示的面板（照抄 Lean 的輸出）。琥珀色 = 被要求證明的；綠色 = 剩下的。",
+          ]}
+        >
+          <LogicMoves />
+        </Figure>
         <Table
           head={[
             ["Symbol, read as", "符號與讀法"],
@@ -358,7 +383,19 @@ export default function LeanMathsConcept({ section }: { section: string | null }
             "`Nat` 裡沒有負數，但 `3 - 5` 還是得是*某個*自然數，因為每個函數都必須回傳它型別裡的一個值。Lean 的答案是 `0`：`Nat` 的減法到零就停（有時稱為截斷減法）。除法會無條件捨去，而除以零得到 `0`，不會出錯。",
           ]}
         />
+        <Figure
+          caption={[
+            "One expression, three kinds of number. `Nat` stops at 0 and `/` rounds down; `Int` has negatives but `/` still gives a whole number; only `ℝ` (Mathlib) has 0.5 and −3.5. Dividing by zero gives the junk value 0 in all three.",
+            "同一個運算式，三種數。`Nat` 減到 0 就停，`/` 會捨去；`Int` 有負數，但 `/` 仍然給整數；只有 `ℝ`（Mathlib）有 0.5 和 −3.5。三者除以零都得到垃圾值 0。",
+          ]}
+        >
+          <NumberLines />
+        </Figure>
         <Lean code={snippet("LeanMaths", "nat-surprises")} />
+        <Lean
+          code={snippet("LeanMaths", "three-lines")}
+          note={["The `Nat` and `Int` answers in the picture, as Lean prints them.", "圖中 `Nat` 與 `Int` 的答案，Lean 印出來就是這樣。"]}
+        />
         <Callout kind="warn" title={["A classic trap", "經典陷阱"]}>
           <P
             t={[

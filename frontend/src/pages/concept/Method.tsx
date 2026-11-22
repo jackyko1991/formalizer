@@ -1,12 +1,14 @@
 /** Concept ▸ From statement to proof (#/concept/method[/<section>]). Lean code: lean/Formalizer/Pages/Method.lean. */
 import { CodeBlock, useLang } from "@learnkit/web";
 import { Callout, Figure, Lean, List, P, Page, Section, SiteLink, snippet, Sources, Table, TryIn, type L } from "../kit";
+import { ComparatorFlow, GaussRectangle, PlanStepper, TheoremAnatomy, TwoStreams } from "./MethodFigures";
 
 const PAGE = "method";
 
 const SECTIONS: { id: string; title: L }[] = [
   { id: "overview", title: ["The method at a glance", "方法總覽"] },
   { id: "statement", title: ["From words to a formal statement", "從文字到形式化陳述"] },
+  { id: "two-languages", title: ["One proof, two languages", "一個證明，兩種語言"] },
   { id: "definitions", title: ["Definitions come first", "先寫定義"] },
   { id: "plan", title: ["A plan made of sorrys", "用 sorry 搭出計畫"] },
   { id: "tactics", title: ["Tactics close the goals one by one", "戰術逐一完成目標"] },
@@ -28,10 +30,10 @@ const STEPS: { name: L; sub: L; checker: boolean }[] = [
 /** The eight steps as a snake: 1–4 left to right, 5–8 right to left underneath. */
 function Pipeline() {
   const { pick } = useLang();
-  const W = 132;
+  const W = 144;
   const H = 58;
-  const GAP = 24;
-  const X0 = 10;
+  const GAP = 16;
+  const X0 = 3;
   const pos = (i: number) => {
     const row = i < 4 ? 0 : 1;
     const col = row === 0 ? i : 7 - i;
@@ -66,7 +68,7 @@ function Pipeline() {
             <text x={x + 14} y={y + 19} textAnchor="middle" className="fill-white text-[11px] font-semibold">
               {i + 1}
             </text>
-            <text x={x + 28} y={y + 20} className="fill-gray-900 text-[12px] font-semibold">
+            <text x={x + 27} y={y + 20} className="fill-gray-900 text-[11.5px] font-semibold">
               {pick(s.name)}
             </text>
             <text x={x + W / 2} y={y + 44} textAnchor="middle" className="fill-gray-600 text-[11px]">
@@ -218,12 +220,28 @@ export default function MethodConcept({ section }: { section: string | null }) {
             "**第 1 步，用文字說。** 相傳年幼的高斯被要求把 1 加到 100，他把頭尾的數配對：$1 + 100$、$2 + 99$……共五十對 $101$，所以是 $5050$。一般來說：*對每個自然數 $n$，$1 + 2 + \\dots + n = \\frac{n(n+1)}{2}$。*",
           ]}
         />
+        <Figure
+          caption={[
+            "Gauss's pairing as a picture. Row $i$ holds $i$ teal dots and $n + 1 - i$ amber ones, so the teal dots count $1 + 2 + \\dots + n$, the amber dots count the same sum backwards, and together they fill $n$ rows of $n + 1$: twice the sum is $n(n+1)$. That is exactly the statement we will give Lean.",
+            "把高斯的配對畫出來。第 $i$ 列有 $i$ 個青綠色點和 $n + 1 - i$ 個琥珀色點，所以青綠色點的個數是 $1 + 2 + \\dots + n$，琥珀色點是同一個和倒過來數，兩者合起來填滿 $n$ 列、每列 $n + 1$ 個：和的兩倍等於 $n(n+1)$。這正是我們要交給 Lean 的陳述。",
+          ]}
+        >
+          <GaussRectangle />
+        </Figure>
         <P
           t={[
             "**Step 2, in Lean.** Each phrase of the sentence becomes a precise piece of the statement:",
             "**第 2 步，寫成 Lean。** 句子裡的每個片語，都變成陳述中一個精確的部分：",
           ]}
         />
+        <Figure
+          caption={[
+            "The statement line taken apart. The name, the input and the statement are the test and stay fixed; the proof after `:= by` is the only part you write.",
+            "把陳述那一行拆開來看。名字、輸入和陳述就是測試，固定不動；`:= by` 之後的證明是唯一由你來寫的部分。",
+          ]}
+        >
+          <TheoremAnatomy />
+        </Figure>
         <Table
           head={[
             ["In words", "文字"],
@@ -243,8 +261,8 @@ export default function MethodConcept({ section }: { section: string | null }) {
               ["$1 + 2 + \\dots + n$", "$1 + 2 + \\dots + n$"],
               ["`sumTo n`", "`sumTo n`"],
               [
-                "The dots “…” are not Lean. We define a function that means exactly this (next section).",
-                "「……」不是 Lean 的語法。我們要定義一個函式，精確表達這個意思（見下一節）。",
+                "The dots “…” are not Lean. We define a function that means exactly this (section 4).",
+                "「……」不是 Lean 的語法。我們要定義一個函式，精確表達這個意思（見第 4 節）。",
               ],
             ],
             [
@@ -285,7 +303,49 @@ export default function MethodConcept({ section }: { section: string | null }) {
         <TryIn ids={["hello", "add-comm"]} />
       </Section>
 
-      <Section page={PAGE} id="definitions" n={3} title={SECTIONS[2].title}>
+      <Section page={PAGE} id="two-languages" n={3} title={SECTIONS[2].title}>
+        <P
+          t={[
+            "A proof can be written in two languages: a **natural-language proof**, in sentences and formulas, for people, and a **Lean proof**, for the machine. On this site they are treated as mirrors: each step of one has a partner in the other, and the two are linked step by step, like the rails of a ladder joined by rungs.",
+            "一個證明可以用兩種語言寫：**自然語言證明**，用句子和公式寫給人看；以及 **Lean 證明**，寫給機器看。在本站，兩者被當成鏡像：其中一邊的每一步，在另一邊都有對應的一步，兩邊一步一步連起來，就像梯子的兩根直桿由橫桿相連。",
+          ]}
+        />
+        <Figure
+          caption={[
+            "Gauss's sum in both languages: the finished proof this page builds. Hover or click a step on either side, or the rung between them, to light up the pair. The chips take one stream away, then let AI translate between them.",
+            "高斯求和的兩種語言：本頁一路要搭出的完整證明。把滑鼠移到任一邊的某一步（或中間的橫桿）上，或點一下，就會亮出成對的兩步。上方的按鈕可以拿掉其中一條，或讓 AI 在兩者之間翻譯。",
+          ]}
+        >
+          <TwoStreams />
+        </Figure>
+        <P
+          t={[
+            "**Why one stream alone is incomplete.** A natural-language proof alone can hide a step nobody checked: readers, referees included, skim what looks obvious. A Lean proof alone is checked but unread: the kernel says the statement is true, not why, and nobody can tell from it what the idea was. The joint, cross-linked pair has both the certainty and the understanding.",
+            "**為什麼只有一條不完整。** 只有自然語言證明，可能藏著沒人檢查過的一步：讀者（包括審稿人）會略過看起來顯然的地方。只有 Lean 證明，則是檢查過卻沒人讀：核心說陳述成立，卻沒說為什麼，從它也看不出想法是什麼。兩條一步一步互相對應、合在一起，才同時有確定性和理解。",
+          ]}
+        />
+        <P
+          t={[
+            "**AI as the translator.** Translating between the two is exactly the kind of work AI is getting good at, so you can start from either side: write the argument in natural language and let AI draft the Lean, or write the Lean and let AI read it back in natural language. Either way the translation is a draft. The kernel checks the Lean; a person checks that the two sides say the same thing, starting with the statement (section 2).",
+            "**AI 當翻譯。** 在兩種語言之間翻譯，正是 AI 越來越擅長的工作，所以你從哪一邊開始都可以：先用自然語言寫論證，讓 AI 起草 Lean；或先寫 Lean，讓 AI 用自然語言讀回來。不管哪個方向，翻譯都只是草稿。Lean 那一邊由核心檢查；兩邊說的是不是同一件事，要由人來核對，第一步就是陳述（第 2 節）。",
+          ]}
+        />
+        <Callout kind="note" title={["A position, not a consensus", "一個立場，不是共識"]}>
+          <P
+            t={[
+              "That a result needs both streams is **this site's stated position**. The accepted standard in mathematics today is a natural-language proof checked by experts through peer review; a Lean proof is welcome but not required, and some mathematicians, Michael Harris among them, are sceptical of the push to formalise.",
+              "一個結果需要兩條都有，是 **本站的立場**。今天數學界公認的標準，是經過專家同儕審查的自然語言證明；Lean 證明很受歡迎，但不是必要的，也有數學家（例如 Michael Harris）對推動形式化持懷疑態度。",
+            ]}
+          />
+        </Callout>
+        <p className="flex flex-wrap gap-x-5 gap-y-1">
+          <SiteLink to={["problems", "gauss"]} label={["See the mirror live on a problem", "在題目裡看鏡像實際運作"]} />
+          <SiteLink to={["concept", "views", "stance"]} label={["Where Formalizer stands", "Formalizer 的立場"]} />
+          <SiteLink to={["concept", "rh", "mirror"]} label={["The Riemann case: one stream each", "黎曼案例：各只有一條"]} />
+        </p>
+      </Section>
+
+      <Section page={PAGE} id="definitions" n={4} title={SECTIONS[3].title}>
         <P
           t={[
             "**Step 3.** A statement can only use words Lean already knows. “$1 + 2 + \\dots + n$” is not one of them, so we define it, the way you would explain it to a computer: the sum up to $0$ is $0$, and the sum up to $n + 1$ is the sum up to $n$, plus $n + 1$.",
@@ -313,36 +373,27 @@ export default function MethodConcept({ section }: { section: string | null }) {
         <TryIn ids={["induction-double"]} />
       </Section>
 
-      <Section page={PAGE} id="plan" n={4} title={SECTIONS[3].title}>
+      <Section page={PAGE} id="plan" n={5} title={SECTIONS[4].title}>
         <P
           t={[
-            "**Step 4.** Don't try to write the whole proof at once. Write its *shape*, with a `sorry` in every hole, and let Lean tell you what each hole still needs. The **goal panel** shows it: above the line `⊢` is what you know (hypotheses, 已知), below it is what is left to prove. At the start there is one goal:",
-            "**第 4 步。** 不要想一次寫完整個證明。先寫出它的 *形狀*，每個缺口放一個 `sorry`，讓 Lean 告訴你每個缺口還需要什麼。**目標面板** 會顯示這些資訊：`⊢` 上方是已知的東西（前提），下方是還要證明的目標。一開始只有一個目標：",
+            "**Step 4.** Don't try to write the whole proof at once. Write its *shape*, with a `sorry` in every hole, and let Lean tell you what each hole still needs. The **goal panel** shows it: above the line `⊢` is what you know (hypotheses, 已知), below it is what is left to prove. Each `sorry` is a box still to tick:",
+            "**第 4 步。** 不要想一次寫完整個證明。先寫出它的 *形狀*，每個缺口放一個 `sorry`，讓 Lean 告訴你每個缺口還需要什麼。**目標面板** 會顯示這些資訊：`⊢` 上方是已知的東西（前提），下方是還要證明的目標。每個 `sorry` 都是一個還沒打勾的格子：",
           ]}
         />
-        <Goals text={GOAL_START} />
+        <Figure
+          caption={[
+            "The goal panel as a checklist. Each `sorry` is an open box (◐); a tactic either closes it (✓) or splits it into smaller ones (↳). Step through the versions: the open boxes go 1, 2, 4, 2, 0.",
+            "把目標面板當成一張待辦清單。每個 `sorry` 是一個未完成的格子（◐）；戰術要嘛完成它（✓），要嘛把它拆成更小的格子（↳）。逐一切換各個版本：未完成的格子依序是 1、2、4、2、0 個。",
+          ]}
+        >
+          <PlanStepper />
+        </Figure>
         <P
           t={[
-            "**Plan A: induction.** One `sorry` becomes two, one for each case. They are smaller problems, and the panel shows exactly what each one asks. In the `succ` case Lean hands us `ih`, the claim for `n`, to use for `n + 1`.",
-            "**計畫 A：歸納法。** 一個 `sorry` 變成兩個，每種情形一個。它們是比較小的問題，面板精確顯示各自要證什麼。在 `succ` 情形中，Lean 給了我們 `ih`，也就是對 `n` 成立的主張，可以拿來證明 `n + 1` 的情形。",
+            "The number of `sorry`s goes *up* before it goes down, and that is the point: one hard hole becomes several easy ones. Every version in between is accepted by Lean, so you always know where you stand.",
+            "`sorry` 的數量先 *增加* 再減少，這正是重點：一個困難的缺口變成好幾個簡單的。中間的每個版本 Lean 都接受，所以你隨時知道自己進行到哪裡。",
           ]}
         />
-        <Lean code={snippet("Method", "plan1")} />
-        <Goals text={GOAL_PLAN1} />
-        <P
-          t={[
-            "**Plan B: close the easy case, break up the hard one.** The `zero` case is plain arithmetic, `rfl` closes it. For the `succ` case, write the calculation as a chain of small equalities with `calc`, each with its own `sorry`. You can check the chain makes sense *before* you justify any link: if Lean accepts the plan, the links are all that is left.",
-            "**計畫 B：先收掉簡單的情形，再拆開困難的那個。** `zero` 情形只是算術，`rfl` 就能完成。`succ` 情形則用 `calc` 寫成一串小等式，每個環節各放一個 `sorry`。你可以在證明任何環節 *之前*，先確認整條鏈說得通：只要 Lean 接受這個計畫，剩下的就只有這些環節。",
-          ]}
-        />
-        <Lean code={snippet("Method", "plan2")} />
-        <P
-          t={[
-            "**Plan C: fill the links you can.** The first two links are a rewrite each: unfold `sumTo` and spread the `2 *`; then use the induction hypothesis `ih`. Two `sorry`s remain.",
-            "**計畫 C：填上會的環節。** 前兩個環節各用一次改寫：展開 `sumTo` 並把 `2 *` 分配進去；接著使用歸納假設 `ih`。還剩兩個 `sorry`。",
-          ]}
-        />
-        <Lean code={snippet("Method", "plan3")} />
         <Table
           head={[
             ["Version", "版本"],
@@ -379,14 +430,37 @@ export default function MethodConcept({ section }: { section: string | null }) {
         />
         <P
           t={[
-            "The count goes *up* before it goes down, and that is the point: one hard hole becomes several easy ones. Every version in between is accepted by Lean, so you always know where you stand.",
-            "`sorry` 的數量先 *增加* 再減少，這正是重點：一個困難的缺口變成好幾個簡單的。中間的每個版本 Lean 都接受，所以你隨時知道自己進行到哪裡。",
+            "Now the details, version by version. At the start there is one goal:",
+            "接下來逐一看各個版本的細節。一開始只有一個目標：",
           ]}
         />
+        <Goals text={GOAL_START} />
+        <P
+          t={[
+            "**Plan A: induction.** One `sorry` becomes two, one for each case. They are smaller problems, and the panel shows exactly what each one asks. In the `succ` case Lean hands us `ih`, the claim for `n`, to use for `n + 1`.",
+            "**計畫 A：歸納法。** 一個 `sorry` 變成兩個，每種情形一個。它們是比較小的問題，面板精確顯示各自要證什麼。在 `succ` 情形中，Lean 給了我們 `ih`，也就是對 `n` 成立的主張，可以拿來證明 `n + 1` 的情形。",
+          ]}
+        />
+        <Lean code={snippet("Method", "plan1")} />
+        <Goals text={GOAL_PLAN1} />
+        <P
+          t={[
+            "**Plan B: close the easy case, break up the hard one.** The `zero` case is plain arithmetic, `rfl` closes it. For the `succ` case, write the calculation as a chain of small equalities with `calc`, each with its own `sorry`. You can check the chain makes sense *before* you justify any link: if Lean accepts the plan, the links are all that is left.",
+            "**計畫 B：先收掉簡單的情形，再拆開困難的那個。** `zero` 情形只是算術，`rfl` 就能完成。`succ` 情形則用 `calc` 寫成一串小等式，每個環節各放一個 `sorry`。你可以在證明任何環節 *之前*，先確認整條鏈說得通：只要 Lean 接受這個計畫，剩下的就只有這些環節。",
+          ]}
+        />
+        <Lean code={snippet("Method", "plan2")} />
+        <P
+          t={[
+            "**Plan C: fill the links you can.** The first two links are a rewrite each: unfold `sumTo` and spread the `2 *`; then use the induction hypothesis `ih`. Two `sorry`s remain.",
+            "**計畫 C：填上會的環節。** 前兩個環節各用一次改寫：展開 `sumTo` 並把 `2 *` 分配進去；接著使用歸納假設 `ih`。還剩兩個 `sorry`。",
+          ]}
+        />
+        <Lean code={snippet("Method", "plan3")} />
         <SiteLink to={["skills", "structure"]} label={["More on structuring proofs", "更多關於證明的結構"]} />
       </Section>
 
-      <Section page={PAGE} id="tactics" n={5} title={SECTIONS[4].title}>
+      <Section page={PAGE} id="tactics" n={6} title={SECTIONS[5].title}>
         <P
           t={[
             "**Step 5.** A **tactic** is an instruction that turns the current goal into simpler goals, or closes it. Each `sorry` is replaced by a tactic that closes its goal, and Lean re-checks after every edit. The two remaining links are pure algebra: collect $n(n+1) + 2(n+1)$ into $(n+2)(n+1)$ with `Nat.add_mul`, then swap the factors with `Nat.mul_comm`.",
@@ -424,7 +498,7 @@ theorem gauss (n : ℕ) : 2 * sumTo n = n * (n + 1) := by
         <SiteLink to={["skills", "tactics"]} label={["The tactics you will use most", "最常用的戰術"]} />
       </Section>
 
-      <Section page={PAGE} id="kernel" n={6} title={SECTIONS[5].title}>
+      <Section page={PAGE} id="kernel" n={7} title={SECTIONS[6].title}>
         <P
           t={[
             "**Step 6.** Tactics are big, clever programs, and clever programs have bugs. So they don't have the last word. Behind the scenes, every tactic writes down a complete, explicit proof (a *proof term*), and Lean's **kernel**, a small program whose only job is to check such terms, checks it from scratch. To trust the result you need to trust the kernel, not the tactics.",
@@ -501,7 +575,7 @@ theorem gauss (n : ℕ) : 2 * sumTo n = n * (n + 1) := by
         />
       </Section>
 
-      <Section page={PAGE} id="comparator" n={7} title={SECTIONS[6].title}>
+      <Section page={PAGE} id="comparator" n={8} title={SECTIONS[7].title}>
         <P
           t={[
             "**Step 8.** For a tutorial problem you can see the whole file. For a research problem, the solution may be thousands of lines, perhaps written with the help of an AI, and nobody wants to read it all. What must be checked is short: does it prove **exactly** the challenge statement, using only the standard axioms?",
@@ -514,6 +588,14 @@ theorem gauss (n : ℕ) : 2 * sumTo n = n * (n + 1) := by
             "這正是 Lean FRO 的 **Comparator** 所檢查的。它接收兩個 Lean 模組，*挑戰*（固定的陳述，證明處是 `sorry`）與 *解答*，再加上一份簡短的設定：",
           ]}
         />
+        <Figure
+          caption={[
+            "Comparator as a machine: three files in, four checks inside a sandbox, one verdict out. The amber bar is the one question it leaves to people.",
+            "把 Comparator 看成一台機器：放進三個檔案，在沙盒裡做四項檢查，輸出一個判定。琥珀色那條是它留給人的唯一問題。",
+          ]}
+        >
+          <ComparatorFlow />
+        </Figure>
         <CodeBlock code={COMPARATOR_CONFIG} title="config.json" />
         <List
           items={[

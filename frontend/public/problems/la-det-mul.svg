@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="Areas scale step by step: the unit square of area 1 is sent by B = (2 0; 0 1) to a rectangle of area 2 (det B = 2), which A = (1 1; 0 2) sends to a parallelogram of area 4 (det A = 2), so det(AB) = 4 = 2 · 2 = det A · det B.">
+<defs><marker id="ah-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L10,5 L0,9 z" fill="#374151"/></marker></defs>
+<g font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#111827">
+<line x1="20" y1="118" x2="20" y2="74" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="42" y1="118" x2="42" y2="74" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="64" y1="118" x2="64" y2="74" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="20" y1="118" x2="64" y2="118" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="20" y1="96" x2="64" y2="96" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="20" y1="74" x2="64" y2="74" stroke="#e5e7eb" stroke-width="1"/>
+<polygon points="20,118 42,118 42,96 20,96" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.6"/>
+<text x="31" y="112" font-size="13" fill="#0f766e" text-anchor="middle" font-family="Source Code Pro, ui-monospace, monospace" font-weight="600">1</text>
+<line x1="72" y1="100" x2="104" y2="100" stroke="#374151" stroke-width="1.8" marker-end="url(#ah-ink)"/>
+<text x="88" y="90" font-size="13" fill="#111827" text-anchor="middle" font-family="Source Code Pro, ui-monospace, monospace" font-weight="600">B</text>
+<text x="80.5" y="121.5" font-size="11" fill="#111827" text-anchor="middle" font-family="Source Code Pro, ui-monospace, monospace">2</text>
+<text x="95.5" y="121.5" font-size="11" fill="#111827" text-anchor="middle" font-family="Source Code Pro, ui-monospace, monospace">0</text>
+<text x="80.5" y="136.5" font-size="11" fill="#111827" text-anchor="middle" font-family="Source Code Pro, ui-monospace, monospace">0</text>
+<text x="95.5" y="136.5" font-size="11" fill="#111827" text-anchor="middle" font-family="Source Code Pro, ui-monospace, monospace">1</text>
+<path d="M78,110 H73 V140 H78" fill="none" stroke="#374151" stroke-width="1.5"/>
+<path d="M98,110 H103 V140 H98" fill="none" stroke="#374151" stroke-width="1.5"/>
+<line x1="114" y1="118" x2="114" y2="74" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="136" y1="118" x2="136" y2="74" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="158" y1="118" x2="158" y2="74" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="114" y1="118" x2="158" y2="118" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="114" y1="96" x2="158" y2="96" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="114" y1="74" x2="158" y2="74" stroke="#e5e7eb" stroke-width="1"/>
+<polygon points="114,118 158,118 158,96 114,96" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.6"/>
+<line x1="136" y1="118" x2="136" y2="96" stroke="#0369a1" stroke-width="0.8" stroke-opacity="0.5"/>
+<text x="136" y="112" font-size="13" fill="#0369a1" text-anchor="middle" font-family="Source Code Pro, ui-monospace, monospace" font-weight="600">2</text>
+<line x1="168" y1="100" x2="202" y2="100" stroke="#374151" stroke-width="1.8" marker-end="url(#ah-ink)"/>
+<text x="185" y="90" font-size="13" fill="#111827" text-anchor="middle" font-family="Source Code Pro, ui-monospace, monospace" font-weight="600">A</text>
+<text x="177.5" y="121.5" font-size="11" fill="#111827" text-anchor="middle" font-family="Source Code Pro, ui-monospace, monospace">1</text>
+<text x="192.5" y="121.5" font-size="11" fill="#111827" text-anchor="middle" font-family="Source Code Pro, ui-monospace, monospace">1</text>
+<text x="177.5" y="136.5" font-size="11" fill="#111827" text-anchor="middle" font-family="Source Code Pro, ui-monospace, monospace">0</text>
+<text x="192.5" y="136.5" font-size="11" fill="#111827" text-anchor="middle" font-family="Source Code Pro, ui-monospace, monospace">2</text>
+<path d="M175,110 H170 V140 H175" fill="none" stroke="#374151" stroke-width="1.5"/>
+<path d="M195,110 H200 V140 H195" fill="none" stroke="#374151" stroke-width="1.5"/>
+<line x1="212" y1="118" x2="212" y2="52" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="234" y1="118" x2="234" y2="52" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="256" y1="118" x2="256" y2="52" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="278" y1="118" x2="278" y2="52" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="300" y1="118" x2="300" y2="52" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="212" y1="118" x2="300" y2="118" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="212" y1="96" x2="300" y2="96" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="212" y1="74" x2="300" y2="74" stroke="#e5e7eb" stroke-width="1"/>
+<line x1="212" y1="52" x2="300" y2="52" stroke="#e5e7eb" stroke-width="1"/>
+<polygon points="212,118 256,118 278,74 234,74" fill="#fef3c7" stroke="#d97706" stroke-width="1.6"/>
+<line x1="234" y1="118" x2="256" y2="74" stroke="#d97706" stroke-width="0.8" stroke-opacity="0.5"/>
+<line x1="223" y1="96" x2="267" y2="96" stroke="#d97706" stroke-width="0.8" stroke-opacity="0.5"/>
+<text x="245" y="101" font-size="13" fill="#d97706" text-anchor="middle" font-family="Source Code Pro, ui-monospace, monospace" font-weight="600">4</text>
+<text x="160" y="164" font-size="12" fill="#111827" text-anchor="middle" font-family="Source Code Pro, ui-monospace, monospace">det(AB) = <tspan fill="#d97706">4</tspan> = 2 · 2 = det A · det B</text>
+</g>
+</svg>

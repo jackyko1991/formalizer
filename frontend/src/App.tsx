@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   go,
   READING_TABS,
@@ -27,17 +28,22 @@ import StructureSkill from "./pages/skills/Structure";
 import TacticsSkill from "./pages/skills/Tactics";
 import VerifySkill from "./pages/skills/Verify";
 import ProversConcept from "./pages/concept/Provers";
+import CheckersConcept from "./pages/concept/Checkers";
+import RhConcept from "./pages/concept/Rh";
+import ViewsConcept from "./pages/concept/Views";
+import MathlibSkill from "./pages/skills/Mathlib";
 import RoadmapAgent from "./pages/agents/Roadmap";
 import { McpAgent, SkillsAgent } from "./pages/agents/Setup";
-import ResearchPage from "./research/ResearchPage";
+import HomePage from "./HomePage";
+import { HOME, legacyResearchHash, legacyResearchRoute } from "./routes";
 import { RunnerButton, RunnerProvider } from "./RunnerPanel";
 import { STRINGS } from "./strings";
 
 const REPO_URL = "https://github.com/jackyko1991/formalizer";
 const SCROLL = "fz-scroll";
 /** Concept's sub-pages (Tensorizer's order, History last); only History is built so far */
-const CONCEPT_TABS = ["method", "feynman", "maths", "kernel", "limits", "provers", "history"] as const;
-const SKILLS_TABS = ["tactics", "search", "structure", "errors", "verify"] as const;
+const CONCEPT_TABS = ["method", "feynman", "maths", "kernel", "checkers", "limits", "provers", "rh", "views", "history"] as const;
+const SKILLS_TABS = ["tactics", "search", "mathlib", "structure", "errors", "verify"] as const;
 /** Further reading: books & papers, then the learnkit series (Code labs, Explorables) */
 const READING = ["books", "papers", "labs", "explorables"] as const;
 type PageView = (props: { section: string | null }) => React.ReactNode;
@@ -46,12 +52,16 @@ const CONCEPT_PAGES: Record<string, PageView> = {
   feynman: FeynmanConcept,
   maths: LeanMathsConcept,
   kernel: KernelConcept,
+  checkers: CheckersConcept,
   limits: LimitsConcept,
   provers: ProversConcept,
+  rh: RhConcept,
+  views: ViewsConcept,
 };
 const SKILLS_PAGES: Record<string, PageView> = {
   tactics: TacticsSkill,
   search: SearchSkill,
+  mathlib: MathlibSkill,
   structure: StructureSkill,
   errors: ErrorsSkill,
   verify: VerifySkill,
@@ -59,10 +69,15 @@ const SKILLS_PAGES: Record<string, PageView> = {
 
 export default function App() {
   const { t, lang } = useLang();
-  const route = useRoute("concept");
+  // the home is the default page (no hash); Research lives in the Problems page's left column now
+  const raw = useRoute(HOME);
+  const legacy = legacyResearchHash(raw);
+  useEffect(() => {
+    if (legacy) window.location.replace(legacy); // #/research… → #/problems/research…, no new history entry
+  }, [legacy]);
+  const route = legacyResearchRoute(raw) ?? raw;
   const pages: ShellPage[] = [
     { id: "problems", label: t("page.problems") },
-    { id: "research", label: t("page.research") },
     {
       id: "concept",
       label: t("page.concept"),
@@ -115,7 +130,7 @@ export default function App() {
           ),
           tagline: t("tagline"),
           logo: `${import.meta.env.BASE_URL}favicon.svg`,
-          home: () => go("concept", CONCEPT_TABS[0]),
+          home: () => go(HOME),
         }}
         pages={pages}
         route={route}
@@ -141,7 +156,9 @@ export default function App() {
           </>
         }
       >
-        {history ? (
+        {route.page === HOME ? (
+          <HomePage />
+        ) : history ? (
           <HistoryPage section={route.section} />
         ) : ConceptView ? (
           <ConceptView key={route.tab} section={route.section} />
@@ -175,16 +192,14 @@ export default function App() {
           ) : (
             <SkillsAgent />
           )
-        ) : route.page === "research" ? (
-          <ResearchPage id={route.tab} section={route.section} />
         ) : route.page === "problems" ? (
-          <ProblemsPage id={route.tab} />
+          <ProblemsPage tab={route.tab} section={route.section} />
         ) : (
           <Coming />
         )}
       </Shell>
-      {/* Ask AI: only the Problems and Research pages publish a context, so the mascot appears only there */}
-      {(route.page === "problems" || route.page === "research") && <AgentPanel />}
+      {/* Ask AI: only the Problems page (a problem or a research project) publishes a context, so the mascot appears there */}
+      {route.page === "problems" && <AgentPanel />}
     </RunnerProvider>
   );
 }

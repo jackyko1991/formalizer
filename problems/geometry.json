@@ -168,6 +168,47 @@
     "solution": "structure Point where\n  x : Int\n  y : Int\n\ndef dist2 (p q : Point) : Int :=\n  (p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y)\n\ntheorem dist2_symm (p q : Point) : dist2 p q = dist2 q p := by\n  unfold dist2\n  grind\n"
   },
   {
+    "id": "geo-pythagoras-vectors",
+    "level": "L2",
+    "runner": "lite",
+    "title": [
+      "Pythagoras for perpendicular vectors",
+      "垂直向量的畢氏定理"
+    ],
+    "summary": [
+      "The algebra behind Pythagoras' theorem: if two vectors $a$, $b$ are perpendicular (their dot product $a_1 b_1 + a_2 b_2$ is $0$), then $\\|a + b\\|^2 = \\|a\\|^2 + \\|b\\|^2$. Here the vectors have integer components (`Int × Int`, `a.1` and `a.2` are the components) and `normSq` is the **squared** length, so no square roots appear. The sum $a + b$ is written component by component: `(a.1 + b.1, a.2 + b.2)`. The full geometric theorem, about angles in Euclidean space, needs Mathlib: see the next problem.",
+      "畢氏定理背後的代數：如果兩個向量 $a$、$b$ 互相垂直（內積 $a_1 b_1 + a_2 b_2$ 等於 $0$），那麼 $\\|a + b\\|^2 = \\|a\\|^2 + \\|b\\|^2$。這裡的向量有整數分量（`Int × Int`，`a.1` 與 `a.2` 是兩個分量），`normSq` 是長度的 **平方**，所以不會出現平方根。和 $a + b$ 逐個分量寫出：`(a.1 + b.1, a.2 + b.2)`。完整的幾何定理（談歐氏空間中的角）需要 Mathlib：見下一題。"
+    ],
+    "tags": [
+      [
+        "Pythagoras",
+        "畢氏定理"
+      ]
+    ],
+    "statements": [
+      "def dot (a b : Int × Int) : Int := a.1 * b.1 + a.2 * b.2",
+      "def normSq (a : Int × Int) : Int := dot a a",
+      "theorem pythagoras_vectors (a b : Int × Int) (h : dot a b = 0) :\n    normSq (a.1 + b.1, a.2 + b.2) = normSq a + normSq b"
+    ],
+    "theorems": [
+      "pythagoras_vectors"
+    ],
+    "start": "/-- the dot product of two integer vectors, written with their components -/\ndef dot (a b : Int × Int) : Int := a.1 * b.1 + a.2 * b.2\n\n/-- the squared length ‖a‖² = a · a -/\ndef normSq (a : Int × Int) : Int := dot a a\n\ntheorem pythagoras_vectors (a b : Int × Int) (h : dot a b = 0) :\n    normSq (a.1 + b.1, a.2 + b.2) = normSq a + normSq b := by\n  sorry\n",
+    "tactics": [
+      "unfold normSq dot at *",
+      "omega",
+      "grind"
+    ],
+    "steps": [
+      "unfold normSq dot at *"
+    ],
+    "hint": [
+      "On paper: $(a_1 + b_1)^2 + (a_2 + b_2)^2 = a_1^2 + a_2^2 + b_1^2 + b_2^2 + 2(a_1 b_1 + a_2 b_2)$, and the last bracket is $0$. In Lean, `unfold` shows the products; `omega` gives up (the squares have to be multiplied out, which is not linear arithmetic); `grind` expands the products and uses `h`.",
+      "紙上：$(a_1 + b_1)^2 + (a_2 + b_2)^2 = a_1^2 + a_2^2 + b_1^2 + b_2^2 + 2(a_1 b_1 + a_2 b_2)$，而最後的括號是 $0$。在 Lean 裡，`unfold` 讓乘積現形；`omega` 會放棄（平方必須乘開，那不是線性算術）；`grind` 會把乘積展開並用上 `h`。"
+    ],
+    "solution": "/-- the dot product of two integer vectors, written with their components -/\ndef dot (a b : Int × Int) : Int := a.1 * b.1 + a.2 * b.2\n\n/-- the squared length ‖a‖² = a · a -/\ndef normSq (a : Int × Int) : Int := dot a a\n\ntheorem pythagoras_vectors (a b : Int × Int) (h : dot a b = 0) :\n    normSq (a.1 + b.1, a.2 + b.2) = normSq a + normSq b := by\n  unfold normSq dot at *\n  grind\n"
+  },
+  {
     "id": "geo-shift",
     "level": "L3",
     "runner": "lite",
@@ -205,5 +246,47 @@
       "`unfold dist2 shift` 把所有定義展開。每個 `have` 用 `omega` 證明一個小事實（只有加減，`omega` 做得到）。`rw [hx, hy]` 把平移後的差換成原本的差，兩邊就一模一樣了。展開之後，用 `grind` 一步也能完成。"
     ],
     "solution": "structure Point where\n  x : Int\n  y : Int\n\ndef dist2 (p q : Point) : Int :=\n  (p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y)\n\ndef shift (p : Point) (a b : Int) : Point :=\n  ⟨p.x + a, p.y + b⟩\n\ntheorem dist2_shift (p q : Point) (a b : Int) :\n    dist2 (shift p a b) (shift q a b) = dist2 p q := by\n  unfold dist2 shift\n  have hx : p.x + a - (q.x + a) = p.x - q.x := by omega\n  have hy : p.y + b - (q.y + b) = p.y - q.y := by omega\n  rw [hx, hy]\n"
+  },
+  {
+    "id": "geo-pythagoras-euclid",
+    "level": "L3",
+    "runner": "full",
+    "title": [
+      "Pythagoras' theorem, with Mathlib",
+      "畢氏定理：用 Mathlib"
+    ],
+    "summary": [
+      "The real theorem: in a triangle $ABC$ with a right angle at $B$ ($\\angle ABC = \\pi/2$), $AC^2 = AB^2 + CB^2$. Mathlib states it for points `P` of **any** Euclidean affine space (any dimension, `NormedAddTorsor V P` over a real inner product space `V`), with `dist` the distance and `∠ A B C` the unoriented angle at $B$. Mathlib proves an *if and only if*: the converse (a triangle with $AC^2 = AB^2 + CB^2$ has a right angle at $B$) is the same lemma read backwards. This needs the Full runner.",
+      "真正的定理：三角形 $ABC$ 在 $B$ 是直角（$\\angle ABC = \\pi/2$）時，$AC^2 = AB^2 + CB^2$。Mathlib 對 **任何** 歐氏仿射空間中的點 `P` 陳述它（任意維度，`NormedAddTorsor V P`，`V` 是實內積空間），`dist` 是距離，`∠ A B C` 是 $B$ 處（不帶方向的）角。Mathlib 證明的是 *若且唯若*：逆定理（滿足 $AC^2 = AB^2 + CB^2$ 的三角形在 $B$ 是直角）是同一條引理反過來讀。這題需要 Full 執行器。"
+    ],
+    "tags": [
+      [
+        "Pythagoras",
+        "畢氏定理"
+      ],
+      [
+        "Mathlib",
+        "Mathlib"
+      ]
+    ],
+    "statements": [
+      "theorem pythagoras_euclid {V P : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]\n    [MetricSpace P] [NormedAddTorsor V P] (A B C : P) (h : ∠ A B C = Real.pi / 2) :\n    dist A C * dist A C = dist A B * dist A B + dist C B * dist C B"
+    ],
+    "theorems": [
+      "pythagoras_euclid"
+    ],
+    "start": "import Mathlib\n\nopen EuclideanGeometry\n\n/-- Pythagoras in any Euclidean space: a right angle at B gives AC² = AB² + CB² -/\ntheorem pythagoras_euclid {V P : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]\n    [MetricSpace P] [NormedAddTorsor V P] (A B C : P) (h : ∠ A B C = Real.pi / 2) :\n    dist A C * dist A C = dist A B * dist A B + dist C B * dist C B := by\n  sorry\n",
+    "tactics": [
+      "rw [dist_sq_eq_dist_sq_add_dist_sq_iff_angle_eq_pi_div_two]",
+      "exact h"
+    ],
+    "steps": [
+      "rw [dist_sq_eq_dist_sq_add_dist_sq_iff_angle_eq_pi_div_two]"
+    ],
+    "hint": [
+      "Mathlib already has it: `EuclideanGeometry.dist_sq_eq_dist_sq_add_dist_sq_iff_angle_eq_pi_div_two` says the equation holds **iff** the angle is $\\pi/2$. Rewriting with it turns the goal into exactly `h`. (`exact?` finds it too.) Underneath, it is the vector version `norm_add_sq_eq_norm_sq_add_norm_sq_iff_real_inner_eq_zero`: the previous problem, for real vectors.",
+      "Mathlib 已經有這條：`EuclideanGeometry.dist_sq_eq_dist_sq_add_dist_sq_iff_angle_eq_pi_div_two` 說等式成立 **若且唯若** 角是 $\\pi/2$。用它改寫後，目標正好變成 `h`。（`exact?` 也找得到。）它底下是向量版本 `norm_add_sq_eq_norm_sq_add_norm_sq_iff_real_inner_eq_zero`：也就是上一題，換成實向量。"
+    ],
+    "solution": "import Mathlib\n\nopen EuclideanGeometry\n\n/-- Pythagoras in any Euclidean space: a right angle at B gives AC² = AB² + CB² -/\ntheorem pythagoras_euclid {V P : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]\n    [MetricSpace P] [NormedAddTorsor V P] (A B C : P) (h : ∠ A B C = Real.pi / 2) :\n    dist A C * dist A C = dist A B * dist A B + dist C B * dist C B := by\n  rw [dist_sq_eq_dist_sq_add_dist_sq_iff_angle_eq_pi_div_two]\n  exact h\n"
   }
 ]

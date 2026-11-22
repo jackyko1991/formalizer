@@ -1,5 +1,6 @@
 /** Coding Skills ▸ First tactics (#/skills/tactics[/<section>]). Lean code: lean/Formalizer/Pages/Tactics.lean. */
-import { Callout, Lean, List, P, Page, Section, SiteLink, Sources, Table, TryIn, snippet, type L, type SectionInfo } from "../kit";
+import { Callout, Figure, Lean, List, P, Page, Section, SiteLink, Sources, Table, TryIn, snippet, type L, type SectionInfo } from "../kit";
+import { AutomationMatrix, TacticShapes, TacticStepper } from "./TacticsFigures";
 
 const PAGE = "tactics";
 
@@ -45,6 +46,28 @@ export default function TacticsSkill({ section }: { section: string | null }) {
             "Lean 裡的證明從一個 **目標** 開始：還沒證明的陳述，在面板中顯示於符號 `⊢` 後面。它上方是 **前提**（面板寫「已知」）：你可以使用的東西。**戰術** 是一道改變目標的指令：要嘛直接關掉目標，要嘛換成一個或幾個比較容易的目標。沒有目標剩下時，證明就完成了。",
           ]}
         />
+        <Figure
+          caption={[
+            "Every tactic does one of three things to the goal it works on: closes it, replaces it with another, or splits it into several.",
+            "每個戰術對它處理的目標只做三件事之一：關掉它、把它換成另一個，或把它拆成幾個。",
+          ]}
+        >
+          <TacticShapes />
+        </Figure>
+        <P
+          t={[
+            "The best way to learn a tactic is to watch the goal panel while it runs. Pick a tactic below and run its example one line at a time: new hypotheses turn green, the subterm `rw` is about to rewrite turns blue, and when a tactic splits the goal, each new goal gets its case name.",
+            "學戰術最好的方法，是在它執行時盯著目標面板看。在下面挑一個戰術，一次執行它範例的一行：新的前提變成綠色，`rw` 正要改寫的子項變成藍色；戰術拆開目標時，每個新目標都會有自己的情形名稱。",
+          ]}
+        />
+        <Figure
+          caption={[
+            "Each goal panel is what Lean v4.34.1 really shows after that line; the code is compiled by CI.",
+            "每個目標面板都是 Lean v4.34.1 在該行之後真正顯示的內容；程式碼由 CI 編譯。",
+          ]}
+        >
+          <TacticStepper />
+        </Figure>
         <Lean code={snippet("Tactics", "first-proof")} />
         <P
           t={[
@@ -467,6 +490,20 @@ example (x : ℝ) : 0 < x ^ 2 + 1 := by positivity`}
           t={[
             "Look at the goal after `⊢` and pick the first tactic to try. If it fails, the error tells you which row you are really in.",
             "看 `⊢` 後面的目標，挑第一個要試的戰術。失敗的話，錯誤訊息會告訴你實際上該看哪一列。",
+          ]}
+        />
+        <Figure
+          caption={[
+            "The four one-step tactics as boxes. Click any cell to see what Lean v4.34.1 answers for that goal (◐: `simp` made progress but did not close the goal).",
+            "把四個一步戰術看成四個箱子。點任何一格，看 Lean v4.34.1 對那個目標的回答（◐：`simp` 有進展，但沒有關掉目標）。",
+          ]}
+        >
+          <AutomationMatrix />
+        </Figure>
+        <P
+          t={[
+            "Notice the patterns: `decide` refuses anything with a variable; `omega` is the only one that uses hypotheses (`h₁`, `h₂`) without being told; nothing on this list proves `a * b = b * a`, which needs a lemma (`Nat.mul_comm`).",
+            "注意其中的規律：`decide` 拒絕任何含變數的目標；`omega` 是唯一不必提醒就會用前提（`h₁`、`h₂`）的；這張表上沒有一個能證 `a * b = b * a`，它需要一條引理（`Nat.mul_comm`）。",
           ]}
         />
         <Table

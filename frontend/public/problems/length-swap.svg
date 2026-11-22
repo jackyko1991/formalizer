@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="Two lists joined, three teal beads xs then four blue beads ys, have the same length as a bar made of ys.length followed by xs.length: (xs ++ ys).length = ys.length + xs.length.">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#374151"/></marker><marker id="aht" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0f766e"/></marker><marker id="ahs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0369a1"/></marker></defs>
+<rect width="320" height="180" fill="#ffffff"/>
+<circle cx="105.0" cy="56" r="10" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.5"/>
+<circle cx="131.0" cy="56" r="10" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.5"/>
+<circle cx="157.0" cy="56" r="10" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.5"/>
+<circle cx="183.0" cy="56" r="10" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<circle cx="209.0" cy="56" r="10" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<circle cx="235.0" cy="56" r="10" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<circle cx="261.0" cy="56" r="10" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<text x="131.0" y="36" font-family="Source Code Pro, ui-monospace, monospace" font-size="13" text-anchor="middle" fill="#0f766e" font-weight="600">xs</text>
+<text x="222.0" y="36" font-family="Source Code Pro, ui-monospace, monospace" font-size="13" text-anchor="middle" fill="#0369a1" font-weight="600">ys</text>
+<text x="14" y="61" font-family="Source Code Pro, ui-monospace, monospace" font-size="13" text-anchor="start" fill="#111827">xs ++ ys</text>
+<rect x="93" y="104" width="102" height="24" rx="5" fill="#e0f2fe" stroke="#0369a1" stroke-width="1.5"/>
+<rect x="197" y="104" width="76" height="24" rx="5" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.5"/>
+<text x="144.0" y="120" font-family="Source Code Pro, ui-monospace, monospace" font-size="11" text-anchor="middle" fill="#0369a1">ys.length</text>
+<text x="235.0" y="120" font-family="Source Code Pro, ui-monospace, monospace" font-size="11" text-anchor="middle" fill="#0f766e">xs.length</text>
+<line x1="90" y1="40" x2="90" y2="138" stroke="#6b7280" stroke-dasharray="3 3"/>
+<line x1="276" y1="40" x2="276" y2="138" stroke="#6b7280" stroke-dasharray="3 3"/>
+<text x="160" y="162" font-family="Source Code Pro, ui-monospace, monospace" font-size="11" text-anchor="middle" fill="#374151">(xs ++ ys).length = ys.length + xs.length</text>
+<text x="292" y="86" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="20" text-anchor="middle" fill="#374151">=</text>
+</svg>

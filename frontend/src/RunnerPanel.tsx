@@ -85,7 +85,7 @@ export function RunnerButton() {
 }
 
 function RunnerPanel({ runner, onClose }: { runner: RunnerState; onClose: () => void }) {
-  const { t } = useLang();
+  const { t, pick } = useLang();
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     const key = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -121,6 +121,23 @@ function RunnerPanel({ runner, onClose }: { runner: RunnerState; onClose: () => 
             <dd className="font-mono text-gray-900">{runner.lean}</dd>
             <dt className="text-gray-500">{t("runner.address")}</dt>
             <dd className="font-mono text-gray-900">{runnerUrl()}</dd>
+            {runner.checkers && (
+              <>
+                <dt className="text-gray-500">{pick(["Checkers", "檢查器"])}</dt>
+                <dd className="flex flex-wrap gap-1" data-testid="runner-checkers">
+                  {runner.checkers.map((c) => (
+                    <span
+                      key={c.id}
+                      title={c.reason}
+                      className={`rounded px-1.5 text-xs ring-1 ${c.available ? "bg-green-50 text-green-800 ring-green-200" : "bg-gray-50 text-gray-400 ring-gray-200"}`}
+                    >
+                      {c.available ? "✓" : "–"} {c.title}
+                      {c.tier === "full" && " (Full)"}
+                    </span>
+                  ))}
+                </dd>
+              </>
+            )}
             {runner.error && (
               <>
                 <dt className="text-gray-500">{t("error.title")}</dt>

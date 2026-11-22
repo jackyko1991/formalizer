@@ -64,9 +64,16 @@ class Worker:
             await self.kill()
             raise LeanCrash(f"the header did not load: {json.dumps(reply)[:500]}")
 
-    async def check(self, code: str, timeout_s: float) -> dict:
+    async def check(self, code: str, timeout_s: float, then: str | None = None) -> dict:
+        """Check `code` against the header (env 0). With `then`: also run that command in the environment `code`
+        left (a fresh command scope: no open sections or namespaces of the user's), as reply["then"]."""
         self.uses += 1
-        return await self._send({"cmd": code, "env": 0}, timeout_s)
+        started = time.monotonic()
+        reply = await self._send({"cmd": code, "env": 0}, timeout_s)
+        if then is not None and isinstance(reply.get("env"), int):
+            left = max(0.1, timeout_s - (time.monotonic() - started))
+            reply["then"] = await self._send({"cmd": then, "env": reply["env"]}, left)
+        return reply
 
     async def _send(self, request: dict, timeout_s: float) -> dict:
         proc = self.proc
@@ -131,6 +138,9 @@ class LeanPool:
         self._tasks: set[asyncio.Task] = set()
 
     async def start(self) -> None:
+        # a fresh queue: an asyncio.Queue binds to the loop that first waits on it, and the app may be started again
+        # in another loop (each TestClient runs its own), after close() emptied the old one
+        self._free = asyncio.Queue()
         self.state = "warming"
         results = await asyncio.gather(*(self._spawn() for _ in range(self.size)), return_exceptions=True)
         errors = [r for r in results if isinstance(r, Exception)]
@@ -154,12 +164,12 @@ class LeanPool:
         self._tasks.add(task)
         task.add_done_callback(self._tasks.discard)
 
-    async def check(self, code: str, timeout_s: float = 10.0) -> dict:
+    async def check(self, code: str, timeout_s: float = 10.0, then: str | None = None) -> dict:
         if self.state == "failed":
             raise LeanCrash(self.error or "Lean could not start")
         worker = await self._free.get()
         try:
-            reply = await worker.check(code, timeout_s)
+            reply = await worker.check(code, timeout_s, then)
         except (LeanTimeout, LeanCrash, asyncio.CancelledError):
             # cancelled too (a stopped job): the worker is mid-request, so it can't go back to the pool
             await worker.kill()

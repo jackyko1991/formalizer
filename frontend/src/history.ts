@@ -575,20 +575,25 @@ export const HISTORY: TimelineCard[] = [
     title: ["A claimed proof of the Riemann hypothesis, with Claude", "一個宣稱的黎曼猜想證明，與 Claude 合作"],
     body: [
       [
-        "On 20 November 2026 Levent Alpöge, a mathematician at Anthropic, posted a short note saying that he and Claude had proved the **Riemann hypothesis** (posed in 1859: every non-trivial zero of the zeta function has real part $1/2$), and the generalized version with it. He published the proof in Lean, reportedly millions of lines long.",
-        "2026 年 11 月 20 日，Anthropic 的數學家 Levent Alpöge 發布一份簡短說明，表示他與 Claude 證明了 **黎曼猜想**（1859 年提出：zeta 函數的每個非平凡零點，實部都是 $1/2$），連同其推廣版本。他把證明以 Lean 公開，據報導長達數百萬行。",
+        "On 20 November 2026 Levent Alpöge, a mathematician at Anthropic, said that he and Claude had proved the **Riemann hypothesis** (every non-trivial zero of the zeta function has real part $1/2$) and its generalized version. The proof exists only in Lean: 175,187 files, about 17.4 million lines.",
+        "2026 年 11 月 20 日，Anthropic 的數學家 Levent Alpöge 表示，他與 Claude 證明了 **黎曼猜想**（zeta 函數的每個非平凡零點，實部都是 $1/2$）及其推廣版本。這份證明只有 Lean 版本：175,187 個檔案，約 1,740 萬行。",
       ],
       [
-        "At the time of writing it is a **claim under review**, not an accepted result. Andrew Sutherland (MIT) reported compiling the Lean code independently, while experts say the mathematical details still have to be understood. Anthropic had made no official announcement, and the Clay Institute still lists the problem as open.",
-        "在撰寫本文時，這仍是 **審查中的宣稱**，不是已被接受的結果。Andrew Sutherland（MIT）表示他獨立編譯了這份 Lean 程式碼，但專家指出證明的數學細節仍有待理解。Anthropic 尚未正式宣布，克雷研究所仍把這個問題列為未解決。",
-      ],
-      [
-        "It is the clearest example yet of what Lean can and cannot settle. If the code compiles with only the standard axioms, the kernel vouches for the steps; the questions left for people are the ones this site keeps asking: does the Lean statement say exactly what Riemann meant (for example, Mathlib's `RiemannHypothesis`), and what does the check trust?",
-        "這是目前最清楚的例子，說明 Lean 能判定什麼、不能判定什麼。如果程式碼只用標準公理就能通過，核心就為每一步背書；留給人的問題，正是本站一直在問的：Lean 的陳述是否正好說出黎曼的意思（例如 Mathlib 的 `RiemannHypothesis`），以及這個檢查信任了什麼？",
+        "As of 22 November 2026 it is a **claim under review**: the Lean community's re-check (read the statement, build in a sandbox, then Comparator with two independent kernels) was still running, and no one can yet read the proof. A check can say the steps are valid; whether the statement is the right one, and what the proof means, is still for people.",
+        "截至 2026 年 11 月 22 日，這仍是 **審查中的宣稱**：Lean 社群的複查（讀陳述、在沙盒中建置，再用 Comparator 搭配兩個獨立核心檢查）仍在進行，而且還沒有人讀得懂這份證明。檢查能說明每一步都成立；陳述對不對、證明的意義是什麼，仍要由人來判斷。",
       ],
     ],
     sources: [
       { label: "L. Alpöge, the note (alpo.ge)", url: "https://alpo.ge/remark.pdf" },
+      { label: "leanprover-community/riemann-hypothesis: the re-check", url: "https://github.com/leanprover-community/riemann-hypothesis" },
+      {
+        label: "K. Buzzard: …and the proof is checked in Lean (Xena, 12 Nov 2026)",
+        url: "https://xenaproject.wordpress.com/2026/11/12/and-the-proof-is-checked-in-lean/",
+      },
+      {
+        label: "T. Tao: Unforced Euler singularity, unforced Navier–Stokes singularity, and the GRH (20 Nov 2026)",
+        url: "https://terrytao.wordpress.com/2026/11/20/unforced-euler-singularity-unforced-navier-stokes-singularity-and-the-generalized-riemann-hypothesis/",
+      },
       {
         label: "Scientific American: Anthropic mathematician claims to prove Riemann hypothesis (20 Nov 2026)",
         url: "https://www.scientificamerican.com/article/anthropic-mathematician-claims-to-prove-riemann-hypothesis-most-famous-problem-in-all-of-math/",
@@ -598,10 +603,44 @@ export const HISTORY: TimelineCard[] = [
         url: "https://www.nature.com/articles/d41586-026-03812-7",
       },
       {
-        label: "SiliconANGLE: Anthropic researcher claims to have proven Riemann hypothesis using Claude",
-        url: "https://siliconangle.com/2026/11/20/anthropic-researcher-claims-to-have-proven-riemann-hypothesis-using-claude/",
+        label: "3Blue1Brown: What if AI solved the Riemann Hypothesis? (video, 22 Nov 2026)",
+        url: "https://www.youtube.com/watch?v=zqzk43bSdDI",
       },
       { label: "Clay Mathematics Institute: the Riemann hypothesis", url: "https://www.claymath.org/millennium/riemann-hypothesis/" },
+    ],
+  },
+  {
+    id: "masullo-2026",
+    era: "ai",
+    year: "2026",
+    image: {
+      src: "history/masullo-2026.svg",
+      alt: [
+        "Two proofs of the same day in mirror image: a Lean proof that machines check but no one has read yet, and a natural-language proof that people read, with AI-assisted readers finding gaps",
+        "同一天的兩份證明互為鏡像：一份是機器檢查、卻還沒有人讀過的 Lean 證明；另一份是人讀的證明，讀者借助 AI 找出其中的缺口",
+      ],
+      credit: "Drawing: Formalizer",
+    },
+    title: ["The same day, a natural-language proof: Masullo's GRH", "同一天，一份自然語言證明：Masullo 的廣義黎曼猜想"],
+    body: [
+      [
+        "That afternoon Ravi Vakil announced a proposed proof of the generalized Riemann hypothesis by **Alessandro Maria Masullo**: \"all human, with no AI\", which Brian Conrad had been reading for months. About eight hours later Vakil added that several people had reported problems in it, \"identified with the assistance of different AI models\".",
+        "當天下午，Ravi Vakil 公布了 **Alessandro Maria Masullo** 對廣義黎曼猜想的一份證明提案：「完全由人完成，沒有用 AI」，Brian Conrad 已經讀了好幾個月。大約八小時後，Vakil 補充說，已有好幾個人回報其中的問題，這些問題是「在不同 AI 模型的協助下找到的」。",
+      ],
+      [
+        "Two claims in mirror image: a machine-checked proof no one has read yet, and a readable proof that has not been machine-checked. As of 22 November 2026 neither is accepted; Vakil wrote that all issues must be resolved to the community's satisfaction first.",
+        "兩份宣稱互為鏡像：一份是機器檢查過、卻還沒有人讀過的證明；另一份是讀得懂、卻還沒經過機器檢查的證明。截至 2026 年 11 月 22 日，兩者都尚未被接受；Vakil 寫道，所有問題都必須先解決到數學界滿意為止。",
+      ],
+    ],
+    sources: [
+      {
+        label: "R. Vakil: Hurried announcement: Alessandro Masullo GRH (20 Nov 2026, with an update)",
+        url: "https://math216.wordpress.com/2026/11/20/hurried-announcement-alessandro-masullo-grh/",
+      },
+      {
+        label: "T. Tao: Unforced Euler singularity, unforced Navier–Stokes singularity, and the GRH (20 Nov 2026)",
+        url: "https://terrytao.wordpress.com/2026/11/20/unforced-euler-singularity-unforced-navier-stokes-singularity-and-the-generalized-riemann-hypothesis/",
+      },
     ],
   },
 ];

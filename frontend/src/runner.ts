@@ -20,6 +20,29 @@ export interface Health {
   state: "warming" | "ready" | "failed" | "stopped";
   workers: number;
   error: string | null;
+  /** the runner's OS (sys.platform: win32, linux, darwin); older runners don't say */
+  os?: string;
+  /** every independent checker and whether this runner can run it here (backend/checkers.py) */
+  checkers?: CheckerStatus[];
+}
+
+/** An independent checker as /api/health lists it. */
+export interface CheckerStatus {
+  id: string;
+  title: string;
+  tier: "lite" | "full";
+  available: boolean;
+  reason: string;
+  /** run by /api/check when no checkers are named */
+  default: boolean;
+}
+
+/** One checker's answer to a check. */
+export interface CheckOutcome {
+  id: string;
+  verdict: "pass" | "fail" | "unavailable" | "error";
+  message: string;
+  ms: number;
 }
 
 export interface Goal {
@@ -49,6 +72,8 @@ export interface CheckResult {
   /** with `decls`: every declaration of the code and its status (the research workspace's blueprint) */
   decls?: Decl[];
   ms: number;
+  /** one answer per independent checker asked for (runners from before the checkers don't send it) */
+  checks?: CheckOutcome[];
 }
 
 /** A declaration of the checked code, from `#decl_status` (lean/Formalizer/DepGraph.lean) and backend/check.py. */
@@ -106,13 +131,23 @@ export async function health(signal?: AbortSignal): Promise<Health | null> {
   }
 }
 
-export async function check(code: string, theorems: string[], statements: string[], decls = false): Promise<CheckResult> {
+/**
+ * Check a file. `more.checkers` picks the independent checkers (none named: the runner's quick Lite set);
+ * `more.challenge` is the problem's starting file, which statement-match and comparator compare against.
+ */
+export async function check(
+  code: string,
+  theorems: string[],
+  statements: string[],
+  decls = false,
+  more: { checkers?: string[]; challenge?: string } = {},
+): Promise<CheckResult> {
   let res: Response;
   try {
     res = await fetch(`${runnerUrl()}/api/check`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, theorems, statements, decls }),
+      body: JSON.stringify({ code, theorems, statements, decls, ...more }),
     });
   } catch {
     throw new RunnerError("offline");
@@ -122,17 +157,23 @@ export async function check(code: string, theorems: string[], statements: string
   return body;
 }
 
-/** Replace the first `sorry` with a tactic (the help chips). */
 /**
- * A chip replaces the first `sorry`. Its further lines (an `induction` or `calc` skeleton) are indented to that column;
- * a step chip keeps a `sorry` after it for what is left. Mirrored by tests/test_tutorial.py `insert_chip`.
+ * A chip replaces a `sorry`: the `at`-th one (0, the first, by default; the page passes the one the reader clicked),
+ * or the first when there are fewer. Its further lines (an `induction` or `calc` skeleton) are indented to that
+ * column; a step chip keeps a `sorry` after it for what is left. Mirrored by tests/test_problems.py `insert_chip`.
  */
-export function insertChip(code: string, chip: string, step = false): string {
-  const m = /\bsorry\b/.exec(code);
-  if (!m) return code;
-  const indent = " ".repeat(m.index - (code.lastIndexOf("\n", m.index - 1) + 1));
+export function insertChip(code: string, chip: string, step = false, at = 0): string {
+  const all = sorryOffsets(code);
+  if (!all.length) return code;
+  const index = all[at] ?? all[0];
+  const indent = " ".repeat(index - (code.lastIndexOf("\n", index - 1) + 1));
   const text = chip.replaceAll("\n", "\n" + indent) + (step ? `\n${indent}sorry` : "");
-  return code.slice(0, m.index) + text + code.slice(m.index + "sorry".length);
+  return code.slice(0, index) + text + code.slice(index + "sorry".length);
+}
+
+/** Where each `sorry` starts in the code (whole words only), in order. */
+export function sorryOffsets(code: string): number[] {
+  return [...code.matchAll(/\bsorry\b/g)].map((m) => m.index!);
 }
 
 /** One file of a proof. A problem may ship extra files (e.g. a read-only library); the reader may add lemma files. */

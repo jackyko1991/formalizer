@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="A clock of the residues 0 to 6 modulo 7 with the walk of the powers of 3: 3, 2, 6, 4, 5, 1 and back to 3 at the seventh power. A table of all a below 7 with a^7 (0, 1, 128, 2187, 16384, 78125, 279936) and a^7 mod 7, which is a every time." font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="11" fill="#111827">
+  <rect width="320" height="180" rx="8" fill="#ffffff"/>
+  <defs><marker id="ah7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker></defs>
+  <circle cx="92" cy="92" r="50" fill="none" stroke="#e5e7eb" stroke-width="1"/>
+  <line x1="121.2" y1="127.7" x2="132" y2="114.1" stroke="#d97706" stroke-width="1.5" marker-end="url(#ah7)"/>
+  <line x1="129.9" y1="97.9" x2="65.5" y2="66.9" stroke="#d97706" stroke-width="1.5" marker-end="url(#ah7)"/>
+  <line x1="55.6" y1="72.5" x2="67.2" y2="123.4" stroke="#d97706" stroke-width="1.5" marker-end="url(#ah7)"/>
+  <line x1="62.8" y1="127.7" x2="52" y2="114.1" stroke="#d97706" stroke-width="1.5" marker-end="url(#ah7)"/>
+  <line x1="54.1" y1="97.9" x2="118.5" y2="66.9" stroke="#d97706" stroke-width="1.5" marker-end="url(#ah7)"/>
+  <line x1="128.4" y1="72.5" x2="116.8" y2="123.4" stroke="#d97706" stroke-width="1.5" marker-end="url(#ah7)"/>
+  <circle cx="92" cy="42" r="11" fill="#ffffff" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="92" y="46" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle">0</text>
+  <circle cx="131.1" cy="60.8" r="11" fill="#ffffff" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="131.1" y="64.8" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle">1</text>
+  <text x="149.9" y="49.9" font-family="Source Code Pro, ui-monospace, monospace" fill="#d97706" text-anchor="middle">3⁶</text>
+  <circle cx="140.7" cy="103.1" r="11" fill="#ffffff" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="140.7" y="107.1" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle">2</text>
+  <text x="164.1" y="112.5" font-family="Source Code Pro, ui-monospace, monospace" fill="#d97706" text-anchor="middle">3²</text>
+  <circle cx="113.7" cy="137" r="11" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.5"/>
+  <text x="113.7" y="141" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle">3</text>
+  <text x="124.1" y="162.7" font-family="Source Code Pro, ui-monospace, monospace" fill="#0f766e" text-anchor="middle">3¹ 3⁷</text>
+  <circle cx="70.3" cy="137" r="11" fill="#ffffff" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="70.3" y="141" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle">4</text>
+  <text x="59.9" y="162.7" font-family="Source Code Pro, ui-monospace, monospace" fill="#d97706" text-anchor="middle">3⁴</text>
+  <circle cx="43.3" cy="103.1" r="11" fill="#ffffff" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="43.3" y="107.1" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle">5</text>
+  <text x="19.9" y="112.5" font-family="Source Code Pro, ui-monospace, monospace" fill="#d97706" text-anchor="middle">3⁵</text>
+  <circle cx="52.9" cy="60.8" r="11" fill="#ffffff" stroke="#9ca3af" stroke-width="1.5"/>
+  <text x="52.9" y="64.8" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle">6</text>
+  <text x="34.1" y="49.9" font-family="Source Code Pro, ui-monospace, monospace" fill="#d97706" text-anchor="middle">3³</text>
+  <text x="194" y="24" font-family="Source Code Pro, ui-monospace, monospace" fill="#6b7280" text-anchor="end">a</text>
+  <text x="256" y="24" font-family="Source Code Pro, ui-monospace, monospace" fill="#6b7280" text-anchor="end">a⁷</text>
+  <text x="298" y="24" font-family="Source Code Pro, ui-monospace, monospace" fill="#6b7280" text-anchor="end">% 7</text>
+  <line x1="182" y1="30" x2="302" y2="30" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="194" y="44" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="end">0</text>
+  <text x="256" y="44" font-family="Source Code Pro, ui-monospace, monospace" fill="#374151" text-anchor="end">0</text>
+  <text x="298" y="44" font-family="Source Code Pro, ui-monospace, monospace" fill="#059669" text-anchor="end">0</text>
+  <text x="194" y="60" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="end">1</text>
+  <text x="256" y="60" font-family="Source Code Pro, ui-monospace, monospace" fill="#374151" text-anchor="end">1</text>
+  <text x="298" y="60" font-family="Source Code Pro, ui-monospace, monospace" fill="#059669" text-anchor="end">1</text>
+  <text x="194" y="76" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="end">2</text>
+  <text x="256" y="76" font-family="Source Code Pro, ui-monospace, monospace" fill="#374151" text-anchor="end">128</text>
+  <text x="298" y="76" font-family="Source Code Pro, ui-monospace, monospace" fill="#059669" text-anchor="end">2</text>
+  <rect x="182" y="80" width="120" height="16" rx="3" fill="#ccfbf1"/>
+  <text x="194" y="92" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="end">3</text>
+  <text x="256" y="92" font-family="Source Code Pro, ui-monospace, monospace" fill="#374151" text-anchor="end">2187</text>
+  <text x="298" y="92" font-family="Source Code Pro, ui-monospace, monospace" fill="#059669" text-anchor="end">3</text>
+  <text x="194" y="108" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="end">4</text>
+  <text x="256" y="108" font-family="Source Code Pro, ui-monospace, monospace" fill="#374151" text-anchor="end">16384</text>
+  <text x="298" y="108" font-family="Source Code Pro, ui-monospace, monospace" fill="#059669" text-anchor="end">4</text>
+  <text x="194" y="124" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="end">5</text>
+  <text x="256" y="124" font-family="Source Code Pro, ui-monospace, monospace" fill="#374151" text-anchor="end">78125</text>
+  <text x="298" y="124" font-family="Source Code Pro, ui-monospace, monospace" fill="#059669" text-anchor="end">5</text>
+  <text x="194" y="140" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="end">6</text>
+  <text x="256" y="140" font-family="Source Code Pro, ui-monospace, monospace" fill="#374151" text-anchor="end">279936</text>
+  <text x="298" y="140" font-family="Source Code Pro, ui-monospace, monospace" fill="#059669" text-anchor="end">6</text>
+  <text x="242" y="166" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="middle">a⁷ % 7 = a <tspan fill="#059669">✓</tspan></text>
+</svg>

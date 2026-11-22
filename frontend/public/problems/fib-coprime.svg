@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="A 13 by 8 rectangle tiled by Fibonacci squares 8, 5, 3, 2, 1, 1: cutting off squares is Euclid's algorithm, gcd(8, 13) = gcd(5, 8) = gcd(3, 5) = gcd(2, 3) = gcd(1, 2) = gcd(1, 1) = gcd(0, 1) = 1, each step by gcd(a, a+b) = gcd(a, b)." font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="11" fill="#111827">
+  <rect width="320" height="180" rx="8" fill="#ffffff"/>
+  <rect x="16" y="30" width="88" height="88" fill="#ccfbf1" stroke="#0f766e" stroke-width="1"/>
+  <text x="60" y="78" font-family="Source Code Pro, ui-monospace, monospace" fill="#0f766e" text-anchor="middle">8</text>
+  <rect x="104" y="30" width="55" height="55" fill="#e0f2fe" stroke="#0369a1" stroke-width="1"/>
+  <text x="131.5" y="61.5" font-family="Source Code Pro, ui-monospace, monospace" fill="#0369a1" text-anchor="middle">5</text>
+  <rect x="126" y="85" width="33" height="33" fill="#fef3c7" stroke="#d97706" stroke-width="1"/>
+  <text x="142.5" y="105.5" font-family="Source Code Pro, ui-monospace, monospace" fill="#d97706" text-anchor="middle">3</text>
+  <rect x="104" y="96" width="22" height="22" fill="#ccfbf1" stroke="#0f766e" stroke-width="1"/>
+  <text x="115" y="111" font-family="Source Code Pro, ui-monospace, monospace" fill="#0f766e" text-anchor="middle">2</text>
+  <rect x="104" y="85" width="11" height="11" fill="#e0f2fe" stroke="#0369a1" stroke-width="1"/>
+  <text x="109.5" y="94.5" font-family="Source Code Pro, ui-monospace, monospace" fill="#0369a1" text-anchor="middle">1</text>
+  <rect x="115" y="85" width="11" height="11" fill="#fef3c7" stroke="#d97706" stroke-width="1"/>
+  <text x="120.5" y="94.5" font-family="Source Code Pro, ui-monospace, monospace" fill="#d97706" text-anchor="middle">1</text>
+  <text x="87.5" y="136" font-family="Source Code Pro, ui-monospace, monospace" fill="#6b7280" text-anchor="middle">13 × 8</text>
+  <text x="191" y="30" font-family="Source Code Pro, ui-monospace, monospace">gcd(8, 13)</text>
+  <text x="178" y="47" font-family="Source Code Pro, ui-monospace, monospace">= gcd(5, 8)</text>
+  <text x="178" y="64" font-family="Source Code Pro, ui-monospace, monospace">= gcd(3, 5)</text>
+  <text x="178" y="81" font-family="Source Code Pro, ui-monospace, monospace">= gcd(2, 3)</text>
+  <text x="178" y="98" font-family="Source Code Pro, ui-monospace, monospace">= gcd(1, 2)</text>
+  <text x="178" y="115" font-family="Source Code Pro, ui-monospace, monospace">= gcd(1, 1)</text>
+  <text x="178" y="132" font-family="Source Code Pro, ui-monospace, monospace">= gcd(0, 1) = 1 <tspan fill="#059669">✓</tspan></text>
+  <line x1="16" y1="148" x2="304" y2="148" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="160" y="168" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="middle"><tspan fill="#0f766e">gcd(a, a+b) = gcd(a, b)</tspan></text>
+</svg>

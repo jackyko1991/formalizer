@@ -1,6 +1,7 @@
 /** Coding Skills ▸ Reading goals and errors (#/skills/errors[/<section>]). Lean code: lean/Formalizer/Pages/Errors.lean. */
 import { RichText, useLang } from "@learnkit/web";
-import { Callout, Lean, List, P, Page, Section, SiteLink, snippet, Sources, Table, TryIn, type L } from "../kit";
+import { Callout, Figure, Lean, List, P, Page, Section, SiteLink, snippet, Sources, Table, TryIn, type L } from "../kit";
+import { ErrorMap, GoalAnatomy } from "./ErrorsFigures";
 
 const PAGE = "errors";
 
@@ -241,6 +242,20 @@ export default function ErrorsSkill({ section }: { section: string | null }) {
       </Section>
 
       <Section page={PAGE} id="anatomy" n={4} title={SECTIONS[3].title}>
+        <P
+          t={[
+            "Goals and errors have fixed layouts, so you can learn where to look once. In a goal, read the line after `⊢` first; in an error, read the first line first, then treat the indented lines as data to compare.",
+            "目標與錯誤都有固定的版面，所以只要學一次該看哪裡。目標先讀 `⊢` 後面那一行；錯誤先讀第一行，再把縮排的行當成要比較的資料。",
+          ]}
+        />
+        <Figure
+          caption={[
+            "Every goal and every error has the same parts. The numbers are the reading order.",
+            "每個目標、每個錯誤都由同樣的部分組成。編號就是閱讀的順序。",
+          ]}
+        >
+          <GoalAnatomy />
+        </Figure>
         <List
           ordered
           items={[
@@ -661,6 +676,20 @@ example (p : Point) : p + p = p + p := rfl`}
       </Section>
 
       <Section page={PAGE} id="cheatsheet" n={14} title={SECTIONS[13].title}>
+        <P
+          t={[
+            "A file passes through five stages, and each message comes from one of them. Knowing which stage complained tells you what kind of mistake to look for: a typo, a wrong name or type, a step that doesn't work, or a broken rule of the problem.",
+            "檔案會經過五個階段，每則訊息都來自其中一個。知道是哪個階段在抱怨，就知道該找哪一類錯：打錯字、名字或型別不對、某一步行不通，或違反了題目的規則。",
+          ]}
+        />
+        <Figure
+          caption={[
+            "Where each common message comes from. Click a message for its usual cause and fix.",
+            "每則常見訊息的來源。點一則訊息，看它通常的原因與修法。",
+          ]}
+        >
+          <ErrorMap />
+        </Figure>
         <Table
           head={[
             ["Lean says", "Lean 說"],

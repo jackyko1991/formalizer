@@ -1,6 +1,6 @@
 /**
  * What the agent panel knows about the page, and how its edits get back into the editor (Tensorizer's agentBus).
- * Only the Problems and Research pages publish a context, so the panel appears only there.
+ * Only the Problems page (a problem or a research project) publishes a context, so the panel appears only there.
  * Self-contained (no imports with values), so node tests can import it.
  */
 export interface AgentFile {
@@ -47,6 +47,20 @@ export const getAgentContext = () => current;
 export function subscribeAgentContext(l: () => void): () => void {
   listeners.add(l);
   return () => void listeners.delete(l);
+}
+
+/** Open the Ask AI panel (from the home's "Ask AI to set one up"), with a first message ready to edit and send. The
+ *  request waits until the panel is on screen (it appears on the Problems page). */
+export const AGENT_OPEN_EVENT = "formalizer:agent-open";
+let openRequest: string | null = null;
+export function requestAgentOpen(draft = ""): void {
+  openRequest = draft;
+  window.dispatchEvent(new Event(AGENT_OPEN_EVENT));
+}
+export function takeAgentOpen(): string | null {
+  const d = openRequest;
+  openRequest = null;
+  return d;
 }
 
 const appliers = new Set<(e: FilesEvent) => boolean>();

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @import "katex/dist/katex.min.css";
+/* Noto Sans for text, Source Code Pro for code: shared by the learnkit sites */
+@import "../../vendor/learnkit/web/src/fonts.css";
 /* learnkit's components use Tailwind classes too */
 @source "../../vendor/learnkit/web/src";
 
@@ -7,17 +9,79 @@
   color-scheme: light;
   --lk-header: #115e59; /* teal-800 */
   --lk-accent: #0f766e; /* teal-700 */
-  --font-text: "Noto Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-:root:lang(zh-Hant) {
-  --font-text: "Noto Sans", "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", sans-serif;
 }
 
-body {
-  font-family: var(--font-text);
+/* The holes in a proof (sorryMarks.ts): every sorry underlined with dots, the one the tactics fill with a thicker
+   line, a hovered tactic previewed in its place (teal) */
+.cm-sorry {
+  color: #b45309; /* amber-700 */
+  font-weight: 600;
+  text-decoration: underline dotted #f59e0b; /* amber-500 */
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+  cursor: pointer;
 }
-code,
-pre,
-.font-mono {
-  font-family: "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, monospace;
+.cm-sorry-target {
+  color: #92400e; /* amber-800 */
+  text-decoration-color: #d97706; /* amber-600 */
+  text-decoration-thickness: 3px;
 }
+.cm-sorry-preview {
+  color: #0f766e; /* teal-700 */
+  font-weight: 600;
+  text-decoration: underline dotted #0d9488; /* teal-600 */
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
+}
+
+/* Tutorial mode (src/tutorial): the coach's flashing box, tools sliding in, the "No goals" celebration, and the
+   frames of a tactic's reveal. With reduced motion: a static outline, nothing moves. */
+.tut-coach {
+  position: relative;
+  border-radius: 0.5rem;
+  outline: 2px solid #f59e0b; /* amber-500 */
+  outline-offset: -2px;
+  animation: tut-pulse 1.6s ease-in-out infinite;
+}
+@keyframes tut-pulse {
+  0%, 100% { outline-color: #f59e0b; box-shadow: inset 0 0 0 0 rgba(245, 158, 11, 0.35); }
+  50% { outline-color: #fcd34d; box-shadow: inset 0 0 0 4px rgba(245, 158, 11, 0.18); }
+}
+.tut-slide-in { animation: tut-slide 0.5s ease-out both; }
+@keyframes tut-slide {
+  from { opacity: 0; transform: translateX(14px); }
+  to { opacity: 1; transform: none; }
+}
+.tut-fade-in { animation: tut-fade 0.45s ease-out both; }
+@keyframes tut-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+.tut-celebrate { animation: tut-pop 0.7s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+@keyframes tut-pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.tut-confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.tut-confetti i {
+  position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; border-radius: 2px; opacity: 0;
+  animation: tut-burst 0.9s ease-out forwards;
+}
+@keyframes tut-burst {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(200deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tut-coach { animation: none; }
+  .tut-slide-in, .tut-fade-in, .tut-celebrate { animation: none; }
+  .tut-confetti { display: none; }
+}
+
+/* The proof mirror in the editor (tutorial/stepMarks.ts): a numbered badge per paper step in the gutter */
+.cm-step-gutter { min-width: 20px; }
+.cm-step-badge {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 16px; height: 16px; margin: 0 2px;
+  border-radius: 4px; color: white; font: 700 10px/1 ui-sans-serif, system-ui, sans-serif; cursor: pointer;
+}
+.cm-step-line.cm-step-active { filter: saturate(2.2) brightness(0.97); }

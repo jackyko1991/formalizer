@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="A table of the ten cases n = 0 to 9 with n times n and its last digit 0, 1, 4, 9, 6, 5, 6, 9, 4, 1; none is 2, so every case gets a check mark.">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#374151"/></marker><marker id="aht" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0f766e"/></marker><marker id="ahs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0369a1"/></marker></defs>
+<rect width="320" height="180" fill="#ffffff"/>
+<text x="160" y="22" font-family="Source Code Pro, ui-monospace, monospace" font-size="13" text-anchor="middle" fill="#111827" font-weight="600">∀ n &lt; 10, n * n % 10 ≠ 2</text>
+<text x="54" y="53" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="end" fill="#374151">n</text>
+<rect x="60" y="36" width="22" height="24" rx="3" fill="#f3f4f6" stroke="#d1d5db"/>
+<text x="71.0" y="53" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827">0</text>
+<rect x="84" y="36" width="22" height="24" rx="3" fill="#f3f4f6" stroke="#d1d5db"/>
+<text x="95.0" y="53" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827">1</text>
+<rect x="108" y="36" width="22" height="24" rx="3" fill="#f3f4f6" stroke="#d1d5db"/>
+<text x="119.0" y="53" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827">2</text>
+<rect x="132" y="36" width="22" height="24" rx="3" fill="#f3f4f6" stroke="#d1d5db"/>
+<text x="143.0" y="53" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827">3</text>
+<rect x="156" y="36" width="22" height="24" rx="3" fill="#f3f4f6" stroke="#d1d5db"/>
+<text x="167.0" y="53" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827">4</text>
+<rect x="180" y="36" width="22" height="24" rx="3" fill="#f3f4f6" stroke="#d1d5db"/>
+<text x="191.0" y="53" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827">5</text>
+<rect x="204" y="36" width="22" height="24" rx="3" fill="#f3f4f6" stroke="#d1d5db"/>
+<text x="215.0" y="53" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827">6</text>
+<rect x="228" y="36" width="22" height="24" rx="3" fill="#f3f4f6" stroke="#d1d5db"/>
+<text x="239.0" y="53" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827">7</text>
+<rect x="252" y="36" width="22" height="24" rx="3" fill="#f3f4f6" stroke="#d1d5db"/>
+<text x="263.0" y="53" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827">8</text>
+<rect x="276" y="36" width="22" height="24" rx="3" fill="#f3f4f6" stroke="#d1d5db"/>
+<text x="287.0" y="53" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827">9</text>
+<text x="54" y="81" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="end" fill="#374151">n * n</text>
+<rect x="60" y="64" width="22" height="24" rx="3" fill="#ffffff" stroke="#d1d5db"/>
+<text x="71.0" y="81" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827">0</text>
+<rect x="84" y="64" width="22" height="24" rx="3" fill="#ffffff" stroke="#d1d5db"/>
+<text x="95.0" y="81" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827">1</text>
+<rect x="108" y="64" width="22" height="24" rx="3" fill="#ffffff" stroke="#d1d5db"/>
+<text x="119.0" y="81" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827">4</text>
+<rect x="132" y="64" width="22" height="24" rx="3" fill="#ffffff" stroke="#d1d5db"/>
+<text x="143.0" y="81" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827">9</text>
+<rect x="156" y="64" width="22" height="24" rx="3" fill="#ffffff" stroke="#d1d5db"/>
+<text x="167.0" y="81" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827">16</text>
+<rect x="180" y="64" width="22" height="24" rx="3" fill="#ffffff" stroke="#d1d5db"/>
+<text x="191.0" y="81" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827">25</text>
+<rect x="204" y="64" width="22" height="24" rx="3" fill="#ffffff" stroke="#d1d5db"/>
+<text x="215.0" y="81" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827">36</text>
+<rect x="228" y="64" width="22" height="24" rx="3" fill="#ffffff" stroke="#d1d5db"/>
+<text x="239.0" y="81" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827">49</text>
+<rect x="252" y="64" width="22" height="24" rx="3" fill="#ffffff" stroke="#d1d5db"/>
+<text x="263.0" y="81" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827">64</text>
+<rect x="276" y="64" width="22" height="24" rx="3" fill="#ffffff" stroke="#d1d5db"/>
+<text x="287.0" y="81" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827">81</text>
+<text x="54" y="109" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="end" fill="#374151">% 10</text>
+<rect x="60" y="92" width="22" height="24" rx="3" fill="#ccfbf1" stroke="#0f766e"/>
+<text x="71.0" y="109" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827" font-weight="600">0</text>
+<rect x="84" y="92" width="22" height="24" rx="3" fill="#ccfbf1" stroke="#0f766e"/>
+<text x="95.0" y="109" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827" font-weight="600">1</text>
+<rect x="108" y="92" width="22" height="24" rx="3" fill="#ccfbf1" stroke="#0f766e"/>
+<text x="119.0" y="109" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827" font-weight="600">4</text>
+<rect x="132" y="92" width="22" height="24" rx="3" fill="#ccfbf1" stroke="#0f766e"/>
+<text x="143.0" y="109" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827" font-weight="600">9</text>
+<rect x="156" y="92" width="22" height="24" rx="3" fill="#ccfbf1" stroke="#0f766e"/>
+<text x="167.0" y="109" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827" font-weight="600">6</text>
+<rect x="180" y="92" width="22" height="24" rx="3" fill="#ccfbf1" stroke="#0f766e"/>
+<text x="191.0" y="109" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827" font-weight="600">5</text>
+<rect x="204" y="92" width="22" height="24" rx="3" fill="#ccfbf1" stroke="#0f766e"/>
+<text x="215.0" y="109" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827" font-weight="600">6</text>
+<rect x="228" y="92" width="22" height="24" rx="3" fill="#ccfbf1" stroke="#0f766e"/>
+<text x="239.0" y="109" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827" font-weight="600">9</text>
+<rect x="252" y="92" width="22" height="24" rx="3" fill="#ccfbf1" stroke="#0f766e"/>
+<text x="263.0" y="109" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827" font-weight="600">4</text>
+<rect x="276" y="92" width="22" height="24" rx="3" fill="#ccfbf1" stroke="#0f766e"/>
+<text x="287.0" y="109" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827" font-weight="600">1</text>
+<text x="54" y="135" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="end" fill="#374151">≠ 2</text>
+<text x="71.0" y="136" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="15" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+<text x="95.0" y="136" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="15" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+<text x="119.0" y="136" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="15" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+<text x="143.0" y="136" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="15" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+<text x="167.0" y="136" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="15" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+<text x="191.0" y="136" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="15" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+<text x="215.0" y="136" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="15" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+<text x="239.0" y="136" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="15" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+<text x="263.0" y="136" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="15" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+<text x="287.0" y="136" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="15" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+<text x="160" y="166" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#6b7280">decide</text>
+</svg>

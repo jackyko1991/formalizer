@@ -22,6 +22,14 @@ export interface Meta {
   lastDecl?: string;
   lastVisit?: number;
   template?: string;
+  /** the theorems proved / all theorems at the last check (shown on the home's project cards) */
+  progress?: { proved: number; total: number };
+}
+
+/** Proved / all theorems, for the home's project cards. */
+export function progressOf(decls: Decl[]): { proved: number; total: number } {
+  const s = summarize(decls);
+  return { proved: s.proved.length, total: s.proved.length + s.open.length + s.failing.length };
 }
 
 /** What a saved version records about itself, to warn before it is replaced. */

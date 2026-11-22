@@ -1,12 +1,35 @@
 // The tutorial track as the page sees it, and the chip helper (mirrored by tests/test_tutorial.py). Run: npm test
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { LEVELS, PROBLEMS } from "../src/problems.ts";
-import { insertChip } from "../src/runner.ts";
+import { CATEGORIES, COLLECTIONS, LEVELS, PROBLEMS, readOnlyOn } from "../src/problems.ts";
+import { insertChip, sorryOffsets } from "../src/runner.ts";
 
 test("every level has problems and every chip names a real step", () => {
   for (const level of LEVELS) assert.ok(PROBLEMS.filter((p) => p.level === level).length >= 3, level);
   for (const p of PROBLEMS) for (const s of p.steps) assert.ok(p.tactics.includes(s), `${p.id}: ${s}`);
+});
+
+test("every topic is listed, Mathlib problems say so, and imported proofs name their source", () => {
+  for (const p of PROBLEMS) assert.ok(CATEGORIES.some((c) => c.id === p.category), p.id);
+  for (const c of COLLECTIONS) for (const id of c.items) assert.ok(PROBLEMS.some((p) => p.id === id), `${c.id}: ${id}`);
+  const full = PROBLEMS.filter((p) => p.runner === "full");
+  assert.ok(full.length >= 6);
+  for (const p of full) assert.ok(p.start.startsWith("import Mathlib\n") && p.solution.startsWith("import Mathlib\n"), p.id);
+  const imo = PROBLEMS.filter((p) => p.category === "imo");
+  assert.ok(imo.length >= 5);
+  for (const p of imo) {
+    assert.ok(p.source && /^https:\/\/github\.com\/dwrensha\/compfiles\/blob\/[0-9a-f]{40}\//.test(p.source.url), p.id);
+    assert.equal(p.source.licence, "Apache-2.0");
+    assert.ok(p.tags?.[0][0].startsWith("IMO "), p.id);
+  }
+});
+
+test("a Mathlib problem is read-only unless a Full runner is connected", () => {
+  assert.equal(readOnlyOn({ runner: "full" }, null), true);
+  assert.equal(readOnlyOn({ runner: "full" }, "lite"), true);
+  assert.equal(readOnlyOn({ runner: "full" }, "full"), false);
+  assert.equal(readOnlyOn({ runner: "lite" }, "lite"), false);
+  assert.equal(readOnlyOn({ runner: "lite" }, null), false);
 });
 
 test("a chip replaces the first sorry, indents its lines and keeps a sorry after a step", () => {
@@ -62,4 +85,16 @@ test("a graph box is wide enough for Chinese labels", async () => {
   const { estimateWidth } = await import("../src/graphLayout.ts");
   assert.ok(estimateWidth("rw · 1 條引理") > estimateWidth("rw · 1 lemma") - 10);
   assert.equal(estimateWidth("條引理"), 2 * estimateWidth("abc"));
+});
+
+test("a chip can fill the sorry the reader picked, not only the first", () => {
+  const two = "theorem t : P ∧ Q := by\n  constructor\n  · sorry\n  · sorry\n";
+  assert.deepEqual(sorryOffsets(two).length, 2);
+  assert.equal(insertChip(two, "exact hq", false, 1), "theorem t : P ∧ Q := by\n  constructor\n  · sorry\n  · exact hq\n");
+  assert.equal(insertChip(two, "exact hp", false, 0), "theorem t : P ∧ Q := by\n  constructor\n  · exact hp\n  · sorry\n");
+  // a step chip keeps a sorry right after it, aligned with the one it replaced
+  assert.equal(insertChip(two, "intro x", true, 1), "theorem t : P ∧ Q := by\n  constructor\n  · sorry\n  · intro x\n    sorry\n");
+  // an index past the end falls back to the first; `sorry` inside a longer name is not a hole
+  assert.equal(insertChip(two, "rfl", false, 5), "theorem t : P ∧ Q := by\n  constructor\n  · rfl\n  · sorry\n");
+  assert.deepEqual(sorryOffsets("theorem sorry_free : True := trivial"), []);
 });

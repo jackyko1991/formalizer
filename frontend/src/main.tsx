@@ -6,6 +6,7 @@ import "@fontsource/noto-sans/500.css";
 import "@fontsource/noto-sans/600.css";
 import "@fontsource/noto-sans/700.css";
 import "@fontsource/source-code-pro/400.css";
+import "@fontsource/source-code-pro/600.css";
 import App from "./App";
 import "./index.css";
 import { LANGS, STRINGS } from "./strings";

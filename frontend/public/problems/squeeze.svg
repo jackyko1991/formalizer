@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="A number line of the natural numbers 0 to 8: h1 says n is greater than 3, h2 says n is less than 5, and the only number in both ranges is 4, so n = 4.">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#374151"/></marker><marker id="aht" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0f766e"/></marker><marker id="ahs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0369a1"/></marker></defs>
+<rect width="320" height="180" fill="#ffffff"/>
+<rect x="136" y="44" width="48" height="84" rx="6" fill="#fef3c7"/>
+<line x1="134" y1="58" x2="300" y2="58" stroke="#0f766e" stroke-width="3" marker-end="url(#aht)"/>
+<circle cx="128" cy="58" r="5" fill="#ffffff" stroke="#0f766e" stroke-width="2"/>
+<text x="226" y="46" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#0f766e">h₁ : 3 &lt; n</text>
+<line x1="186" y1="88" x2="20" y2="88" stroke="#0369a1" stroke-width="3" marker-end="url(#ahs)"/>
+<circle cx="192" cy="88" r="5" fill="#ffffff" stroke="#0369a1" stroke-width="2"/>
+<text x="88" y="78" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#0369a1">h₂ : n &lt; 5</text>
+<line x1="20" y1="114" x2="300" y2="114" stroke="#d1d5db" stroke-width="1.5"/>
+<circle cx="32" cy="114" r="3.5" fill="#6b7280"/>
+<text x="32" y="140" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#6b7280">0</text>
+<circle cx="64" cy="114" r="3.5" fill="#6b7280"/>
+<text x="64" y="140" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#6b7280">1</text>
+<circle cx="96" cy="114" r="3.5" fill="#6b7280"/>
+<text x="96" y="140" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#6b7280">2</text>
+<circle cx="128" cy="114" r="3.5" fill="#6b7280"/>
+<text x="128" y="140" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#6b7280">3</text>
+<circle cx="160" cy="114" r="8" fill="#14b8a6" stroke="#0f766e" stroke-width="1.5"/>
+<text x="160" y="140" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#111827" font-weight="700">4</text>
+<circle cx="192" cy="114" r="3.5" fill="#6b7280"/>
+<text x="192" y="140" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#6b7280">5</text>
+<circle cx="224" cy="114" r="3.5" fill="#6b7280"/>
+<text x="224" y="140" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#6b7280">6</text>
+<circle cx="256" cy="114" r="3.5" fill="#6b7280"/>
+<text x="256" y="140" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#6b7280">7</text>
+<circle cx="288" cy="114" r="3.5" fill="#6b7280"/>
+<text x="288" y="140" font-family="Source Code Pro, ui-monospace, monospace" font-size="12" text-anchor="middle" fill="#6b7280">8</text>
+<text x="160" y="166" font-family="Source Code Pro, ui-monospace, monospace" font-size="14" text-anchor="middle" fill="#111827" font-weight="600">n = 4</text>
+<text x="200" y="166" font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="16" text-anchor="middle" fill="#059669" font-weight="700">✓</text>
+</svg>

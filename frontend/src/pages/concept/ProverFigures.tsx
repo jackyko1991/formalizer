@@ -12,9 +12,9 @@ import { useLang } from "@learnkit/web";
 import { useState } from "react";
 
 type L = readonly [string, string];
-const MONO = "ui-monospace, SFMono-Regular, Menlo, monospace";
+export const MONO = "ui-monospace, SFMono-Regular, Menlo, monospace";
 
-function Arrow({
+export function Arrow({
   x1,
   y1,
   x2,
@@ -61,8 +61,8 @@ export function ProposeCheck() {
         by induction n …
       </text>
       <Arrow x1={190} y1={105} x2={246} y2={105} />
-      <Arrow x1={380} y1={105} x2={436} y2={105} />
-      <rect x={440} y={70} width={170} height={70} rx={10} className="fill-teal-50 stroke-teal-600" />
+      <Arrow x1={380} y1={105} x2={418} y2={105} />
+      <rect x={422} y={70} width={206} height={70} rx={10} className="fill-teal-50 stroke-teal-600" />
       <text x={525} y={98} textAnchor="middle" fontSize={14} className="fill-teal-900 font-semibold">
         {pick(["Lean's kernel", "Lean 的核心"])}
       </text>
@@ -71,7 +71,7 @@ export function ProposeCheck() {
       </text>
       {/* accepted */}
       <Arrow x1={525} y1={140} x2={525} y2={180} cls="stroke-emerald-600" />
-      <rect x={455} y={184} width={140} height={30} rx={15} className="fill-emerald-50 stroke-emerald-500" />
+      <rect x={433} y={184} width={184} height={30} rx={15} className="fill-emerald-50 stroke-emerald-500" />
       <text x={525} y={204} textAnchor="middle" fontSize={12} className="fill-emerald-800">
         ✓ {pick(["a proof anyone can recheck", "任何人都能重驗的證明"])}
       </text>
@@ -297,7 +297,7 @@ export function DivideConquer() {
               .split(/(`[^`]+`|\*[^*]+\*)/)
               .map((part, k) =>
                 part.startsWith("`") ? (
-                  <code key={k} className="rounded bg-gray-100 px-1 text-[0.9em]">
+                  <code key={k} className="rounded bg-gray-100 px-1 text-[0.9em] text-gray-800">
                     {part.slice(1, -1)}
                   </code>
                 ) : part.startsWith("*") ? (
@@ -487,6 +487,277 @@ export function LearningLoop() {
       <text x={320} y={20} textAnchor="middle" fontSize={11} className="fill-gray-500">
         {pick(["no human grader needed: the checker never tires and cannot be talked round", "不需要人來改：檢查器不會累，也說服不了"])}
       </text>
+    </svg>
+  );
+}
+
+/** The row of step buttons shared by the steppers on the Concept pages (one pressed at a time). */
+export function StepChips({ labels, i, setI }: { labels: string[]; i: number; setI: (k: number) => void }) {
+  return (
+    <div className="mb-3 flex flex-wrap gap-1">
+      {labels.map((label, k) => (
+        <button
+          key={k}
+          onClick={() => setI(k)}
+          aria-pressed={k === i}
+          className={`rounded-full px-3 py-1 text-xs ${k === i ? "bg-(--lk-accent) text-white" : "bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-gray-100"}`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------------------------------------ Lean's own search
+
+const SEARCHES: { tac: string; lemma: string; match: L; left: string; leftNote: L }[] = [
+  {
+    tac: "exact?",
+    lemma: "lemma : P",
+    match: ["its conclusion is the goal", "結論正好是目標"],
+    left: "✓",
+    leftNote: ["nothing left", "什麼都不剩"],
+  },
+  {
+    tac: "apply?",
+    lemma: "lemma : Q → P",
+    match: ["its conclusion fits the goal", "結論符合目標"],
+    left: "⊢ Q",
+    leftNote: ["its hypotheses become goals", "它的前提變成新目標"],
+  },
+  {
+    tac: "rw?",
+    lemma: "lemma : s = t",
+    match: ["s appears in the goal", "s 出現在目標裡"],
+    left: "⊢ P, with s replaced by t",
+    leftNote: ["one rewrite", "改寫一次"],
+  },
+  {
+    tac: "simp?",
+    lemma: "simp lemmas  s₁ = t₁, …",
+    match: ["rewrite again and again", "一再改寫"],
+    left: "simp only [...]",
+    leftNote: ["prints the lemmas it used", "印出用到的引理"],
+  },
+];
+
+/** Where each of Lean's own search tactics looks, and what it leaves you: the goal is `⊢ P`. */
+export function LeanSearchMap() {
+  const { pick } = useLang();
+  return (
+    <svg viewBox="0 0 660 262" className="w-full max-w-[660px]" role="img" aria-label={pick(["Lean's own search", "Lean 自己的搜尋"])}>
+      <text x={60} y={18} textAnchor="middle" fontSize={11} className="fill-gray-500">
+        {pick(["you write", "你寫"])}
+      </text>
+      <text x={250} y={18} textAnchor="middle" fontSize={11} className="fill-gray-500">
+        {pick(["Lean searches the library for…", "Lean 在函式庫裡找……"])}
+      </text>
+      <text x={555} y={18} textAnchor="middle" fontSize={11} className="fill-gray-500">
+        {pick(["what is left of the goal ⊢ P", "目標 ⊢ P 剩下什麼"])}
+      </text>
+      {SEARCHES.map((s, i) => {
+        const y = 30 + i * 54;
+        return (
+          <g key={s.tac}>
+            <rect x={10} y={y} width={100} height={40} rx={8} className="fill-gray-900" />
+            <text x={60} y={y + 25} textAnchor="middle" fontSize={13} fontFamily={MONO} className="fill-white">
+              {s.tac}
+            </text>
+            <Arrow x1={110} y1={y + 20} x2={146} y2={y + 20} />
+            <rect x={150} y={y} width={200} height={40} rx={8} className="fill-sky-50 stroke-sky-400" />
+            <text x={250} y={y + 17} textAnchor="middle" fontSize={12} fontFamily={MONO} className="fill-gray-900">
+              {s.lemma}
+            </text>
+            <text x={250} y={y + 33} textAnchor="middle" fontSize={10.5} className="fill-sky-800">
+              {pick(s.match)}
+            </text>
+            <Arrow x1={350} y1={y + 20} x2={456} y2={y + 20} />
+            <rect
+              x={460}
+              y={y}
+              width={190}
+              height={40}
+              rx={8}
+              className={s.left === "✓" ? "fill-emerald-50 stroke-emerald-500" : "fill-amber-50 stroke-amber-500"}
+            />
+            <text x={555} y={y + 17} textAnchor="middle" fontSize={11.5} fontFamily={MONO} className="fill-gray-900">
+              {s.left}
+            </text>
+            <text x={555} y={y + 33} textAnchor="middle" fontSize={10.5} className="fill-gray-600">
+              {pick(s.leftNote)}
+            </text>
+          </g>
+        );
+      })}
+      <text x={330} y={254} textAnchor="middle" fontSize={11} className="fill-gray-500">
+        {pick([
+          "no model, no guessing: every candidate is tried by Lean, and you get back a line to paste",
+          "沒有模型、沒有猜測：每個候選都由 Lean 試過，你得到一行可以貼上的程式碼",
+        ])}
+      </text>
+    </svg>
+  );
+}
+
+// ------------------------------------------------------------------------------------------------ helpers vs provers
+
+/** Who does the thinking: a next-step helper suggests, Lean filters, you choose; a whole-proof prover hands back a proof. */
+export function HelperVsProver() {
+  const { pick } = useLang();
+  const sug: { t: string; ok: boolean }[] = [
+    { t: "simp", ok: false },
+    { t: "omega", ok: true },
+    { t: "induction n", ok: true },
+  ];
+  return (
+    <svg viewBox="0 0 660 210" className="w-full max-w-[660px]" role="img" aria-label={pick(["Helper versus prover", "助手與證明器"])}>
+      <text x={160} y={18} textAnchor="middle" fontSize={13} className="fill-gray-900 font-semibold">
+        {pick(["Next-step helper", "下一步助手"])}
+      </text>
+      <rect x={20} y={62} width={110} height={36} rx={8} className="fill-amber-50 stroke-amber-500" />
+      <text x={75} y={85} textAnchor="middle" fontSize={12} fontFamily={MONO} className="fill-gray-900">
+        ⊢ {pick(["your goal", "你的目標"])}
+      </text>
+      {sug.map((s, i) => (
+        <g key={s.t}>
+          <Arrow x1={130} y1={80} x2={176} y2={45 + i * 44} cls="stroke-violet-400" />
+          <rect
+            x={180}
+            y={30 + i * 44}
+            width={120}
+            height={30}
+            rx={6}
+            className={s.ok ? "fill-emerald-50 stroke-emerald-500" : "fill-red-50 stroke-red-300"}
+          />
+          <text x={240} y={50 + i * 44} textAnchor="middle" fontSize={12} fontFamily={MONO} className="fill-gray-800">
+            {s.ok ? "✓" : "✖"} {s.t}
+          </text>
+        </g>
+      ))}
+      <text x={160} y={178} textAnchor="middle" fontSize={11} className="fill-gray-600">
+        {pick(["model suggests · Lean tries each · you choose", "模型建議 · Lean 逐一試 · 你來選"])}
+      </text>
+      <text x={160} y={196} textAnchor="middle" fontSize={11} className="fill-teal-700 font-semibold">
+        {pick(["you still do the thinking", "思考仍然是你的"])}
+      </text>
+      <line x1={330} y1={10} x2={330} y2={200} className="stroke-gray-200" />
+      <text x={495} y={18} textAnchor="middle" fontSize={13} className="fill-gray-900 font-semibold">
+        {pick(["Whole-proof prover", "整份證明的證明器"])}
+      </text>
+      <rect x={350} y={62} width={110} height={36} rx={8} className="fill-amber-50 stroke-amber-500" />
+      <text x={405} y={85} textAnchor="middle" fontSize={12} fontFamily={MONO} className="fill-gray-900">
+        theorem …
+      </text>
+      <Arrow x1={460} y1={80} x2={500} y2={80} cls="stroke-violet-400" />
+      <rect x={504} y={30} width={140} height={110} rx={8} className="fill-emerald-50 stroke-emerald-500" />
+      {[0, 1, 2, 3, 4, 5].map((l) => (
+        <line key={l} x1={516} x2={l % 3 === 2 ? 590 : 630} y1={46 + l * 13} y2={46 + l * 13} strokeWidth={2} className="stroke-emerald-300" />
+      ))}
+      <text x={574} y={132} textAnchor="middle" fontSize={11} className="fill-emerald-800">
+        ✓ {pick(["Lean accepts", "Lean 接受"])}
+      </text>
+      <text x={495} y={178} textAnchor="middle" fontSize={11} className="fill-gray-600">
+        {pick(["many tries, one finished proof", "多次嘗試，一份完成的證明"])}
+      </text>
+      <text x={495} y={196} textAnchor="middle" fontSize={11} className="fill-amber-700 font-semibold">
+        {pick(["correct, but reading it is up to you", "正確，但讀懂它要靠你"])}
+      </text>
+    </svg>
+  );
+}
+
+// ------------------------------------------------------------------------------------------------ pass@k
+
+const PS: { p: number; color: string; label: string }[] = [
+  { p: 0.2, color: "#0d9488", label: "p = 20%" },
+  { p: 0.01, color: "#8b5cf6", label: "p = 1%" },
+  { p: 0.001, color: "#d97706", label: "p = 0.1%" },
+];
+
+/** pass@k = 1 − (1 − p)^k for independent tries that each succeed with probability p; k on a log scale, 1 … 8192. */
+export function PassAtK() {
+  const { pick } = useLang();
+  const [hk, setHk] = useState<number | null>(null);
+  const W = 600;
+  const H = 230;
+  const L0 = 50;
+  const R0 = W - 90;
+  const T0 = 16;
+  const B0 = H - 36;
+  const maxE = 13; // 2^13 = 8192
+  const x = (k: number) => L0 + (Math.log2(k) / maxE) * (R0 - L0);
+  const y = (v: number) => B0 - v * (B0 - T0);
+  const pass = (p: number, k: number) => 1 - Math.pow(1 - p, k);
+  const ks = Array.from({ length: 131 }, (_, i) => Math.pow(2, (i / 130) * maxE));
+  const kTicks = [1, 8, 32, 128, 1024, 8192];
+  const tx = hk === null ? 0 : Math.min(x(hk) + 8, R0 - 150);
+  return (
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      className="w-full max-w-[600px] touch-none"
+      role="img"
+      aria-label={pick(["pass@k against the number of tries", "pass@k 與嘗試次數"])}
+      data-testid="pass-at-k"
+      onPointerMove={(e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        const px = ((e.clientX - r.left) / r.width) * W;
+        if (px < L0 || px > R0) return setHk(null);
+        setHk(Math.max(1, Math.round(Math.pow(2, ((px - L0) / (R0 - L0)) * maxE))));
+      }}
+      onPointerLeave={() => setHk(null)}
+    >
+      {[0, 0.25, 0.5, 0.75, 1].map((v) => (
+        <g key={v}>
+          <line x1={L0} x2={R0} y1={y(v)} y2={y(v)} className="stroke-gray-200" />
+          <text x={L0 - 6} y={y(v) + 4} textAnchor="end" fontSize={10} className="fill-gray-500">
+            {v * 100}%
+          </text>
+        </g>
+      ))}
+      {kTicks.map((k) => (
+        <text key={k} x={x(k)} y={B0 + 16} textAnchor="middle" fontSize={10} className="fill-gray-500">
+          {k}
+        </text>
+      ))}
+      <text x={(L0 + R0) / 2} y={H - 4} textAnchor="middle" fontSize={11} className="fill-gray-600">
+        {pick(["k, tries per problem (log scale)", "k，每題嘗試次數（對數尺度）"])}
+      </text>
+      {[32, 8192].map((k) => (
+        <line key={k} x1={x(k)} x2={x(k)} y1={T0} y2={B0} strokeDasharray="3 3" className="stroke-gray-300" />
+      ))}
+      {PS.map((s) => (
+        <g key={s.p}>
+          <polyline
+            fill="none"
+            stroke={s.color}
+            strokeWidth={2}
+            points={ks.map((k) => `${x(k).toFixed(1)},${y(pass(s.p, k)).toFixed(1)}`).join(" ")}
+          />
+          <text x={x(Math.log(0.5) / Math.log(1 - s.p)) + 8} y={y(0.5) + 16} fontSize={11} className="fill-gray-800">
+            <tspan fill={s.color}>━ </tspan>
+            {s.label}
+          </text>
+        </g>
+      ))}
+      {hk !== null && (
+        <g>
+          <line x1={x(hk)} x2={x(hk)} y1={T0} y2={B0} className="stroke-gray-500" />
+          {PS.map((s) => (
+            <circle key={s.p} cx={x(hk)} cy={y(pass(s.p, hk))} r={4} fill={s.color} className="stroke-white" strokeWidth={2} />
+          ))}
+          <rect x={tx} y={T0 + 4} width={146} height={66} rx={6} className="fill-white stroke-gray-300" />
+          <text x={tx + 8} y={T0 + 20} fontSize={11} className="fill-gray-900 font-semibold">
+            k = {hk}
+          </text>
+          {PS.map((s, i) => (
+            <text key={s.p} x={tx + 8} y={T0 + 36 + i * 14} fontSize={11} className="fill-gray-700">
+              <tspan fill={s.color}>● </tspan>
+              {s.label}: {(pass(s.p, hk) * 100).toFixed(1)}%
+            </text>
+          ))}
+        </g>
+      )}
     </svg>
   );
 }

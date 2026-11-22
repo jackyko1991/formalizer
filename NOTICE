@@ -9,3 +9,13 @@ problem folder:
 - openai/NavierStokesAndEuler (https://github.com/openai/NavierStokesAndEuler), Apache License 2.0
 - openai/math (https://github.com/openai/math), Apache License 2.0
 - Google DeepMind, Formal Conjectures (https://github.com/google-deepmind/formal-conjectures), Apache License 2.0
+
+IMO problems in problems/imo.json, with their complete Lean proofs, are ported from:
+- compfiles (https://github.com/dwrensha/compfiles, commit d5377252e05b2a66b3d79974987dbe04e153f588), Apache License 2.0,
+  David Renshaw and the Compfiles contributors. Each problem names its file and its authors (Kevin Lacker; David Renshaw;
+  Maximiliano Onofre-Martínez; David Renshaw, Anand Rao, Harald Carlens; InternLM-MATH LEAN Formalizer v0.1 and
+  Maximiliano Onofre-Martínez; Tian Chen; Sara Díaz Real; Manuel Candales). Several of these proofs came to compfiles
+  from Mathlib's Archive (https://github.com/leanprover-community/mathlib4, Apache License 2.0).
+  Changes: compfiles' module header, `problem_file` and `snip` markers removed; `problem` renamed to `theorem` and
+  `determine` to `abbrev`; `import Mathlib` in place of the module imports. Each file keeps its copyright
+  header, and the proofs are unchanged.

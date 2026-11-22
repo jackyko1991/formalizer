@@ -1,0 +1,388 @@
+[
+  {
+    "id": "imo-1959-p1",
+    "level": "L1",
+    "runner": "full",
+    "title": [
+      "IMO 1959 P1: an irreducible fraction",
+      "IMO 1959 第 1 題：既約分數"
+    ],
+    "summary": [
+      "The very first IMO problem: for every natural number $n$ the fraction $\\frac{21n+4}{14n+3}$ is irreducible. Lean has no notion of an \"irreducible fraction\", so the statement says what that means: numerator and denominator are coprime (`Nat.Coprime`). Lean's `ℕ` starts at $0$, so $n = 0$ ($\\frac{4}{3}$) is included.",
+      "第一屆 IMO 的第一題：對每個自然數 $n$，分數 $\\frac{21n+4}{14n+3}$ 都是既約分數。Lean 沒有「既約分數」這個概念，所以陳述直接寫出它的意思：分子與分母互質（`Nat.Coprime`）。Lean 的 `ℕ` 從 $0$ 開始，所以 $n = 0$（$\\frac{4}{3}$）也包含在內。"
+    ],
+    "tags": [
+      [
+        "IMO 1959 P1",
+        "IMO 1959 第 1 題"
+      ],
+      [
+        "Number theory",
+        "數論"
+      ]
+    ],
+    "source": {
+      "name": "compfiles",
+      "url": "https://github.com/dwrensha/compfiles/blob/d5377252e05b2a66b3d79974987dbe04e153f588/Compfiles/Imo1959P1.lean",
+      "licence": "Apache-2.0",
+      "authors": "Kevin Lacker",
+      "via": "https://github.com/leanprover-community/mathlib4/blob/master/Archive/Imo/Imo1959Q1.lean",
+      "changes": [
+        "Ported from compfiles: the `module` and `public import` lines become `import Mathlib`; compfiles' `problem_file` header and its `snip begin` / `snip end` markers are removed; `problem` becomes `theorem` and `determine` becomes `abbrev`. The proof is unchanged and compiles against Mathlib v4.34.1.",
+        "移植自 compfiles：`module` 與 `public import` 改成 `import Mathlib`；拿掉 compfiles 的 `problem_file` 標頭與 `snip begin` / `snip end` 標記；`problem` 改成 `theorem`、`determine` 改成 `abbrev`。證明本身沒有改動，並在 Mathlib v4.34.1 上編譯通過。"
+      ]
+    },
+    "statements": [
+      "theorem imo1959_p1 : ∀ n : ℕ, Nat.Coprime (21 * n + 4) (14 * n + 3)"
+    ],
+    "theorems": [
+      "Imo1959P1.imo1959_p1"
+    ],
+    "start": "import Mathlib\n\n/-\nCopyright (c) 2020 Kevin Lacker. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kevin Lacker\n-/\n\n/-!\n# International Mathematical Olympiad 1959, Problem 1.\n\nProve that the fraction `(21n+4)/(14n+3)` is irreducible for every\nnatural number `n`.\n-/\n\nnamespace Imo1959P1\n\ntheorem imo1959_p1 : ∀ n : ℕ, Nat.Coprime (21 * n + 4) (14 * n + 3) := by\n  sorry\n\nend Imo1959P1\n",
+    "tactics": [],
+    "steps": [],
+    "hint": [
+      "Any common divisor $k$ of $21n+4$ and $14n+3$ divides $3(14n+3) - 2(21n+4) = 1$. The proof avoids the subtraction (in `ℕ` it would stop at $0$): $3(14n+3) = 2(21n+4) + 1$ by `ring`, then `Nat.dvd_add_right`.",
+      "$21n+4$ 與 $14n+3$ 的任何公因數 $k$ 都整除 $3(14n+3) - 2(21n+4) = 1$。證明避開了減法（在 `ℕ` 裡減法會停在 $0$）：用 `ring` 得到 $3(14n+3) = 2(21n+4) + 1$，再用 `Nat.dvd_add_right`。"
+    ],
+    "solution": "import Mathlib\n\n/-\nCopyright (c) 2020 Kevin Lacker. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kevin Lacker\n-/\n\n/-!\n# International Mathematical Olympiad 1959, Problem 1.\n\nProve that the fraction `(21n+4)/(14n+3)` is irreducible for every\nnatural number `n`.\n-/\n\nnamespace Imo1959P1\n\nlemma calculation\n    (n k : ℕ)\n    (h1 : k ∣ 21 * n + 4)\n    (h2 : k ∣ 14 * n + 3) :\n    k ∣ 1 := by\n  have h3 : k ∣ 2 * (21 * n + 4) := h1.mul_left 2\n  have h4 : k ∣ 3 * (14 * n + 3) := h2.mul_left 3\n  have h5 : 3 * (14 * n + 3) = 2 * (21 * n + 4) + 1 := by ring\n  exact (Nat.dvd_add_right h3).mp (h5 ▸ h4)\n\n/-\nSince Lean doesn't have a concept of \"irreducible fractions\" per se,\nwe just formalize this as saying the numerator and denominator are\nrelatively prime.\n-/\ntheorem imo1959_p1 : ∀ n : ℕ, Nat.Coprime (21 * n + 4) (14 * n + 3) :=\nfun n => Nat.coprime_of_dvd' <| λ k _ h1 h2 => calculation n k h1 h2\n\nend Imo1959P1\n"
+  },
+  {
+    "id": "imo-1984-p2",
+    "level": "L1",
+    "runner": "full",
+    "title": [
+      "IMO 1984 P2: a pair found, then computed",
+      "IMO 1984 第 2 題：找到一組，再算出來"
+    ],
+    "summary": [
+      "Find positive integers $a$, $b$ such that $7 \\nmid ab(a+b)$ and $7^7 \\mid (a+b)^7 - a^7 - b^7$. In compfiles the answer is part of the file (`determine`, here `abbrev`): $a = 18$, $b = 1$, as integers (`ℤ`, so the subtraction is the usual one). With the numbers fixed, the whole statement is a finite computation.",
+      "找出正整數 $a$、$b$，使得 $7 \\nmid ab(a+b)$ 且 $7^7 \\mid (a+b)^7 - a^7 - b^7$。在 compfiles 裡答案寫在檔案中（`determine`，這裡改成 `abbrev`）：$a = 18$、$b = 1$，都是整數（`ℤ`，所以減法就是平常的減法）。數字固定之後，整個陳述就是有限的計算。"
+    ],
+    "tags": [
+      [
+        "IMO 1984 P2",
+        "IMO 1984 第 2 題"
+      ],
+      [
+        "Number theory",
+        "數論"
+      ]
+    ],
+    "source": {
+      "name": "compfiles",
+      "url": "https://github.com/dwrensha/compfiles/blob/d5377252e05b2a66b3d79974987dbe04e153f588/Compfiles/Imo1984P2.lean",
+      "licence": "Apache-2.0",
+      "authors": "David Renshaw",
+      "changes": [
+        "Ported from compfiles: the `module` and `public import` lines become `import Mathlib`; compfiles' `problem_file` header and its `snip begin` / `snip end` markers are removed; `problem` becomes `theorem` and `determine` becomes `abbrev`. The proof is unchanged and compiles against Mathlib v4.34.1.",
+        "移植自 compfiles：`module` 與 `public import` 改成 `import Mathlib`；拿掉 compfiles 的 `problem_file` 標頭與 `snip begin` / `snip end` 標記；`problem` 改成 `theorem`、`determine` 改成 `abbrev`。證明本身沒有改動，並在 Mathlib v4.34.1 上編譯通過。"
+      ]
+    },
+    "statements": [
+      "abbrev a : ℤ := 18\nabbrev b : ℤ := 1",
+      "theorem imo1984_p2 :\n    (0 < a) ∧ (0 < b) ∧\n    (¬ 7 ∣ a * b * (a + b)) ∧\n    7^7 ∣ (a + b)^7 - a^7 - b^7"
+    ],
+    "theorems": [
+      "Imo1984P2.imo1984_p2"
+    ],
+    "start": "import Mathlib\n\n/-\nCopyright (c) 2024 David Renshaw. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: David Renshaw\n-/\n\n/-!\n# International Mathematical Olympiad 1984, Problem 2\n\nFind a pair of positive integers a and b such that\n\n (i) ab(a + b) is not divisible by 7.\n (ii) (a + b)⁷ - a⁷ - b⁷ is divisible by 7⁷.\n-/\n\nnamespace Imo1984P2\n\nabbrev a : ℤ := 18\nabbrev b : ℤ := 1\n\ntheorem imo1984_p2 :\n    (0 < a) ∧ (0 < b) ∧\n    (¬ 7 ∣ a * b * (a + b)) ∧\n    7^7 ∣ (a + b)^7 - a^7 - b^7 := by\n  sorry\n\nend Imo1984P2\n",
+    "tactics": [],
+    "steps": [],
+    "hint": [
+      "The proof is one word, `decide`: Lean evaluates $19^7 - 18^7 - 1$ and the divisibility tests. Finding $18$ and $1$ is the olympiad work ($(a+b)^7 - a^7 - b^7 = 7ab(a+b)(a^2+ab+b^2)^2$, so one wants $7^3 \\mid a^2 + ab + b^2$); checking them is not.",
+      "證明只有一個字：`decide`。Lean 直接算出 $19^7 - 18^7 - 1$ 並檢查整除。真正的奧賽功夫在於找到 $18$ 與 $1$（$(a+b)^7 - a^7 - b^7 = 7ab(a+b)(a^2+ab+b^2)^2$，所以要讓 $7^3 \\mid a^2 + ab + b^2$）；檢查它們則不是。"
+    ],
+    "solution": "import Mathlib\n\n/-\nCopyright (c) 2024 David Renshaw. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: David Renshaw\n-/\n\n/-!\n# International Mathematical Olympiad 1984, Problem 2\n\nFind a pair of positive integers a and b such that\n\n (i) ab(a + b) is not divisible by 7.\n (ii) (a + b)⁷ - a⁷ - b⁷ is divisible by 7⁷.\n-/\n\nnamespace Imo1984P2\n\nabbrev a : ℤ := 18\nabbrev b : ℤ := 1\n\ntheorem imo1984_p2 :\n    (0 < a) ∧ (0 < b) ∧\n    (¬ 7 ∣ a * b * (a + b)) ∧\n    7^7 ∣ (a + b)^7 - a^7 - b^7 := by\n  decide\n\nend Imo1984P2\n"
+  },
+  {
+    "id": "imo-1963-p4",
+    "level": "L2",
+    "runner": "full",
+    "title": [
+      "IMO 1963 P4: a cyclic linear system",
+      "IMO 1963 第 4 題：循環的線性方程組"
+    ],
+    "summary": [
+      "Solve $x_5 + x_2 = y x_1$, $x_1 + x_3 = y x_2$, $x_2 + x_4 = y x_3$, $x_3 + x_5 = y x_4$, $x_4 + x_1 = y x_5$ for real $x_1, \\dots, x_5$, with $y$ a real parameter. The answer `SolutionSet y` is written in the file: all zero; or all equal when $y = 2$; or, when $y^2 + y - 1 = 0$, a two-parameter family in $s$, $t$. The theorem says a 5-tuple is in that set **if and only if** it solves the system.",
+      "對實數 $x_1, \\dots, x_5$ 解 $x_5 + x_2 = y x_1$、$x_1 + x_3 = y x_2$、$x_2 + x_4 = y x_3$、$x_3 + x_5 = y x_4$、$x_4 + x_1 = y x_5$，其中 $y$ 是實數參數。答案 `SolutionSet y` 寫在檔案裡：全部為零；或 $y = 2$ 時全部相等；或 $y^2 + y - 1 = 0$ 時，一個以 $s$、$t$ 為參數的解族。定理說：一組五元數在這個集合裡，**若且唯若** 它是方程組的解。"
+    ],
+    "tags": [
+      [
+        "IMO 1963 P4",
+        "IMO 1963 第 4 題"
+      ],
+      [
+        "Algebra",
+        "代數"
+      ]
+    ],
+    "source": {
+      "name": "compfiles",
+      "url": "https://github.com/dwrensha/compfiles/blob/d5377252e05b2a66b3d79974987dbe04e153f588/Compfiles/Imo1963P4.lean",
+      "licence": "Apache-2.0",
+      "authors": "Maximiliano Onofre-Martínez",
+      "changes": [
+        "Ported from compfiles: the `module` and `public import` lines become `import Mathlib`; compfiles' `problem_file` header and its `snip begin` / `snip end` markers are removed; `problem` becomes `theorem` and `determine` becomes `abbrev`. The proof is unchanged and compiles against Mathlib v4.34.1.",
+        "移植自 compfiles：`module` 與 `public import` 改成 `import Mathlib`；拿掉 compfiles 的 `problem_file` 標頭與 `snip begin` / `snip end` 標記；`problem` 改成 `theorem`、`determine` 改成 `abbrev`。證明本身沒有改動，並在 Mathlib v4.34.1 上編譯通過。"
+      ]
+    },
+    "statements": [
+      "abbrev SolutionSet (y : ℝ) : Set (ℝ × ℝ × ℝ × ℝ × ℝ) :=\n {(x₁, x₂, x₃, x₄, x₅) |\n  (x₁ = 0 ∧ x₂ = 0 ∧ x₃ = 0 ∧ x₄ = 0 ∧ x₅ = 0) ∨\n  (x₁ = x₂ ∧ x₂ = x₃ ∧ x₃ = x₄ ∧ x₄ = x₅ ∧ y = 2) ∨\n  (y^2 + y - 1 = 0 ∧ ∃ s t,\n    x₁ = s ∧\n    x₂ = t ∧\n    x₃ = y * t - s ∧\n    x₄ = -(y * t) - y * s ∧\n    x₅ = y * s - t)}",
+      "theorem imo1963_p4 (x₁ x₂ x₃ x₄ x₅ y : ℝ) :\n    (x₁, x₂, x₃, x₄, x₅) ∈ SolutionSet y ↔\n    (x₅ + x₂ = y * x₁ ∧\n     x₁ + x₃ = y * x₂ ∧\n     x₂ + x₄ = y * x₃ ∧\n     x₃ + x₅ = y * x₄ ∧\n     x₄ + x₁ = y * x₅)"
+    ],
+    "theorems": [
+      "Imo1963P4.imo1963_p4"
+    ],
+    "start": "import Mathlib\n\n/-\nCopyright (c) 2024 The Compfiles Contributors. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Maximiliano Onofre-Martínez\n-/\n\n/-!\n# International Mathematical Olympiad 1963, Problem 4\n\nFind all solutions x₁,x₂,x₃,x₄,x₅ of the system\n\n  x₅ + x₂ = yx₁\n  x₁ + x₃ = yx₂\n  x₂ + x₄ = yx₃\n  x₃ + x₅ = yx₄\n  x₄ + x₁ = yx₅\n\nwhere y is a parameter.\n-/\n\nnamespace Imo1963P4\n\nabbrev SolutionSet (y : ℝ) : Set (ℝ × ℝ × ℝ × ℝ × ℝ) :=\n {(x₁, x₂, x₃, x₄, x₅) |\n  (x₁ = 0 ∧ x₂ = 0 ∧ x₃ = 0 ∧ x₄ = 0 ∧ x₅ = 0) ∨\n  (x₁ = x₂ ∧ x₂ = x₃ ∧ x₃ = x₄ ∧ x₄ = x₅ ∧ y = 2) ∨\n  (y^2 + y - 1 = 0 ∧ ∃ s t,\n    x₁ = s ∧\n    x₂ = t ∧\n    x₃ = y * t - s ∧\n    x₄ = -(y * t) - y * s ∧\n    x₅ = y * s - t)}\n\ntheorem imo1963_p4 (x₁ x₂ x₃ x₄ x₅ y : ℝ) :\n    (x₁, x₂, x₃, x₄, x₅) ∈ SolutionSet y ↔\n    (x₅ + x₂ = y * x₁ ∧\n     x₁ + x₃ = y * x₂ ∧\n     x₂ + x₄ = y * x₃ ∧\n     x₃ + x₅ = y * x₄ ∧\n     x₄ + x₁ = y * x₅) := by\n  sorry\n\nend Imo1963P4\n",
+    "tactics": [],
+    "steps": [],
+    "hint": [
+      "The whole proof is `grind`: Lean's automation splits the cases and does the algebra (over Mathlib's real numbers, so a Full runner). On paper: add the five equations to get $(y - 2)(x_1 + \\dots + x_5) = 0$, then treat $y = 2$ and $y \\ne 2$.",
+      "整個證明就是 `grind`：Lean 的自動化會拆開各種情形並做代數運算（用 Mathlib 的實數，所以要 Full 執行器）。紙上的做法：把五條方程相加得到 $(y - 2)(x_1 + \\dots + x_5) = 0$，再分 $y = 2$ 與 $y \\ne 2$ 討論。"
+    ],
+    "solution": "import Mathlib\n\n/-\nCopyright (c) 2024 The Compfiles Contributors. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Maximiliano Onofre-Martínez\n-/\n\n/-!\n# International Mathematical Olympiad 1963, Problem 4\n\nFind all solutions x₁,x₂,x₃,x₄,x₅ of the system\n\n  x₅ + x₂ = yx₁\n  x₁ + x₃ = yx₂\n  x₂ + x₄ = yx₃\n  x₃ + x₅ = yx₄\n  x₄ + x₁ = yx₅\n\nwhere y is a parameter.\n-/\n\nnamespace Imo1963P4\n\nabbrev SolutionSet (y : ℝ) : Set (ℝ × ℝ × ℝ × ℝ × ℝ) :=\n {(x₁, x₂, x₃, x₄, x₅) |\n  (x₁ = 0 ∧ x₂ = 0 ∧ x₃ = 0 ∧ x₄ = 0 ∧ x₅ = 0) ∨\n  (x₁ = x₂ ∧ x₂ = x₃ ∧ x₃ = x₄ ∧ x₄ = x₅ ∧ y = 2) ∨\n  (y^2 + y - 1 = 0 ∧ ∃ s t,\n    x₁ = s ∧\n    x₂ = t ∧\n    x₃ = y * t - s ∧\n    x₄ = -(y * t) - y * s ∧\n    x₅ = y * s - t)}\n\ntheorem imo1963_p4 (x₁ x₂ x₃ x₄ x₅ y : ℝ) :\n    (x₁, x₂, x₃, x₄, x₅) ∈ SolutionSet y ↔\n    (x₅ + x₂ = y * x₁ ∧\n     x₁ + x₃ = y * x₂ ∧\n     x₂ + x₄ = y * x₃ ∧\n     x₃ + x₅ = y * x₄ ∧\n     x₄ + x₁ = y * x₅) := by\n  grind\n\nend Imo1963P4\n"
+  },
+  {
+    "id": "imo-1964-p1",
+    "level": "L2",
+    "runner": "full",
+    "title": [
+      "IMO 1964 P1: powers of 2 modulo 7",
+      "IMO 1964 第 1 題：2 的次方除以 7"
+    ],
+    "summary": [
+      "(a) Find all natural numbers $n$ with $7 \\mid 2^n - 1$. (b) Show that $7 \\nmid 2^n + 1$ for every positive integer $n$. Lean's (a) uses a congruence, `2^n ≡ 1 [MOD 7]`, and gives the answer: $n$ is a multiple of $3$. Lean's (b) is stated for **every** natural number, $n = 0$ included ($2^0 + 1 = 2$), so it is slightly stronger than the original.",
+      "(a) 找出所有使 $7 \\mid 2^n - 1$ 的自然數 $n$。(b) 證明對每個正整數 $n$，$7 \\nmid 2^n + 1$。Lean 的 (a) 用同餘 `2^n ≡ 1 [MOD 7]` 表示，答案是：$n$ 是 $3$ 的倍數。Lean 的 (b) 對 **每個** 自然數成立，包括 $n = 0$（$2^0 + 1 = 2$），所以比原題稍強。"
+    ],
+    "tags": [
+      [
+        "IMO 1964 P1",
+        "IMO 1964 第 1 題"
+      ],
+      [
+        "Number theory",
+        "數論"
+      ]
+    ],
+    "source": {
+      "name": "compfiles",
+      "url": "https://github.com/dwrensha/compfiles/blob/d5377252e05b2a66b3d79974987dbe04e153f588/Compfiles/Imo1964P1.lean",
+      "licence": "Apache-2.0",
+      "authors": "David Renshaw, Anand Rao, Harald Carlens",
+      "changes": [
+        "Ported from compfiles: the `module` and `public import` lines become `import Mathlib`; compfiles' `problem_file` header and its `snip begin` / `snip end` markers are removed; `problem` becomes `theorem` and `determine` becomes `abbrev`. The proof is unchanged and compiles against Mathlib v4.34.1.",
+        "移植自 compfiles：`module` 與 `public import` 改成 `import Mathlib`；拿掉 compfiles 的 `problem_file` 標頭與 `snip begin` / `snip end` 標記；`problem` 改成 `theorem`、`determine` 改成 `abbrev`。證明本身沒有改動，並在 Mathlib v4.34.1 上編譯通過。"
+      ]
+    },
+    "statements": [
+      "abbrev solution_set : Set ℕ := { n | n % 3 = 0 }",
+      "theorem imo1964_p1a (n : ℕ) : n ∈ solution_set ↔ 2^n ≡ 1 [MOD 7]",
+      "theorem imo1964_p1b (n : ℕ) : ¬ 7 ∣ (2^n + 1)"
+    ],
+    "theorems": [
+      "Imo1964P1.imo1964_p1a",
+      "Imo1964P1.imo1964_p1b"
+    ],
+    "start": "import Mathlib\n\n/-\nCopyright (c) 2023 David Renshaw. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: David Renshaw, Anand Rao, Harald Carlens\n-/\n\n/-!\n# International Mathematical Olympiad 1964, Problem 1\n\n(a) Find all natural numbers n for which 2ⁿ - 1 is divisible by 7.\n(b) Prove that there is no positive integer n for which 2ⁿ + 1 is divisible by 7.\n-/\n\nnamespace Imo1964P1\n\nabbrev solution_set : Set ℕ := { n | n % 3 = 0 }\n\ntheorem imo1964_p1a (n : ℕ) : n ∈ solution_set ↔ 2^n ≡ 1 [MOD 7] := by\n  sorry\n\ntheorem imo1964_p1b (n : ℕ) : ¬ 7 ∣ (2^n + 1) := by\n  sorry\n\nend Imo1964P1\n",
+    "tactics": [],
+    "steps": [],
+    "hint": [
+      "$2^3 = 8 \\equiv 1 \\pmod 7$, so $2^n \\bmod 7$ cycles through $1, 2, 4$. Both parts write $n = 3q + r$ and split on $r$ with `mod_cases`; the file also keeps a shorter alternative proof of (b), by recursion on $n$.",
+      "$2^3 = 8 \\equiv 1 \\pmod 7$，所以 $2^n \\bmod 7$ 依序循環 $1, 2, 4$。兩小題都把 $n$ 寫成 $3q + r$，再用 `mod_cases` 依 $r$ 分情形；檔案裡還留著 (b) 的另一個較短證明，是對 $n$ 遞迴。"
+    ],
+    "solution": "import Mathlib\n\n/-\nCopyright (c) 2023 David Renshaw. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: David Renshaw, Anand Rao, Harald Carlens\n-/\n\n/-!\n# International Mathematical Olympiad 1964, Problem 1\n\n(a) Find all natural numbers n for which 2ⁿ - 1 is divisible by 7.\n(b) Prove that there is no positive integer n for which 2ⁿ + 1 is divisible by 7.\n-/\n\nnamespace Imo1964P1\n\nabbrev solution_set : Set ℕ := { n | n % 3 = 0 }\n\ntheorem imo1964_p1a (n : ℕ) : n ∈ solution_set ↔ 2^n ≡ 1 [MOD 7] := by\n  constructor\n  · intro hn\n    obtain ⟨m, hm⟩ := Nat.dvd_of_mod_eq_zero hn\n    change 2^n % 7 = 1\n    rw [hm, Nat.pow_mul, Nat.pow_mod]\n    norm_num\n  · intro hn\n    change n % 3 = 0\n    change 2^n % 7 = 1 at hn\n    rw [(Nat.div_add_mod' n 3).symm] at hn\n    rw [pow_add, pow_mul', Nat.mul_mod, Nat.pow_mod] at hn\n    mod_cases H : n % 3\n    · exact H\n    · rw [H] at hn; norm_num at hn\n    · rw [H] at hn; norm_num at hn\n\ntheorem imo1964_p1b (n : ℕ) : ¬ 7 ∣ (2^n + 1) := by\n  /-\n  Following https://prase.cz/kalva/imo/isoln/isoln641.html:\n  Let n = 3m + k; k = 0, 1, or 2.\n  2^3 = 1 (mod 7).\n  Hence\n  2^3m + 1 = 2 (mod 7),\n  2^(3m+1) + 1 = 3 (mod 7), and\n  2^(3m + 2) + 1 = 5 (mod 7).\n  -/\n  intro h\n  apply Nat.mod_eq_zero_of_dvd at h\n  have h1: 2 ^ 3 % 7 = 1 := by rfl\n  mod_cases h2 : n % 3 <;> rw [← Nat.div_add_mod n 3, h2] at h\n  · rw [Nat.zero_mod, add_zero, Nat.add_mod, Nat.pow_mod, pow_mul,\n        Nat.pow_mod, h1, one_pow (M := ℕ)] at h\n    contradiction\n  · rw [Nat.add_mod, pow_add, pow_mul, Nat.mul_mod, Nat.pow_mod, h1, one_pow (M := ℕ)] at h\n    contradiction\n  · rw [Nat.add_mod, pow_add, pow_mul, Nat.mul_mod, Nat.pow_mod, h1, one_pow (M := ℕ)] at h\n    contradiction\n\n/- An alternative proof, heavily golfed. The statement here is slightly modified from\n   the original one. -/\ntheorem imo_1964_p1b' : ∀ (n : ℕ), (2 ^ n + 1) % 7 ≠ 0\n    | 0 | 1 | 2 => by decide\n    | n + 3 => by\n      rw [pow_add, Nat.add_mod, Nat.mul_mod, show 2 ^ 3 % 7 = 1 by rfl]\n      simp [imo_1964_p1b' n]\n\nend Imo1964P1\n"
+  },
+  {
+    "id": "imo-1972-p4",
+    "level": "L2",
+    "runner": "full",
+    "title": [
+      "IMO 1972 P4: five inequalities",
+      "IMO 1972 第 4 題：五個不等式"
+    ],
+    "summary": [
+      "Find all positive real solutions of the five cyclic inequalities $(x_1^2 - x_3x_5)(x_2^2 - x_3x_5) \\le 0$, …. Lean names $x_1, \\dots, x_5$ as $a, \\dots, e$; the theorem says that, for positive reals, the five inequalities hold **if and only if** $a = b = c = d = e$.",
+      "求五個循環不等式 $(x_1^2 - x_3x_5)(x_2^2 - x_3x_5) \\le 0$、… 的所有正實數解。Lean 把 $x_1, \\dots, x_5$ 叫做 $a, \\dots, e$；定理說：對正實數，五個不等式同時成立 **若且唯若** $a = b = c = d = e$。"
+    ],
+    "tags": [
+      [
+        "IMO 1972 P4",
+        "IMO 1972 第 4 題"
+      ],
+      [
+        "Algebra",
+        "代數"
+      ]
+    ],
+    "source": {
+      "name": "compfiles",
+      "url": "https://github.com/dwrensha/compfiles/blob/d5377252e05b2a66b3d79974987dbe04e153f588/Compfiles/Imo1972P4.lean",
+      "licence": "Apache-2.0",
+      "authors": "InternLM-MATH LEAN Formalizer v0.1, Maximiliano Onofre-Martínez",
+      "changes": [
+        "Ported from compfiles: the `module` and `public import` lines become `import Mathlib`; compfiles' `problem_file` header and its `snip begin` / `snip end` markers are removed; `problem` becomes `theorem` and `determine` becomes `abbrev`. The proof is unchanged and compiles against Mathlib v4.34.1.",
+        "移植自 compfiles：`module` 與 `public import` 改成 `import Mathlib`；拿掉 compfiles 的 `problem_file` 標頭與 `snip begin` / `snip end` 標記；`problem` 改成 `theorem`、`determine` 改成 `abbrev`。證明本身沒有改動，並在 Mathlib v4.34.1 上編譯通過。"
+      ]
+    },
+    "statements": [
+      "abbrev solution_set : Set (ℝ × ℝ × ℝ × ℝ × ℝ) :=\n  {(a, b, c, d, e) | a = b ∧ b = c ∧ c = d ∧ d = e}",
+      "theorem imo1972_p4 (a b c d e : ℝ)\n  (h₀ : 0 < a ∧ 0 < b ∧ 0 < c ∧ 0 < d ∧ 0 < e):\n    (a^2 - c * e) * (b^2 - c * e) ≤ 0 ∧\n    (b^2 - d * a) * (c^2 - d * a) ≤ 0 ∧\n    (c^2 - e * b) * (d^2 - e * b) ≤ 0 ∧\n    (d^2 - a * c) * (e^2 - a * c) ≤ 0 ∧\n    (e^2 - b * d) * (a^2 - b * d) ≤ 0 ↔\n      (a, b, c, d, e) ∈ solution_set"
+    ],
+    "theorems": [
+      "Imo1972P4.imo1972_p4"
+    ],
+    "start": "import Mathlib\n\n/-\nCopyright (c) 2024 The Compfiles Contributors. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: InternLM-MATH LEAN Formalizer v0.1, Maximiliano Onofre-Martínez\n-/\n\n/-!\n# International Mathematical Olympiad 1972, Problem 4\n\nFind all positive real solutions to:\n\n(x_1^2 - x_3x_5)(x_2^2 - x_3x_5) ≤ 0\n(x_2^2 - x_4x_1)(x_3^2 - x_4x_1) ≤ 0\n(x_3^2 - x_5x_2)(x_4^2 - x_5x_2) ≤ 0\n(x_4^2 - x_1x_3)(x_5^2 - x_1x_3) ≤ 0\n(x_5^2 - x_2x_4)(x_1^2 - x_2x_4) ≤ 0\n-/\n\nnamespace Imo1972P4\n\nabbrev solution_set : Set (ℝ × ℝ × ℝ × ℝ × ℝ) :=\n  {(a, b, c, d, e) | a = b ∧ b = c ∧ c = d ∧ d = e}\n\ntheorem imo1972_p4 (a b c d e : ℝ)\n  (h₀ : 0 < a ∧ 0 < b ∧ 0 < c ∧ 0 < d ∧ 0 < e):\n    (a^2 - c * e) * (b^2 - c * e) ≤ 0 ∧\n    (b^2 - d * a) * (c^2 - d * a) ≤ 0 ∧\n    (c^2 - e * b) * (d^2 - e * b) ≤ 0 ∧\n    (d^2 - a * c) * (e^2 - a * c) ≤ 0 ∧\n    (e^2 - b * d) * (a^2 - b * d) ≤ 0 ↔\n      (a, b, c, d, e) ∈ solution_set := by\n  sorry\n\nend Imo1972P4\n",
+    "tactics": [],
+    "steps": [],
+    "hint": [
+      "Adding the five inequalities gives a sum of ten squares that is $\\le 0$ (`linarith`), so every square is $0$, and `grind` reads off the equalities. The converse is `simp`: equal numbers make every factor $0$.",
+      "把五個不等式加起來，得到十個平方的和 $\\le 0$（`linarith`），所以每個平方都是 $0$，再由 `grind` 讀出各個相等。反方向用 `simp`：數字都相等時每個因子都是 $0$。"
+    ],
+    "solution": "import Mathlib\n\n/-\nCopyright (c) 2024 The Compfiles Contributors. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: InternLM-MATH LEAN Formalizer v0.1, Maximiliano Onofre-Martínez\n-/\n\n/-!\n# International Mathematical Olympiad 1972, Problem 4\n\nFind all positive real solutions to:\n\n(x_1^2 - x_3x_5)(x_2^2 - x_3x_5) ≤ 0\n(x_2^2 - x_4x_1)(x_3^2 - x_4x_1) ≤ 0\n(x_3^2 - x_5x_2)(x_4^2 - x_5x_2) ≤ 0\n(x_4^2 - x_1x_3)(x_5^2 - x_1x_3) ≤ 0\n(x_5^2 - x_2x_4)(x_1^2 - x_2x_4) ≤ 0\n-/\n\nnamespace Imo1972P4\n\nabbrev solution_set : Set (ℝ × ℝ × ℝ × ℝ × ℝ) :=\n  {(a, b, c, d, e) | a = b ∧ b = c ∧ c = d ∧ d = e}\n\ntheorem imo1972_p4 (a b c d e : ℝ)\n  (h₀ : 0 < a ∧ 0 < b ∧ 0 < c ∧ 0 < d ∧ 0 < e):\n    (a^2 - c * e) * (b^2 - c * e) ≤ 0 ∧\n    (b^2 - d * a) * (c^2 - d * a) ≤ 0 ∧\n    (c^2 - e * b) * (d^2 - e * b) ≤ 0 ∧\n    (d^2 - a * c) * (e^2 - a * c) ≤ 0 ∧\n    (e^2 - b * d) * (a^2 - b * d) ≤ 0 ↔\n      (a, b, c, d, e) ∈ solution_set := by\n  rw [solution_set]\n  constructor\n  · rintro h\n    have :\n      (a * b - a * d) ^ 2 + (b * c - b * e) ^ 2 + (c * d - c * a) ^ 2 +\n      (d * e - d * b) ^ 2 + (e * a - e * c) ^ 2 + (a * c - a * e) ^ 2 +\n      (b * d - b * a) ^ 2 + (c * e - c * b) ^ 2 + (d * a - d * c) ^ 2 +\n      (e * b - e * d) ^ 2 ≤ 0 := by linarith\n    grind (splits := 10) [eq_zero_of_add_nonpos_left, sq_nonneg, sq_eq_zero_iff]\n  · simp +contextual [sq]\n\nend Imo1972P4\n"
+  },
+  {
+    "id": "imo-1977-p6",
+    "level": "L3",
+    "runner": "full",
+    "title": [
+      "IMO 1977 P6: f(f(n)) < f(n + 1)",
+      "IMO 1977 第 6 題：f(f(n)) < f(n + 1)"
+    ],
+    "summary": [
+      "Let $f$ map positive integers to positive integers with $f(f(n)) < f(n+1)$ for every $n$. Prove $f(n) = n$ for all $n$. Lean's `ℕ+` is the type of positive integers, so the statement matches the original.",
+      "設 $f$ 把正整數映到正整數，且對每個 $n$ 都有 $f(f(n)) < f(n+1)$。證明對所有 $n$，$f(n) = n$。Lean 的 `ℕ+` 就是正整數的型別，所以陳述與原題一致。"
+    ],
+    "tags": [
+      [
+        "IMO 1977 P6",
+        "IMO 1977 第 6 題"
+      ],
+      [
+        "Algebra",
+        "代數"
+      ]
+    ],
+    "source": {
+      "name": "compfiles",
+      "url": "https://github.com/dwrensha/compfiles/blob/d5377252e05b2a66b3d79974987dbe04e153f588/Compfiles/Imo1977P6.lean",
+      "licence": "Apache-2.0",
+      "authors": "Tian Chen",
+      "via": "https://github.com/leanprover-community/mathlib4/blob/master/Archive/Imo/Imo1977Q6.lean",
+      "changes": [
+        "Ported from compfiles: the `module` and `public import` lines become `import Mathlib`; compfiles' `problem_file` header and its `snip begin` / `snip end` markers are removed; `problem` becomes `theorem` and `determine` becomes `abbrev`. The proof is unchanged and compiles against Mathlib v4.34.1.",
+        "移植自 compfiles：`module` 與 `public import` 改成 `import Mathlib`；拿掉 compfiles 的 `problem_file` 標頭與 `snip begin` / `snip end` 標記；`problem` 改成 `theorem`、`determine` 改成 `abbrev`。證明本身沒有改動，並在 Mathlib v4.34.1 上編譯通過。"
+      ]
+    },
+    "statements": [
+      "theorem imo1977_p6 (f : ℕ+ → ℕ+) (h : ∀ n, f (f n) < f (n + 1)) : ∀ n, f n = n"
+    ],
+    "theorems": [
+      "Imo1977P6.imo1977_p6"
+    ],
+    "start": "import Mathlib\n\n/-\nCopyright (c) 2021 Tian Chen. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Tian Chen\n-/\n\n/-!\n# International Mathematical Olympiad 1977, Problem 6\n\nSuppose `f : ℕ+ → ℕ+` satisfies `f(f(n)) < f(n + 1)` for all `n`.\nProve that `f(n) = n` for all `n`.\n-/\n\nnamespace Imo1977P6\n\ntheorem imo1977_p6 (f : ℕ+ → ℕ+) (h : ∀ n, f (f n) < f (n + 1)) : ∀ n, f n = n := by\n  sorry\n\nend Imo1977P6\n",
+    "tactics": [],
+    "steps": [],
+    "hint": [
+      "First prove the same statement for $f : ℕ → ℕ$ (`imo1977_p6_nat`): by induction on $k$, $n \\ge k$ implies $f(n) \\ge k$; so $f(n) \\ge n$, $f$ is strictly increasing, and $f(f(n)) < f(n+1)$ forces $f(n) < n + 1$. Then transfer to `ℕ+`.",
+      "先對 $f : ℕ → ℕ$ 證明同樣的陳述（`imo1977_p6_nat`）：對 $k$ 歸納，$n \\ge k$ 推得 $f(n) \\ge k$；於是 $f(n) \\ge n$、$f$ 嚴格遞增，而 $f(f(n)) < f(n+1)$ 逼出 $f(n) < n + 1$。最後再轉回 `ℕ+`。"
+    ],
+    "solution": "import Mathlib\n\n/-\nCopyright (c) 2021 Tian Chen. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Tian Chen\n-/\n\n/-!\n# International Mathematical Olympiad 1977, Problem 6\n\nSuppose `f : ℕ+ → ℕ+` satisfies `f(f(n)) < f(n + 1)` for all `n`.\nProve that `f(n) = n` for all `n`.\n-/\n\nnamespace Imo1977P6\n\n/-\nWe first prove the problem statement for `f : ℕ → ℕ`\nthen we use it to prove the statement for positive naturals.\n-/\n\ntheorem imo1977_p6_nat (f : ℕ → ℕ) (h : ∀ n, f (f n) < f (n + 1)) : ∀ n, f n = n := by\n  have h' : ∀ k n : ℕ, k ≤ n → k ≤ f n := by\n    intro k\n    induction k with\n    | zero => intros; exact Nat.zero_le _\n    | succ k h_ind =>\n      intro n hk\n      apply Nat.succ_le_of_lt\n      calc\n        k ≤ f (f (n - 1)) := h_ind _ (h_ind (n - 1) (le_tsub_of_add_le_right hk))\n        _ < f n := tsub_add_cancel_of_le (le_trans (Nat.succ_le_succ (Nat.zero_le _)) hk) ▸ h _\n  have hf : ∀ n, n ≤ f n := fun n => h' n n rfl.le\n  have hf_mono : StrictMono f := strictMono_nat_of_lt_succ fun _ => lt_of_le_of_lt (hf _) (h _)\n  intro\n  exact Nat.eq_of_le_of_lt_succ (hf _) (hf_mono.lt_iff_lt.mp (h _))\n\ntheorem imo1977_p6 (f : ℕ+ → ℕ+) (h : ∀ n, f (f n) < f (n + 1)) : ∀ n, f n = n := by\n  intro n\n  have := by\n    refine imo1977_p6_nat (fun m => if 0 < m then f m.toPNat' else 0) ?_ n\n    intro x; cases x\n    · simp\n    · simp only [Nat.succ_pos, ite_true, PNat.pos, PNat.coe_toPNat', PNat.coe_lt_coe]\n      exact h _\n  simpa\n\nend Imo1977P6\n"
+  },
+  {
+    "id": "imo-2001-p6",
+    "level": "L3",
+    "runner": "full",
+    "title": [
+      "IMO 2001 P6: ab + cd is not prime",
+      "IMO 2001 第 6 題：ab + cd 不是質數"
+    ],
+    "summary": [
+      "Let $a > b > c > d > 0$ be integers with $ac + bd = (a + b - c + d)(-a + b + c + d)$. Prove that $ab + cd$ is not prime. Lean states it over `ℤ` (so the subtractions are the usual ones) with `Prime`, the general notion of a prime element of a ring; for a positive integer it agrees with the usual one.",
+      "設整數 $a > b > c > d > 0$ 滿足 $ac + bd = (a + b - c + d)(-a + b + c + d)$。證明 $ab + cd$ 不是質數。Lean 在 `ℤ` 上陳述（所以減法是平常的減法），用的是 `Prime`，即環中「質元素」的一般概念；對正整數它與平常的質數一致。"
+    ],
+    "tags": [
+      [
+        "IMO 2001 P6",
+        "IMO 2001 第 6 題"
+      ],
+      [
+        "Number theory",
+        "數論"
+      ]
+    ],
+    "source": {
+      "name": "compfiles",
+      "url": "https://github.com/dwrensha/compfiles/blob/d5377252e05b2a66b3d79974987dbe04e153f588/Compfiles/Imo2001P6.lean",
+      "licence": "Apache-2.0",
+      "authors": "Sara Díaz Real",
+      "via": "https://github.com/leanprover-community/mathlib4/blob/master/Archive/Imo/Imo2001Q6.lean",
+      "changes": [
+        "Ported from compfiles: the `module` and `public import` lines become `import Mathlib`; compfiles' `problem_file` header and its `snip begin` / `snip end` markers are removed; `problem` becomes `theorem` and `determine` becomes `abbrev`. The proof is unchanged and compiles against Mathlib v4.34.1.",
+        "移植自 compfiles：`module` 與 `public import` 改成 `import Mathlib`；拿掉 compfiles 的 `problem_file` 標頭與 `snip begin` / `snip end` 標記；`problem` 改成 `theorem`、`determine` 改成 `abbrev`。證明本身沒有改動，並在 Mathlib v4.34.1 上編譯通過。"
+      ]
+    },
+    "statements": [
+      "theorem imo2001_p6 {a b c d : ℤ} (hd : 0 < d) (hdc : d < c) (hcb : c < b) (hba : b < a)\n    (h : a * c + b * d = (a + b - c + d) * (-a + b + c + d)) : ¬Prime (a * b + c * d)"
+    ],
+    "theorems": [
+      "Imo2001P6.imo2001_p6"
+    ],
+    "start": "import Mathlib\n\n/-\nCopyright (c) 2021 Sara Díaz Real. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Sara Díaz Real\n-/\n\n/-!\n# International Mathematical Olympiad 2001, Problem 6\n\nLet a, b, c, d be integers with a > b > c > d > 0. Suppose that\n\n  ac + bd = (a + b - c + d) * (-a + b + c + d).\n\nProve that ab + cd is not prime.\n-/\n\nnamespace Imo2001P6\n\ntheorem imo2001_p6 {a b c d : ℤ} (hd : 0 < d) (hdc : d < c) (hcb : c < b) (hba : b < a)\n    (h : a * c + b * d = (a + b - c + d) * (-a + b + c + d)) : ¬Prime (a * b + c * d) := by\n  sorry\n\nend Imo2001P6\n",
+    "tactics": [],
+    "steps": [],
+    "hint": [
+      "The key step: $ac + bd$ divides $(ab + cd)(ad + bc)$ (`linear_combination` with the hypothesis). If $ab + cd$ were prime, it would divide $ac + bd$, or $ac + bd$ would divide $ad + bc$; the size comparisons $ab + cd > ac + bd > ad + bc$ (`nlinarith`) rule out both.",
+      "關鍵一步：$ac + bd$ 整除 $(ab + cd)(ad + bc)$（用假設做 `linear_combination`）。若 $ab + cd$ 是質數，那它整除 $ac + bd$，或者 $ac + bd$ 整除 $ad + bc$；大小比較 $ab + cd > ac + bd > ad + bc$（`nlinarith`）把兩種情形都排除。"
+    ],
+    "solution": "import Mathlib\n\n/-\nCopyright (c) 2021 Sara Díaz Real. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Sara Díaz Real\n-/\n\n/-!\n# International Mathematical Olympiad 2001, Problem 6\n\nLet a, b, c, d be integers with a > b > c > d > 0. Suppose that\n\n  ac + bd = (a + b - c + d) * (-a + b + c + d).\n\nProve that ab + cd is not prime.\n-/\n\nnamespace Imo2001P6\n\ntheorem imo2001_p6 {a b c d : ℤ} (hd : 0 < d) (hdc : d < c) (hcb : c < b) (hba : b < a)\n    (h : a * c + b * d = (a + b - c + d) * (-a + b + c + d)) : ¬Prime (a * b + c * d) := by\n  intro (h0 : Prime (a * b + c * d))\n  have ha : 0 < a := by lia\n  have hb : 0 < b := by lia\n  have hc : 0 < c := by lia\n  -- the key step is to show that `a*c + b*d` divides the product `(a*b + c*d) * (a*d + b*c)`\n  have dvd_mul : a * c + b * d ∣ (a * b + c * d) * (a * d + b * c) := by\n    use b ^ 2 + b * d + d ^ 2\n    linear_combination b * d * h\n  -- since `a*b + c*d` is prime (by assumption), it must divide `a*c + b*d` or `a*d + b*c`\n  obtain (h1 : a * b + c * d ∣ a * c + b * d) | (h2 : a * c + b * d ∣ a * d + b * c) :=\n    h0.left_dvd_or_dvd_right_of_dvd_mul dvd_mul\n  -- in both cases, we derive a contradiction\n  · have aux : 0 < a * c + b * d := by positivity\n    have : a * b + c * d ≤ a * c + b * d := Int.le_of_dvd aux h1\n    nlinarith only [hba, hcb, hdc, h, this]\n  · have aux : 0 < a * d + b * c := by positivity\n    have : a * c + b * d ≤ a * d + b * c := Int.le_of_dvd aux h2\n    nlinarith only [hba, hdc, h, this]\n\nend Imo2001P6\n"
+  },
+  {
+    "id": "imo-2005-p3",
+    "level": "L3",
+    "runner": "full",
+    "title": [
+      "IMO 2005 P3: an inequality with fifth powers",
+      "IMO 2005 第 3 題：五次方的不等式"
+    ],
+    "summary": [
+      "For positive reals $x, y, z$ with $xyz \\ge 1$: $\\frac{x^5 - x^2}{x^5 + y^2 + z^2} + \\frac{y^5 - y^2}{y^5 + z^2 + x^2} + \\frac{z^5 - z^2}{z^5 + x^2 + y^2} \\ge 0$. In Lean `/` returns $0$ for a zero denominator, but here every denominator is positive, so the statement means exactly the original.",
+      "對正實數 $x, y, z$，若 $xyz \\ge 1$，則 $\\frac{x^5 - x^2}{x^5 + y^2 + z^2} + \\frac{y^5 - y^2}{y^5 + z^2 + x^2} + \\frac{z^5 - z^2}{z^5 + x^2 + y^2} \\ge 0$。在 Lean 裡分母為零時 `/` 會回傳 $0$，但這裡每個分母都是正的，所以陳述的意思與原題完全相同。"
+    ],
+    "tags": [
+      [
+        "IMO 2005 P3",
+        "IMO 2005 第 3 題"
+      ],
+      [
+        "Algebra",
+        "代數"
+      ]
+    ],
+    "source": {
+      "name": "compfiles",
+      "url": "https://github.com/dwrensha/compfiles/blob/d5377252e05b2a66b3d79974987dbe04e153f588/Compfiles/Imo2005P3.lean",
+      "licence": "Apache-2.0",
+      "authors": "Manuel Candales",
+      "via": "https://github.com/leanprover-community/mathlib4/blob/master/Archive/Imo/Imo2005Q3.lean",
+      "changes": [
+        "Ported from compfiles: the `module` and `public import` lines become `import Mathlib`; compfiles' `problem_file` header and its `snip begin` / `snip end` markers are removed; `problem` becomes `theorem` and `determine` becomes `abbrev`. The proof is unchanged and compiles against Mathlib v4.34.1.",
+        "移植自 compfiles：`module` 與 `public import` 改成 `import Mathlib`；拿掉 compfiles 的 `problem_file` 標頭與 `snip begin` / `snip end` 標記；`problem` 改成 `theorem`、`determine` 改成 `abbrev`。證明本身沒有改動，並在 Mathlib v4.34.1 上編譯通過。"
+      ]
+    },
+    "statements": [
+      "theorem imo2005_p3 (x y z : ℝ) (hx : x > 0) (hy : y > 0) (hz : z > 0) (h : x * y * z ≥ 1) :\n    (x ^ 5 - x ^ 2) / (x ^ 5 + y ^ 2 + z ^ 2) + (y ^ 5 - y ^ 2) / (y ^ 5 + z ^ 2 + x ^ 2) +\n        (z ^ 5 - z ^ 2) / (z ^ 5 + x ^ 2 + y ^ 2) ≥\n      0"
+    ],
+    "theorems": [
+      "Imo2005P3.imo2005_p3"
+    ],
+    "start": "import Mathlib\n\n/-\nCopyright (c) 2021 Manuel Candales. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Manuel Candales\n-/\n\n/-!\n# International Mathematical Olympiad 2005, Problem 3\nLet `x`, `y` and `z` be positive real numbers such that `xyz ≥ 1`. Prove that:\n`(x^5 - x^2)/(x^5 + y^2 + z^2) + (y^5 - y^2)/(y^5 + z^2 + x^2) + (z^5 - z^2)/(z^5 + x^2 + y^2) ≥ 0`\n-/\n\nnamespace Imo2005P3\n\ntheorem imo2005_p3 (x y z : ℝ) (hx : x > 0) (hy : y > 0) (hz : z > 0) (h : x * y * z ≥ 1) :\n    (x ^ 5 - x ^ 2) / (x ^ 5 + y ^ 2 + z ^ 2) + (y ^ 5 - y ^ 2) / (y ^ 5 + z ^ 2 + x ^ 2) +\n        (z ^ 5 - z ^ 2) / (z ^ 5 + x ^ 2 + y ^ 2) ≥\n      0 := by\n  sorry\n\nend Imo2005P3\n",
+    "tactics": [],
+    "steps": [],
+    "hint": [
+      "Iurie Boreico's solution (a special prize at IMO 2005), as the file explains: each term is at least $\\frac{x^2 - yz}{x^2 + y^2 + z^2}$ (`key_insight`, by `field_simp`, `ring` and `gcongr`), and those three add up to $\\frac{(x-y)^2 + (y-z)^2 + (z-x)^2}{2(x^2+y^2+z^2)} \\ge 0$.",
+      "Iurie Boreico 的解法（在 2005 年 IMO 得到特別獎），檔案裡有說明：每一項都至少是 $\\frac{x^2 - yz}{x^2 + y^2 + z^2}$（`key_insight`，用 `field_simp`、`ring` 與 `gcongr`），而這三項加起來是 $\\frac{(x-y)^2 + (y-z)^2 + (z-x)^2}{2(x^2+y^2+z^2)} \\ge 0$。"
+    ],
+    "solution": "import Mathlib\n\n/-\nCopyright (c) 2021 Manuel Candales. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Manuel Candales\n-/\n\n/-!\n# International Mathematical Olympiad 2005, Problem 3\nLet `x`, `y` and `z` be positive real numbers such that `xyz ≥ 1`. Prove that:\n`(x^5 - x^2)/(x^5 + y^2 + z^2) + (y^5 - y^2)/(y^5 + z^2 + x^2) + (z^5 - z^2)/(z^5 + x^2 + y^2) ≥ 0`\n-/\n\nnamespace Imo2005P3\n\n/-\n# Solution\nThe solution by Iurie Boreico from Moldova is presented, which won a special prize during the exam.\nThe key insight is that `(x^5-x^2)/(x^5+y^2+z^2) ≥ (x^2-y*z)/(x^2+y^2+z^2)`, which is proven by\nfactoring `(x^5-x^2)/(x^5+y^2+z^2) - (x^5-x^2)/(x^3*(x^2+y^2+z^2))` into a non-negative expression\nand then making use of `xyz ≥ 1` to show `(x^5-x^2)/(x^3*(x^2+y^2+z^2)) ≥ (x^2-y*z)/(x^2+y^2+z^2)`.\n-/\n\ntheorem key_insight (x y z : ℝ) (hx : x > 0) (hy : y > 0) (hz : z > 0) (h : x * y * z ≥ 1) :\n    (x ^ 5 - x ^ 2) / (x ^ 5 + y ^ 2 + z ^ 2) ≥ (x ^ 2 - y * z) / (x ^ 2 + y ^ 2 + z ^ 2) := by\n  have key :\n    (x ^ 5 - x ^ 2) / (x ^ 5 + y ^ 2 + z ^ 2) -\n        (x ^ 5 - x ^ 2 * 1) / (x ^ 3 * (x ^ 2 + y ^ 2 + z ^ 2)) =\n      (x ^ 3 - 1) ^ 2 * x ^ 2 * (y ^ 2 + z ^ 2) /\n        ((x ^ 5 + y ^ 2 + z ^ 2) * (x ^ 3 * (x ^ 2 + y ^ 2 + z ^ 2))) := by\n    field_simp\n    ring\n  have h₅ :\n    (x ^ 3 - 1) ^ 2 * x ^ 2 * (y ^ 2 + z ^ 2) /\n        ((x ^ 5 + y ^ 2 + z ^ 2) * (x ^ 3 * (x ^ 2 + y ^ 2 + z ^ 2))) ≥ 0 := by positivity\n  calc\n    (x ^ 5 - x ^ 2) / (x ^ 5 + y ^ 2 + z ^ 2)\n      ≥ (x ^ 5 - x ^ 2 * 1) / (x ^ 3 * (x ^ 2 + y ^ 2 + z ^ 2)) := by linarith only [key, h₅]\n    _ ≥ (x ^ 5 - x ^ 2 * (x * y * z)) / (x ^ 3 * (x ^ 2 + y ^ 2 + z ^ 2)) := by gcongr\n    _ = (x ^ 2 - y * z) / (x ^ 2 + y ^ 2 + z ^ 2) := by field_simp\n\ntheorem imo2005_p3 (x y z : ℝ) (hx : x > 0) (hy : y > 0) (hz : z > 0) (h : x * y * z ≥ 1) :\n    (x ^ 5 - x ^ 2) / (x ^ 5 + y ^ 2 + z ^ 2) + (y ^ 5 - y ^ 2) / (y ^ 5 + z ^ 2 + x ^ 2) +\n        (z ^ 5 - z ^ 2) / (z ^ 5 + x ^ 2 + y ^ 2) ≥\n      0 := by\n  calc\n    (x ^ 5 - x ^ 2) / (x ^ 5 + y ^ 2 + z ^ 2) + (y ^ 5 - y ^ 2) / (y ^ 5 + z ^ 2 + x ^ 2) +\n          (z ^ 5 - z ^ 2) / (z ^ 5 + x ^ 2 + y ^ 2) ≥\n        (x ^ 2 - y * z) / (x ^ 2 + y ^ 2 + z ^ 2) + (y ^ 2 - z * x) / (y ^ 2 + z ^ 2 + x ^ 2) +\n          (z ^ 2 - x * y) / (z ^ 2 + x ^ 2 + y ^ 2) := by\n      gcongr ?_ + ?_ + ?_ <;> apply key_insight <;> linarith\n    _ = 1 / 2 * ((x - y) ^ 2 + (y - z) ^ 2 + (z - x) ^ 2) / (x ^ 2 + y ^ 2 + z ^ 2) := by ring\n    _ ≥ 0 := by positivity\n\nend Imo2005P3\n"
+  }
+]

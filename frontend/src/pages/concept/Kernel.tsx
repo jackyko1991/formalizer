@@ -1,6 +1,8 @@
 /** Concept ▸ How Lean checks (#/concept/kernel[/<section>]). Lean code: lean/Formalizer/Pages/Kernel.lean. */
 import { useLang } from "@learnkit/web";
+import { useState } from "react";
 import { Callout, Figure, Lean, List, P, Page, Section, SiteLink, snippet, Sources, Table, TryIn, type L, type SectionInfo } from "../kit";
+import { FourGatesMini, useReducedMotion } from "./CheckerFigures";
 
 const PAGE = "kernel";
 
@@ -121,9 +123,9 @@ function PipelineFigure() {
     >
       <ArrowHead />
       <Box x={8} y={40} w={110} h={64} title={pick(["Your file", "你的檔案"])} lines={[pick(["plain text", "純文字"])]} />
-      <Box x={150} y={40} w={110} h={64} title={pick(["Parser", "解析器"])} lines={[pick(["text → syntax", "文字 → 語法樹"])]} />
+      <Box x={140} y={40} w={110} h={64} title={pick(["Parser", "解析器"])} lines={[pick(["text → syntax", "文字 → 語法樹"])]} />
       <Box
-        x={292}
+        x={280}
         y={28}
         w={150}
         h={88}
@@ -137,11 +139,11 @@ function PipelineFigure() {
       <Box x={486} y={40} w={104} h={64} title={pick(["Kernel", "核心"])} lines={[pick(["checks the term", "檢查證明項"])]} tone="accent" />
       <circle cx={652} cy={72} r={17} className="fill-green-600" />
       <path d="M643,72 l6,6.5 l11,-12" className="fill-none stroke-white" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
-      <Arrow x1={118} y1={72} x2={148} y2={72} />
-      <Arrow x1={260} y1={72} x2={290} y2={72} />
-      <Arrow x1={442} y1={72} x2={484} y2={72} label={pick(["term", "證明項"])} />
+      <Arrow x1={118} y1={72} x2={138} y2={72} />
+      <Arrow x1={250} y1={72} x2={278} y2={72} />
+      <Arrow x1={430} y1={72} x2={484} y2={72} label={pick(["term", "證明項"])} />
       <Arrow x1={590} y1={72} x2={633} y2={72} />
-      <text x={367} y={16} textAnchor="middle" className="fill-gray-500 text-[10.5px]">
+      <text x={355} y={16} textAnchor="middle" className="fill-gray-500 text-[10.5px]">
         {pick(["large, clever, extensible: may have bugs", "龐大、聰明、可擴充：可能有 bug"])}
       </text>
       <Box
@@ -158,10 +160,383 @@ function PipelineFigure() {
         ]}
         tone="muted"
       />
-      <Arrow x1={367} y1={176} x2={367} y2={118} dashed />
+      <Arrow x1={355} y1={176} x2={355} y2={118} dashed />
       <Arrow x1={538} y1={176} x2={538} y2={106} dashed />
       <text x={652} y={112} textAnchor="middle" className="fill-gray-600 text-[10.5px]">
         {pick(["added", "加入環境"])}
+      </text>
+    </svg>
+  );
+}
+
+function Toggle({ options, value, onChange }: { options: L[]; value: number; onChange: (i: number) => void }) {
+  const { pick } = useLang();
+  return (
+    <div className="mb-3 flex flex-wrap justify-center gap-1">
+      {options.map((o, i) => (
+        <button
+          key={i}
+          onClick={() => onChange(i)}
+          aria-pressed={i === value}
+          className={`rounded-full px-3 py-1 text-xs ${i === value ? "bg-(--lk-accent) text-white" : "bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-gray-100"}`}
+        >
+          {pick(o)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const MONO = "ui-monospace, SFMono-Regular, Menlo, monospace";
+
+/** `1 + 2 : Nat` as you wrote it, and the tree the elaborator built, coloured by what was filled in. */
+function ElaborateFigure() {
+  const { pick } = useLang();
+  const reduced = useReducedMotion();
+  const [built, setBuilt] = useState(1);
+  const fade = (show: boolean) => ({ opacity: show ? 1 : 0, transition: reduced ? "none" : "opacity 400ms" });
+  const kinds = {
+    notation: "fill-teal-50 stroke-teal-600",
+    type: "fill-sky-50 stroke-sky-500",
+    inst: "fill-violet-50 stroke-violet-400",
+    num: "fill-amber-50 stroke-amber-500",
+  };
+  // child nodes: x centre, width, label (built), label (written) or null if it only exists once built, kind
+  const kids: { x: number; w: number; built: string; wrote: string | null; kind: keyof typeof kinds }[] = [
+    { x: 34, w: 50, built: "Nat", wrote: null, kind: "type" },
+    { x: 92, w: 50, built: "Nat", wrote: null, kind: "type" },
+    { x: 150, w: 50, built: "Nat", wrote: null, kind: "type" },
+    { x: 290, w: 164, built: "instHAdd Nat instAddNat", wrote: null, kind: "inst" },
+    { x: 458, w: 130, built: "OfNat.ofNat Nat 1 _", wrote: "1", kind: "num" },
+    { x: 604, w: 130, built: "OfNat.ofNat Nat 2 _", wrote: "2", kind: "num" },
+  ];
+  const b = built === 1;
+  return (
+    <div className="w-full">
+      <Toggle
+        options={[
+          ["What you wrote", "你寫的"],
+          ["What Lean built", "Lean 建出來的"],
+        ]}
+        value={built}
+        onChange={setBuilt}
+      />
+      <svg viewBox="0 0 680 210" className="w-full max-w-[680px]" role="img" aria-label={pick(["Elaboration fills in what you left out", "精煉補上你省略的部分"])}>
+        {kids.map((k, i) => (
+          <line key={i} x1={340} y1={58} x2={k.x} y2={110} strokeWidth={1.4} className="stroke-gray-300" style={fade(b || k.wrote !== null)} />
+        ))}
+        <rect x={b ? 280 : 316} y={26} width={b ? 120 : 48} height={32} rx={8} className={kinds.notation} strokeWidth={1.4} style={{ transition: reduced ? "none" : "all 400ms" }} />
+        <text x={340} y={47} textAnchor="middle" fontSize={13} fontFamily={MONO} className="fill-gray-900 font-semibold">
+          {b ? "HAdd.hAdd" : "+"}
+        </text>
+        {kids.map((k, i) => {
+          const show = b || k.wrote !== null;
+          const w = b ? k.w : 36;
+          return (
+            <g key={i} style={fade(show)}>
+              <rect x={k.x - w / 2} y={110} width={w} height={30} rx={7} className={kinds[k.kind]} strokeWidth={1.3} />
+              <text x={k.x} y={129.5} textAnchor="middle" fontSize={b ? 10.5 : 13} fontFamily={MONO} className="fill-gray-900">
+                {b ? k.built : (k.wrote ?? "")}
+              </text>
+            </g>
+          );
+        })}
+        <g style={fade(b)}>
+          <text x={92} y={160} textAnchor="middle" fontSize={10.5} className="fill-sky-700">
+            {pick(["types: from your `: Nat`", "型別：從你寫的 `: Nat`"])}
+          </text>
+          <text x={290} y={160} textAnchor="middle" fontSize={10.5} className="fill-violet-700">
+            {pick(["instance: found by type class search", "實例：由型別類別搜尋找到"])}
+          </text>
+          <text x={531} y={160} textAnchor="middle" fontSize={10.5} className="fill-amber-700">
+            {pick(["numerals: through OfNat", "數字：經過 OfNat"])}
+          </text>
+          <text x={430} y={30} fontSize={10.5} className="fill-teal-700">
+            {pick(["notation: `+` is HAdd.hAdd", "記號：`+` 就是 HAdd.hAdd"])}
+          </text>
+        </g>
+        <text x={340} y={195} textAnchor="middle" fontSize={11} className="fill-gray-500">
+          {b
+            ? pick(["three nodes became nine: the kernel sees only this tree", "三個節點變成九個：核心只看得到這棵樹"])
+            : pick(["three things on the page: 1, +, 2", "頁面上只有三樣東西：1、+、2"])}
+        </text>
+      </svg>
+    </div>
+  );
+}
+
+const TERM_STEPS: { line: number; hole: boolean; title: L }[] = [
+  { line: 0, hole: true, title: ["Start: one hole, the whole goal", "開始：一個洞，就是整個目標"] },
+  { line: 1, hole: true, title: ["`obtain` splits `h`; a smaller hole remains", "`obtain` 拆開 `h`；剩下一個較小的洞"] },
+  { line: 2, hole: false, title: ["`exact` fills the last hole: a complete term", "`exact` 填上最後一個洞：完整的項"] },
+];
+
+/** A tactic proof building its term: each tactic replaces a hole (amber) with a piece of term. */
+function TermFigure() {
+  const { pick } = useLang();
+  const [i, setI] = useState(0);
+  const s = TERM_STEPS[i];
+  // script rows: the theorem line is shown over two rows (it is one line, numbered 0)
+  const script: [string, number][] = [
+    ["theorem and_swap (p q : Prop) (h : p ∧ q) :", 0],
+    ["    q ∧ p := by", 0],
+    ["  obtain ⟨hp, hq⟩ := h", 1],
+    ["  exact ⟨hq, hp⟩", 2],
+  ];
+  const node = (x: number, y: number, w: number, label: string, cls: string, dashed = false) => (
+    <g>
+      <rect x={x - w / 2} y={y - 14} width={w} height={28} rx={7} className={cls} strokeWidth={1.4} strokeDasharray={dashed ? "4 3" : undefined} />
+      <text x={x} y={y + 4.5} textAnchor="middle" fontSize={11.5} fontFamily={MONO} className="fill-gray-900">
+        {label}
+      </text>
+    </g>
+  );
+  const hole = "fill-amber-50 stroke-amber-500";
+  const term = "fill-white stroke-gray-400";
+  const done = "fill-emerald-50 stroke-emerald-500";
+  return (
+    <div className="w-full">
+      <Toggle options={TERM_STEPS.map((t, k) => [`${k + 1}. ${t.title[0]}`, `${k + 1}. ${t.title[1]}`] as L)} value={i} onChange={setI} />
+      <svg viewBox="0 0 680 230" className="w-full max-w-[680px]" role="img" aria-label={pick(["Tactics build a proof term", "戰術建出證明項"])}>
+        {script.map(([l, n], k) => (
+          <g key={k}>
+            <rect x={8} y={30 + k * 26} width={300} height={22} rx={4} className={n <= s.line && n > 0 ? "fill-teal-50" : n === 0 ? "fill-gray-100" : "fill-transparent"} />
+            <text x={14} y={45 + k * 26} fontSize={10} fontFamily={MONO} className={n <= s.line ? "fill-gray-900" : "fill-gray-300"}>
+              {l}
+            </text>
+          </g>
+        ))}
+        <text x={14} y={152} fontSize={10.5} className="fill-gray-500">
+          {pick(["the tactics you write", "你寫的戰術"])}
+        </text>
+        <line x1={322} y1={20} x2={322} y2={210} className="stroke-gray-200" />
+        <text x={500} y={18} textAnchor="middle" fontSize={10.5} className="fill-gray-500">
+          {pick(["the term Lean builds", "Lean 建出的項"])}
+        </text>
+        {node(500, 44, 130, "fun p q h ↦", term)}
+        <line x1={500} y1={58} x2={500} y2={76} className="stroke-gray-400" />
+        {s.line === 0 && node(500, 90, 150, "?_ : q ∧ p", hole, true)}
+        {s.line >= 1 && (
+          <>
+            {node(500, 90, 130, "And.casesOn h", term)}
+            <line x1={500} y1={104} x2={500} y2={122} className="stroke-gray-400" />
+            {node(500, 136, 130, "fun hp hq ↦", term)}
+            <line x1={500} y1={150} x2={500} y2={168} className="stroke-gray-400" />
+            {s.hole ? (
+              <>
+                {node(500, 182, 150, "?_ : q ∧ p", hole, true)}
+                <text x={588} y={186} fontSize={10} className="fill-amber-700">
+                  hp : p, hq : q
+                </text>
+              </>
+            ) : (
+              node(500, 182, 110, "⟨hq, hp⟩", done)
+            )}
+          </>
+        )}
+        <text x={14} y={206} fontSize={11} className={s.hole ? "fill-amber-700" : "fill-emerald-700"}>
+          {s.hole ? pick(["◐ holes left = goals in the panel", "◐ 剩下的洞 = 面板上的目標"]) : pick(["✓ no holes: this term goes to the kernel", "✓ 沒有洞：這個項交給核心"])}
+        </text>
+      </svg>
+    </div>
+  );
+}
+
+/** The elaborator: big, extensible, untrusted. The kernel: a narrow gate with a short list of rules. */
+function KernelGateFigure() {
+  const { pick } = useLang();
+  const parts = ["simp", "omega", "decide", "notation", "type classes", "macros", "Mathlib tactics", "metaprograms", "exact?", "AI suggestions", "linarith", "induction"];
+  const rules: L[] = [
+    ["look up a constant", "查找常數"],
+    ["f a: a's type must match", "f a：a 的型別必須相符"],
+    ["λ and ∀: check under a binder", "λ 與 ∀：在約束變數下檢查"],
+    ["compute: unfold, substitute, reduce", "計算：展開、代入、化簡"],
+    ["inductive types and recursors", "歸納型別與遞迴子"],
+    ["universe levels", "宇宙層級"],
+  ];
+  return (
+    <svg viewBox="0 0 680 250" className="w-full max-w-[680px]" role="img" aria-label={pick(["The kernel is a small gate", "核心是一道窄門"])}>
+      <ArrowHead />
+      <rect x={8} y={20} width={300} height={200} rx={18} className="fill-gray-50 stroke-gray-300" strokeDasharray="5 4" />
+      <text x={158} y={40} textAnchor="middle" fontSize={12.5} className="fill-gray-900 font-semibold">
+        {pick(["Elaborator & tactics", "精煉器與戰術"])}
+      </text>
+      <text x={158} y={56} textAnchor="middle" fontSize={10.5} className="fill-gray-500">
+        {pick(["large, clever, anyone can extend it: untrusted", "龐大、聰明、誰都能擴充：不受信任"])}
+      </text>
+      {parts.map((p, k) => {
+        const col = k % 3;
+        const row = Math.floor(k / 3);
+        const x = 24 + col * 94 + (row % 2) * 10;
+        const y = 72 + row * 36;
+        return (
+          <g key={p}>
+            <rect x={x} y={y} width={84} height={26} rx={13} className="fill-white stroke-gray-300" />
+            <text x={x + 42} y={y + 17} textAnchor="middle" fontSize={10} fontFamily={MONO} className="fill-gray-600">
+              {p}
+            </text>
+          </g>
+        );
+      })}
+      <Arrow x1={310} y1={120} x2={376} y2={120} label={pick(["term", "證明項"])} />
+      {/* the gate */}
+      <rect x={378} y={30} width={10} height={70} className="fill-teal-700" />
+      <rect x={378} y={140} width={10} height={80} className="fill-teal-700" />
+      <rect x={392} y={30} width={196} height={190} rx={12} className="fill-teal-50 stroke-teal-600" strokeWidth={1.4} />
+      <text x={490} y={50} textAnchor="middle" fontSize={13} className="fill-teal-900 font-semibold">
+        {pick(["Kernel", "核心"])}
+      </text>
+      <text x={490} y={66} textAnchor="middle" fontSize={10} className="fill-teal-800">
+        {pick(["small, fixed rules: trusted", "小、規則固定：受信任"])}
+      </text>
+      {rules.map((r, k) => (
+        <g key={k}>
+          <rect x={402} y={76 + k * 23} width={176} height={19} rx={4} className="fill-white stroke-teal-200" />
+          <text x={410} y={89.5 + k * 23} fontSize={10} className="fill-gray-700">
+            {pick(r)}
+          </text>
+        </g>
+      ))}
+      <Arrow x1={590} y1={95} x2={628} y2={80} />
+      <Arrow x1={590} y1={160} x2={628} y2={176} />
+      <circle cx={648} cy={72} r={15} className="fill-green-600" />
+      <path d="M640,72 l5,5.5 l9.5,-10.5" fill="none" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" className="stroke-white" />
+      <circle cx={648} cy={184} r={15} className="fill-red-500" />
+      <text x={648} y={189} textAnchor="middle" fontSize={14} className="fill-white font-semibold">
+        ✖
+      </text>
+      <text x={648} y={212} textAnchor="middle" fontSize={10} className="fill-gray-500">
+        {pick(["reject", "拒絕"])}
+      </text>
+      <text x={648} y={104} textAnchor="middle" fontSize={10} className="fill-gray-500">
+        {pick(["accept", "接受"])}
+      </text>
+      <text x={340} y={244} textAnchor="middle" fontSize={10.5} className="fill-gray-500">
+        {pick(["no tactics, no notation, no search inside the gate: only these rules", "門內沒有戰術、沒有記號、沒有搜尋：只有這幾條規則"])}
+      </text>
+    </svg>
+  );
+}
+
+const AX_THMS = ["two_two", "pe", "em'", "todo"] as const;
+type AxNode = "Classical.em" | "funext" | "propext" | "Quot.sound" | "Classical.choice" | "sorryAx";
+const AX_EDGES: [string, AxNode][] = [
+  ["pe", "propext"],
+  ["em'", "Classical.em"],
+  ["Classical.em", "propext"],
+  ["Classical.em", "Classical.choice"],
+  ["Classical.em", "funext"],
+  ["funext", "Quot.sound"],
+  ["todo", "sorryAx"],
+];
+
+/** Axioms as the roots of a dependency tree: pick a theorem and follow it down. */
+function AxiomTreeFigure() {
+  const { pick } = useLang();
+  const [sel, setSel] = useState(2);
+  const pos: Record<string, [number, number, number]> = {
+    two_two: [90, 34, 90],
+    pe: [250, 34, 70],
+    "em'": [420, 34, 70],
+    todo: [590, 34, 70],
+    "Classical.em": [420, 100, 120],
+    funext: [520, 140, 80],
+    propext: [200, 196, 90],
+    "Quot.sound": [520, 196, 100],
+    "Classical.choice": [360, 196, 130],
+    sorryAx: [640, 196, 80],
+  };
+  // everything reachable from the selected theorem
+  const reach = new Set<string>([AX_THMS[sel]]);
+  for (let changed = true; changed; ) {
+    changed = false;
+    for (const [a, b] of AX_EDGES)
+      if (reach.has(a) && !reach.has(b)) {
+        reach.add(b);
+        changed = true;
+      }
+  }
+  const roots: string[] = ["propext", "Quot.sound", "Classical.choice", "sorryAx"];
+  return (
+    <div className="w-full">
+      <Toggle options={AX_THMS.map((t) => [t, t] as L)} value={sel} onChange={setSel} />
+      <svg viewBox="0 0 690 240" className="w-full max-w-[690px]" role="img" aria-label={pick(["Axioms are the roots", "公理是樹根"])}>
+        <rect x={145} y={176} width={440} height={40} rx={10} className="fill-violet-50/60" />
+        <text x={150} y={232} fontSize={10.5} className="fill-violet-700">
+          {pick(["the three standard axioms", "三條標準公理"])}
+        </text>
+        {AX_EDGES.map(([a, b]) => (
+          <line
+            key={a + b}
+            x1={pos[a][0]}
+            y1={pos[a][1] + 13}
+            x2={pos[b][0]}
+            y2={pos[b][1] - 13}
+            strokeWidth={reach.has(a) ? 2.2 : 1.2}
+            className={reach.has(a) ? (b === "sorryAx" ? "stroke-red-500" : "stroke-teal-600") : "stroke-gray-200"}
+          />
+        ))}
+        {Object.entries(pos).map(([k, [x, y, w]]) => {
+          const on = reach.has(k);
+          const root = roots.includes(k);
+          const cls = !on
+            ? "fill-white stroke-gray-300"
+            : k === "sorryAx"
+              ? "fill-red-50 stroke-red-500"
+              : root
+                ? "fill-violet-100 stroke-violet-500"
+                : "fill-teal-50 stroke-teal-600";
+          return (
+            <g key={k} onClick={() => AX_THMS.indexOf(k as (typeof AX_THMS)[number]) >= 0 && setSel(AX_THMS.indexOf(k as (typeof AX_THMS)[number]))}>
+              <rect x={x - w / 2} y={y - 13} width={w} height={26} rx={root ? 13 : 6} className={cls} strokeWidth={1.4} />
+              <text x={x} y={y + 4.5} textAnchor="middle" fontSize={11} fontFamily={MONO} className={on ? "fill-gray-900" : "fill-gray-400"}>
+                {k}
+              </text>
+            </g>
+          );
+        })}
+        {sel === 0 && (
+          <text x={90} y={72} textAnchor="middle" fontSize={10.5} className="fill-emerald-700">
+            {pick(["no axioms: pure computation", "沒有公理：純粹計算"])}
+          </text>
+        )}
+      </svg>
+    </div>
+  );
+}
+
+/** How checked work is reused: .lean → checked → .olean → import; Mathlib's cache built once on a server. */
+function OleanFigure() {
+  const { pick } = useLang();
+  return (
+    <svg viewBox="0 0 680 240" className="w-full max-w-[680px]" role="img" aria-label={pick([".olean files and Mathlib's cache", ".olean 檔與 Mathlib 的快取"])}>
+      <ArrowHead />
+      <text x={8} y={18} fontSize={11} className="fill-gray-500 font-semibold">
+        {pick(["Your project", "你的專案"])}
+      </text>
+      <Box x={8} y={28} w={110} h={54} title="Foo.lean" lines={[pick(["source text", "原始碼"])]} />
+      <Box x={160} y={28} w={150} h={54} title={pick(["elaborate + kernel", "精煉 + 核心"])} lines={[pick(["slow, once", "慢，只做一次"])]} tone="accent" />
+      <Box x={340} y={28} w={120} h={54} title="Foo.olean" lines={[pick(["checked terms, saved", "已檢查的項，存檔"])]} tone="muted" />
+      <Box x={536} y={28} w={136} h={54} title="import Foo" lines={[pick(["loaded in a blink", "一眨眼就載入"])]} />
+      <Arrow x1={118} y1={55} x2={158} y2={55} />
+      <Arrow x1={310} y1={55} x2={338} y2={55} />
+      <Arrow x1={460} y1={55} x2={534} y2={55} label={pick(["no re-check", "不重新檢查"])} />
+      <line x1={8} y1={108} x2={672} y2={108} className="stroke-gray-200" />
+      <text x={8} y={130} fontSize={11} className="fill-gray-500 font-semibold">
+        Mathlib
+      </text>
+      <Box x={8} y={140} w={150} h={58} title={pick(["Mathlib's servers", "Mathlib 的伺服器"])} lines={[pick(["build every file, hours", "建置每個檔案，數小時"])]} tone="accent" />
+      <Box x={200} y={140} w={150} h={58} title={pick(["Cache", "快取"])} lines={[pick(["thousands of .olean, GBs", "幾千個 .olean，好幾 GB"])]} tone="muted" />
+      <Box x={392} y={140} w={130} h={58} title="lake exe cache get" lines={[pick(["download, minutes", "下載，幾分鐘"])]} />
+      <Box x={562} y={140} w={110} h={58} title="import Mathlib" lines={[pick(["your machine", "你的電腦"])]} />
+      <Arrow x1={158} y1={169} x2={198} y2={169} />
+      <Arrow x1={350} y1={169} x2={390} y2={169} />
+      <Arrow x1={522} y1={169} x2={560} y2={169} />
+      <text x={340} y={228} textAnchor="middle" fontSize={10.5} className="fill-amber-700">
+        {pick([
+          "a downloaded .olean is trusted, not re-checked: `leanchecker` can replay it through the kernel",
+          "下載的 .olean 是被信任的，不會重新檢查：`leanchecker` 可以把它重新交給核心",
+        ])}
       </text>
     </svg>
   );
@@ -329,6 +704,14 @@ export default function KernelConcept({ section }: { section: string | null }) {
             "數學寫作省略了很多東西，Lean 程式碼也一樣。寫 `1 + 2` 時，你沒說是哪一種 `+`（自然數？整數？矩陣？），也沒說 `1` 是什麼東西。精煉器會把這些推出來。`#check` 顯示簡短的寫法；打開 `pp.explicit` 選項，Lean 就會顯示它真正建出來的東西：",
           ]}
         />
+        <Figure
+          caption={[
+            "Toggle between the three symbols you typed and the tree Lean actually built. Colours show what was filled in: the notation, the types, the instance, the numerals.",
+            "在你打的三個符號與 Lean 實際建出的樹之間切換。顏色標出補上的東西：記號、型別、實例、數字。",
+          ]}
+        >
+          <ElaborateFigure />
+        </Figure>
         <Lean code={snippet("Kernel", "elaborate")} />
         <Output text={OUT_ELABORATE} />
         <P
@@ -363,6 +746,14 @@ export default function KernelConcept({ section }: { section: string | null }) {
             "在 Lean 裡，證明不是一串步驟，而是一個 *項*：一個像程式一樣的運算式，它的型別就是它所證明的陳述。戰術是一種方便的寫法，讓你不必親手打出整個項。每個戰術填上一塊，留下空洞（就是面板上看到的目標）給後面的戰術。空洞都填滿了，項就完成了。`#print` 會顯示戰術證明產生的項：",
           ]}
         />
+        <Figure
+          caption={[
+            "Step through `and_swap`. Each tactic replaces a hole (amber, a goal in the panel) with a piece of term; when no hole is left, the term is complete.",
+            "一步步看 `and_swap`。每個戰術把一個洞（琥珀色，也就是面板上的目標）換成一塊項；沒有洞了，項就完成了。",
+          ]}
+        >
+          <TermFigure />
+        </Figure>
         <Lean code={snippet("Kernel", "tactic-term")} />
         <Output text={OUT_TERM} />
         <P
@@ -395,6 +786,14 @@ export default function KernelConcept({ section }: { section: string | null }) {
             "精煉器龐大又聰明，而且誰都能擴充它：光是 Mathlib 就自己加了大量戰術。龐大又聰明的程式碼一定有 bug。所以 Lean 不信任它。它產生的項會交給 **核心**：一個獨立、刻意保持小巧的型別檢查器，它對戰術、記號、型別類別一無所知，只依照一小組固定規則，檢查項的每一塊是否接得上，以及整個項的型別是否正好是陳述。",
           ]}
         />
+        <Figure
+          caption={[
+            "Everything on the left can be wrong without harm: whatever it produces must pass through the narrow gate, which knows only a handful of rules.",
+            "左邊的一切出錯都無妨：它產生的任何東西都必須穿過那道窄門，而門只認得少數幾條規則。",
+          ]}
+        >
+          <KernelGateFigure />
+        </Figure>
         <Callout kind="note" title={["The de Bruijn criterion", "de Bruijn 準則"]}>
           <P
             t={[
@@ -447,6 +846,14 @@ is false`}
             "每個證明最終都建立在不經證明就接受的東西上：**公理**。核心的規則是其中一部分；在此之上，Lean 裡的一般數學只用到三條公理，整個 Mathlib 都建立在它們上面。你可以問一個定理用了哪些公理，Lean 會順著它依賴的每個引理一路往下追：",
           ]}
         />
+        <Figure
+          caption={[
+            "Theorems at the top, axioms at the roots. Pick a theorem to light up everything it rests on: `two_two` rests on nothing, `em'` reaches all three standard axioms, `todo` reaches `sorryAx`.",
+            "定理在上，公理在根。選一個定理，點亮它所依賴的一切：`two_two` 什麼都不依賴，`em'` 用到全部三條標準公理，`todo` 則連到 `sorryAx`。",
+          ]}
+        >
+          <AxiomTreeFigure />
+        </Figure>
         <Lean code={snippet("Kernel", "axioms")} />
         <Output text={OUT_AXIOMS} />
         <Table
@@ -488,6 +895,14 @@ is false`}
             "檢查一個檔案很快，但前提是它匯入的東西都已經檢查過了。Lean 檢查完一個檔案，會把結果（每個定義和定理，都已精煉並通過核心檢查）存進一個編譯好的 **.olean** 檔。下一個寫 `import` 的檔案直接載入那個 .olean，不必全部重新檢查。Lean 本身就附帶了自己函式庫的 .olean 檔。",
           ]}
         />
+        <Figure
+          caption={[
+            "Checked once, reused forever. Top: your own files. Bottom: Mathlib, built on its servers and downloaded as a cache. Either way, what you import is loaded, not re-checked.",
+            "檢查一次，之後一直重用。上面：你自己的檔案。下面：Mathlib，在它的伺服器上建好、以快取下載。無論哪種，你匯入的東西都是載入，而不是重新檢查。",
+          ]}
+        >
+          <OleanFigure />
+        </Figure>
         <P
           t={[
             "Mathlib is far bigger, with thousands of files. Building it from source on a laptop takes hours, so you normally don't: the Mathlib project builds it once on its servers for each version, and running `lake exe cache get` in a project that uses Mathlib downloads the ready .olean files (several GB) instead. Formalizer's Full runner gets its Mathlib the same way.",
@@ -539,49 +954,19 @@ is false`}
       <Section page={PAGE} id="recheck" n={++n} title={SECTIONS[6].title}>
         <P
           t={[
-            "The kernel is small, but it is still a program, and the elaborator runs in the same process: in principle a malicious or buggy extension could slip something into the environment without the kernel ever seeing it. For results that matter, proofs are checked again, by separate tools:",
-            "核心雖小，終究也是一支程式，而且精煉器和它跑在同一個程序裡：理論上，惡意或有 bug 的擴充功能可能把東西偷偷塞進環境，而核心從頭到尾沒看過。對於重要的結果，證明會再由獨立的工具檢查一次：",
+            "A green check means the kernel accepted *a* proof of *what is written*. Before believing a big result, people ask four questions: is the statement right, does it compile, does it prove exactly that with only the standard axioms, and is the kernel itself sound?",
+            "綠色勾勾的意思是：核心接受了 *寫下來的陳述* 的 *某個* 證明。在相信一個重大結果之前，人們會問四個問題：陳述對嗎？能編譯嗎？它證的正是那個陳述、而且只用標準公理嗎？核心本身可靠嗎？",
           ]}
         />
-        <List
-          items={[
-            [
-              "**lean4checker** reloads the compiled .olean files and replays every declaration through the kernel again, in a fresh process with no tactics or extensions loaded. Since Lean v4.28.0 it ships with every Lean toolchain as `leanchecker` (run `lake env leanchecker` in a project).",
-              "**lean4checker** 重新載入編譯好的 .olean 檔，在一個沒有載入任何戰術或擴充功能的全新程序裡，把每個宣告再交給核心檢查一遍。從 Lean v4.28.0 起，它以 `leanchecker` 的名字隨每個 Lean 工具鏈發布（在專案裡執行 `lake env leanchecker`）。",
-            ],
-            [
-              "**lean4export** writes the declarations out in a plain text format, and **nanoda** is a second kernel, written independently in Rust, that type-checks that export. A bug would have to be in both kernels, in the same way, to let a false proof through.",
-              "**lean4export** 把宣告輸出成純文字格式，**nanoda** 則是用 Rust 獨立寫成的第二個核心，負責對這份輸出做型別檢查。錯誤的證明要能過關，兩個核心得在同一個地方有同樣的 bug。",
-            ],
-            [
-              "**Comparator**, from the Lean FRO, puts it together for a proof you didn't write (a contest entry, an AI's output): inside a sandbox it checks that the solution proves *exactly* the fixed challenge statement, uses only the three standard axioms, and is accepted by Lean's kernel, optionally by nanoda as well. From Lean v4.35.0 the same checks are built into Lean's build tool as `lake comparator` and `lake check`. Formalizer's hardest problems, the research-level ones, are Comparator challenges.",
-              "Lean FRO 的 **Comparator** 把這些組合起來，用來檢查不是你寫的證明（比賽作品、AI 的產出）：它在沙盒裡確認解答證明的 *正是* 固定的挑戰陳述、只用了三條標準公理，並被 Lean 的核心接受，也可以選擇再交給 nanoda 檢查。從 Lean v4.35.0 起，同樣的檢查已併入 Lean 的建置工具，成為 `lake comparator` 與 `lake check`。Formalizer 最難的研究級題目，就是 Comparator 挑戰。",
-            ],
+        <Figure
+          caption={[
+            "The four gates a proof passes. Statements are checked by people; the other gates by `leanchecker`, comparator and independent kernels such as nanoda.",
+            "證明要通過的四道關卡。陳述由人檢查；其他關卡則由 `leanchecker`、comparator 與 nanoda 之類的獨立核心把關。",
           ]}
-        />
-        <P
-          t={[
-            "Put together, the chain of trust is short: the kernel's rules (checked twice, by two independent programs), three axioms, and a statement you read yourself. Everything else, however long, can be wrong without harm, because it will be caught.",
-            "整理起來，信任的鏈條很短：核心的規則（由兩個獨立程式各檢查一次）、三條公理，以及一個你自己讀過的陳述。其餘的一切，不管多長，錯了也無妨，因為一定會被抓到。",
-          ]}
-        />
-        <Callout kind="tip">
-          <P
-            t={[
-              "The one part no checker can do for you is the statement: Lean confirms the proof proves *what is written*, not what you meant. Read the statement carefully.",
-              "唯一沒有檢查器能替你做的，是陳述本身：Lean 確認證明證的是 *寫下來的東西*，而不是你心裡想的東西。請仔細讀陳述。",
-            ]}
-          />
-          <SiteLink to={["concept", "limits"]} label={["What a check does not tell you", "檢查沒告訴你的事"]} />
-        </Callout>
-        <Sources
-          items={[
-            { label: "leanprover/lean4checker", url: "https://github.com/leanprover/lean4checker" },
-            { label: "ammkrn/nanoda_lib", url: "https://github.com/ammkrn/nanoda_lib" },
-            { label: "leanprover/lean4export", url: "https://github.com/leanprover/lean4export" },
-            { label: "leanprover/comparator", url: "https://github.com/leanprover/comparator" },
-          ]}
-        />
+        >
+          <FourGatesMini />
+        </Figure>
+        <SiteLink to={["concept", "checkers"]} label={["Checking the checker: the four gates in full", "檢查檢查者：四道關卡完整介紹"]} />
       </Section>
     </Page>
   );

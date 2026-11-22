@@ -1,5 +1,6 @@
 /**
- * Research ▸ the workspace for long proofs (#/research, #/research/<project>). Designed from the research brief:
+ * Research, in the Problems page's left column, for long proofs (#/problems/research[/<project>]; the old #/research
+ * addresses lead there). Designed from the research brief:
  * the blueprint (lemma graph, status computed by Lean) is the home view; one lemma at a time with its informal note
  * beside the Lean; the goals and messages of that lemma on the right; a next-step note so you can stop; a "where was
  * I" card when you come back; the working copy autosaves, and the free tier keeps one saved version (restore swaps
@@ -12,23 +13,20 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { H, layout } from "../graphLayout";
 import { mergeFiles, onAgentFiles, setAgentContext, type AgentContext } from "../agent/bus";
 import { cancelJob, followJob, listJobs, startJob, type JobInfo } from "../jobs";
+import { proEnabled } from "../checkers";
+import CheckersPanel from "../CheckersPanel";
 import { check, joinFiles, RunnerError, type CheckResult, type Decl, type LeanFile } from "../runner";
 import { runnerReady, useRunner } from "../RunnerPanel";
-import { blueprintGraph, counts, declAt, exportZip, lostSince, place, readZip, summarize, workable, type Meta, type Placed } from "./model";
-import {
-  browserStore,
-  diskStore,
-  FREE_PROJECTS,
-  fork,
-  newId,
-  protectBrowserStorage,
-  rename,
-  showcaseStore,
-  type ProjectInfo,
-  type SavedInfo,
-  type Store,
-} from "./store";
+import { lean } from "../leanLanguage";
+import { sorryMarks } from "../sorryMarks";
+import { showcaseOf } from "../routes";
+import { blueprintGraph, counts, declAt, exportZip, lostSince, place, progressOf, summarize, workable, type Meta, type Placed } from "./model";
+import { ago, download, openProject, startTemplate, templateMeta, useProjects, type Listed } from "./projects";
+import { browserStore, diskStore, protectBrowserStorage, showcaseStore, type SavedInfo, type Store } from "./store";
 import { finishedFiles, SHOWCASES, TEMPLATES, type Template } from "./templates";
+
+/** the editor: Lean colours, every `sorry` as a badge, long lines wrapped */
+const RESEARCH_EXTENSIONS = [...lean(), sorryMarks(-1, null), EditorView.lineWrapping];
 
 type L = readonly [string, string];
 const RESUME_AFTER_MS = 30 * 60 * 1000;
@@ -61,133 +59,23 @@ const STATUS: Record<Decl["status"], { glyph: string; cls: string; fill: string;
   def: { glyph: "·", cls: "bg-gray-50 text-gray-700 ring-gray-200", fill: "fill-white stroke-gray-400", label: ["Definition", "定義"] },
 };
 
-function ago(ms: number | undefined, pick: (v: L) => string): string {
-  if (!ms) return "";
-  const s = Math.max(0, Math.round((Date.now() - ms) / 1000));
-  if (s < 60) return pick([`${s} s ago`, `${s} 秒前`]);
-  if (s < 3600) return pick([`${Math.round(s / 60)} min ago`, `${Math.round(s / 60)} 分鐘前`]);
-  if (s < 86400) return pick([`${Math.round(s / 3600)} h ago`, `${Math.round(s / 3600)} 小時前`]);
-  return new Date(ms).toLocaleDateString();
-}
-
-function download(bytes: Uint8Array, name: string) {
-  const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/zip" }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-export default function ResearchPage({ id, section }: { id: string | null; section?: string | null }) {
-  if (id === "showcase") {
-    const t = SHOWCASES().find((x) => x.id === section);
-    return t ? <Workspace key={`showcase-${t.id}`} id={`showcase-${t.id}`} showcase={t} /> : <Home />;
-  }
+/**
+ * The research area on the Problems page: with no project, the research home (demos, templates, your projects); with
+ * one, its workspace. `id` is a project id, or `showcase-<demo>` for a demo's finished, read-only version.
+ */
+export default function ResearchPage({ id }: { id: string | null }) {
+  const demo = showcaseOf(id);
+  const shown = demo ? SHOWCASES().find((x) => x.id === demo) : undefined;
+  if (shown) return <Workspace key={`showcase-${shown.id}`} id={`showcase-${shown.id}`} showcase={shown} />;
   return id ? <Workspace key={id} id={id} /> : <Home />;
-}
-
-/** A demo's starting meta, in the reader's language. */
-function templateMeta(t: Template, pick: (v: L) => string): Meta {
-  return {
-    title: pick(t.title),
-    main: t.main,
-    statements: t.statements,
-    notes: Object.fromEntries(Object.entries(t.notes).map(([k, v]) => [k, pick(v)])),
-    next: {},
-    template: t.id,
-    lastVisit: Date.now(),
-  };
-}
-
-/** Start a project from a demo (its lemmas open) where projects are kept now; false when the free tier is full. */
-async function startTemplate(t: Template, pick: (v: L) => string, ready: boolean): Promise<boolean> {
-  const disk = ready ? await diskStore.list().catch(() => []) : [];
-  if (disk.length + (await browserStore.list()).length >= FREE_PROJECTS) return false;
-  const id = newId(t.id === "empty" ? "project" : t.id);
-  await (ready ? diskStore : browserStore).put(id, t.files, templateMeta(t, pick));
-  go("research", id);
-  return true;
 }
 
 // ---------------------------------------------------------------------------------------------------- home
 
 function Home() {
   const { pick } = useLang();
-  const { runner } = useRunner();
-  const ready = runnerReady(runner);
-  const [projects, setProjects] = useState<(ProjectInfo & { where: Store["kind"] })[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const store = ready ? diskStore : browserStore;
-  const [reload, setReload] = useState(0);
-
-  useEffect(() => {
-    let alive = true;
-    void (async () => {
-      const disk = ready ? await diskStore.list().catch(() => []) : [];
-      const browser = await browserStore.list();
-      if (alive)
-        setProjects([...disk.map((p) => ({ ...p, where: "disk" as const })), ...browser.map((p) => ({ ...p, where: "browser" as const }))]);
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [ready, reload]);
-  // the free tier keeps FREE_PROJECTS research projects: starting, importing or forking another waits for a delete
-  const full = projects.length >= FREE_PROJECTS;
-  const limitNote = pick([
-    `The free tier keeps ${FREE_PROJECTS} research project. To start another, export this one if you want to keep it, then delete it. More projects come with Pro (pending).`,
-    `免費版保留 ${FREE_PROJECTS} 個研究專案。要開始另一個，先匯出這個（如果想保留），再刪除它。更多專案會隨 Pro 推出（籌備中）。`,
-  ]);
-
-  async function act(what: () => Promise<unknown>) {
-    try {
-      setError(null);
-      await what();
-    } catch (e) {
-      setError(String(e));
-    }
-    setReload((n) => n + 1);
-  }
-
-  async function start(t: Template) {
-    if (full) return;
-    try {
-      if (!(await startTemplate(t, pick, ready))) setError(limitNote);
-    } catch (e) {
-      setError(String(e));
-    }
-  }
-
-  async function importFiles(list: FileList | null) {
-    if (!list?.length) return;
-    let files: LeanFile[] = [];
-    let meta: Partial<Meta> & { order?: string[] } = {};
-    for (const f of Array.from(list)) {
-      if (f.name.endsWith(".zip")) {
-        for (const e of readZip(new Uint8Array(await f.arrayBuffer()))) {
-          if (e.name === "formalizer.json") meta = JSON.parse(e.text);
-          else if (e.name.endsWith(".lean")) files.push({ name: e.name.split("/").pop()!, code: e.text });
-        }
-      } else if (f.name.endsWith(".lean")) files.push({ name: f.name, code: await f.text() });
-    }
-    if (full) return setError(limitNote);
-    if (!files.length) return setError(pick(["No .lean files found in what you chose.", "選取的檔案裡沒有 .lean 檔。"]));
-    if (meta.order)
-      files = [...meta.order.flatMap((n) => files.filter((f) => f.name === n)), ...files.filter((f) => !meta.order!.includes(f.name))];
-    const title = meta.title ?? files[files.length - 1].name.replace(/\.lean$/, "");
-    const imported: Meta = {
-      title,
-      main: meta.main ?? "",
-      statements: meta.statements ?? [],
-      notes: meta.notes ?? {},
-      next: meta.next ?? {},
-      lastVisit: Date.now(),
-    };
-    const id = newId(title);
-    await store.put(id, files, imported);
-    go("research", id);
-  }
+  const { projects: listed, ready, full, limitNote, error, start, importFiles, rename, fork, remove } = useProjects();
+  const projects = listed ?? [];
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-5 pt-6 pb-16" data-testid="research-home">
@@ -229,7 +117,7 @@ function Home() {
           {SHOWCASES().map((t) => (
             <button
               key={t.id}
-              onClick={() => go("research", "showcase", t.id)}
+              onClick={() => openProject(`showcase-${t.id}`)}
               className="flex flex-col rounded-xl border border-emerald-200 bg-white p-4 text-left hover:border-emerald-400 hover:shadow-sm"
               data-testid={`showcase-${t.id}`}
             >
@@ -303,9 +191,9 @@ function Home() {
                 project={p}
                 full={full}
                 limitNote={limitNote}
-                onRename={(title) => act(() => rename(p.where === "disk" ? diskStore : browserStore, p.id, title))}
-                onFork={(title) => act(async () => go("research", await fork(p.where === "disk" ? diskStore : browserStore, p.id, title)))}
-                onDelete={() => act(() => (p.where === "disk" ? diskStore : browserStore).remove(p.id))}
+                onRename={(title) => rename(p, title)}
+                onFork={(title) => fork(p, title)}
+                onDelete={() => remove(p)}
               />
             ))}
           </ul>
@@ -324,7 +212,7 @@ function ProjectRow({
   onFork,
   onDelete,
 }: {
-  project: ProjectInfo & { where: Store["kind"] };
+  project: Listed;
   full: boolean;
   limitNote: string;
   onRename: (title: string) => Promise<void>;
@@ -344,7 +232,7 @@ function ProjectRow({
   return (
     <li className="px-5 py-3" data-testid={`project-${p.id}`}>
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <button onClick={() => go("research", p.id)} className="font-medium text-gray-900 hover:text-(--lk-accent) hover:underline">
+        <button onClick={() => openProject(p.id)} className="font-medium text-gray-900 hover:text-(--lk-accent) hover:underline">
           {p.title}
         </button>
         <span className="text-xs text-gray-500">
@@ -544,6 +432,7 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
   const joined = useMemo(() => joinFiles(files), [files]);
   const main = meta?.main ?? "";
   const statements = useMemo(() => meta?.statements ?? [], [meta?.statements]);
+  const pro = useMemo(() => proEnabled(), []); // Formalizer Pro (pending): the Full checkers
   useEffect(() => {
     if (!ready || !files.length || meta === null) return;
     if (jobCode === joined.code) return; // a background check already has the result for exactly this code
@@ -648,6 +537,13 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
   }
   const jobActive = job && ["queued", "running"].includes(job.info.status);
 
+  // the blueprint's proved / total, kept in the meta (autosaved) for the home's project cards
+  useEffect(() => {
+    if (!result?.decls || showcase) return;
+    const p = progressOf(result.decls);
+    setMeta((m) => (!m || (m.progress?.proved === p.proved && m.progress?.total === p.total) ? m : { ...m, progress: p }));
+  }, [result, showcase]);
+
   const placed: Placed[] = useMemo(() => (result?.decls ? place(result.decls, result.where) : []), [result]);
   const byName = useMemo(() => new Map(placed.map((d) => [d.name, d])), [placed]);
   const decl = selected ? byName.get(selected) : undefined;
@@ -745,7 +641,7 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
     return (
       <div className="mx-auto max-w-xl px-5 py-16 text-center">
         <p className="text-gray-700">{pick(["This project isn't here. Is the runner running?", "找不到這個專案。執行器有在跑嗎？"])}</p>
-        <button onClick={() => go("research")} className="mt-4 text-(--lk-accent) hover:underline">
+        <button onClick={() => openProject()} className="mt-4 text-(--lk-accent) hover:underline">
           ◂ {pick(["All projects", "所有專案"])}
         </button>
       </div>
@@ -767,7 +663,7 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
     <div className="flex h-full min-h-0 flex-col bg-gray-50/60" data-testid="research-workspace">
       {/* top bar: where things are, quietly */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-gray-200 bg-white px-4 py-2 text-xs text-gray-600">
-        <button onClick={() => go("research")} className="text-(--lk-accent) hover:underline">
+        <button onClick={() => openProject()} className="text-(--lk-accent) hover:underline">
           ◂ {pick(["Projects", "專案"])}
         </button>
         {renaming !== null ? (
@@ -1093,7 +989,7 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
                       setMeta((m) => m && { ...m, lastDecl: d.name });
                     }
                   }}
-                  extensions={[EditorView.lineWrapping]}
+                  extensions={RESEARCH_EXTENSIONS}
                   basicSetup={{ foldGutter: false }}
                   className="font-mono text-sm"
                   data-testid="research-editor"
@@ -1198,6 +1094,18 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
               </p>
             </div>
           )}
+          {/* the independent checkers on the whole project: Lite for everyone, Full listed (Pro, on a Linux runner) */}
+          {meta && (
+            <CheckersPanel
+              code={joined.code}
+              theorems={main ? [main] : []}
+              statements={statements}
+              full
+              pro={pro}
+              verdict={result?.verdict}
+              scope="research"
+            />
+          )}
         </aside>
       </div>
 
@@ -1231,8 +1139,8 @@ function ShowcaseBanner({ template }: { template: Template }) {
       <span className="flex-1">
         {full
           ? pick([
-              "The free tier keeps one research project: delete yours on the Research page first (export it if you want to keep it).",
-              "免費版保留一個研究專案：請先到研究頁刪除你的專案（想保留的話先匯出）。",
+              "The free tier keeps one research project: delete yours in the Research list first (export it if you want to keep it).",
+              "免費版保留一個研究專案：請先在研究清單裡刪除你的專案（想保留的話先匯出）。",
             ])
           : pick([
               "Showcase: this demo finished, every lemma proved. Read-only: try it yourself from the start, with the lemmas open.",

@@ -24,7 +24,7 @@ def templates() -> list[dict]:
         "import('./frontend/src/research/templates.ts').then(m => console.log(JSON.stringify("
         "m.TEMPLATES.map(t => ({...t, finished: m.finishedFiles(t)})))))"
     )
-    out = subprocess.run([node, "-e", script], cwd=ROOT, capture_output=True, text=True, check=True)
+    out = subprocess.run([node, "-e", script], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", check=True)
     return json.loads(out.stdout)
 
 

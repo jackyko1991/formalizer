@@ -8,7 +8,17 @@ import pytest
 from fastapi.testclient import TestClient
 
 ROOT = Path(__file__).resolve().parents[1]
-REPL = ROOT / "lean" / ".lake" / "packages" / "REPL" / ".lake" / "build" / "bin" / "repl"
+REPL = (
+    ROOT
+    / "lean"
+    / ".lake"
+    / "packages"
+    / "REPL"
+    / ".lake"
+    / "build"
+    / "bin"
+    / ("repl.exe" if os.name == "nt" else "repl")
+)
 pytestmark = pytest.mark.skipif(
     not (shutil.which("lake") and REPL.exists()), reason="needs lake and `pixi run lean-build`"
 )

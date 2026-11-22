@@ -18,6 +18,12 @@ example (xs : List Nat) (h : xs.length = 3) : (xs ++ xs).length = 6 := by
     simp
   omega
 
+-- snippet: suffices
+example (xs : List Nat) (h : xs.length = 3) : (xs ++ xs).length = 6 := by
+  suffices hlen : (xs ++ xs).length = xs.length + xs.length by
+    omega
+  simp
+
 -- snippet: show
 def double (n : Nat) : Nat := n + n
 
@@ -92,6 +98,58 @@ example (n : Nat) : n + 1 = 3 ↔ n = 2 := by
     omega
   · intro h      -- goal 2:  n = 2 → n + 1 = 3
     rw [h]
+-- end
+
+-- The worked example, built the way it was planned: a skeleton of `sorry`s, filled one at a time.
+namespace Plan1
+-- snippet: plan-1
+theorem consecutive_even (n : Nat) : ∃ k, n * (n + 1) = 2 * k := by
+  sorry
+
+theorem square_add_even (n : Nat) : ∃ k, n * n + n = 2 * k := by
+  have h : n * n + n = n * (n + 1) := by
+    sorry
+  obtain ⟨k, hk⟩ := consecutive_even n
+  exact ⟨k, by rw [h, hk]⟩
+-- end
+end Plan1
+
+namespace Plan2
+theorem consecutive_even (n : Nat) : ∃ k, n * (n + 1) = 2 * k := by
+  sorry
+-- snippet: plan-2
+theorem square_add_even (n : Nat) : ∃ k, n * n + n = 2 * k := by
+  have h : n * n + n = n * (n + 1) := by
+    rw [Nat.mul_add, Nat.mul_one]
+  obtain ⟨k, hk⟩ := consecutive_even n
+  exact ⟨k, by rw [h, hk]⟩
+-- end
+end Plan2
+
+namespace Plan3
+-- snippet: plan-3
+theorem consecutive_even (n : Nat) : ∃ k, n * (n + 1) = 2 * k := by
+  induction n with
+  | zero => sorry
+  | succ m ih => sorry
+-- end
+end Plan3
+
+namespace Plan4
+-- snippet: plan-4
+theorem consecutive_even (n : Nat) : ∃ k, n * (n + 1) = 2 * k := by
+  induction n with
+  | zero => exact ⟨0, rfl⟩
+  | succ m ih =>
+    obtain ⟨k, hk⟩ := ih
+    refine ⟨k + (m + 1), ?_⟩
+    calc (m + 1) * (m + 1 + 1)
+        = (m + 2) * (m + 1) := by sorry
+      _ = m * (m + 1) + 2 * (m + 1) := by sorry
+      _ = 2 * k + 2 * (m + 1) := by sorry
+      _ = 2 * (k + (m + 1)) := by sorry
+-- end
+end Plan4
 
 -- snippet: worked
 /-- Helper lemma: the product of two consecutive numbers is even. -/

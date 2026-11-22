@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="The Fermat numbers F0 to F4 = 3, 5, 17, 257, 65537 are prime, but F5 = 2^32 + 1 = 4294967297 is not: a factor tree splits it as 641 × 6700417, Euler's factor of 1732." font-family="Noto Sans, ui-sans-serif, system-ui, sans-serif" font-size="11" fill="#111827">
+  <rect width="320" height="180" rx="8" fill="#ffffff"/>
+  <rect x="16" y="14" width="44" height="38" rx="5" fill="#ecfdf5" stroke="#059669" stroke-width="1"/>
+  <text x="38" y="28" fill="#374151" text-anchor="middle">F₀ <tspan fill="#059669">✓</tspan></text>
+  <text x="38" y="45" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="middle">3</text>
+  <rect x="65" y="14" width="44" height="38" rx="5" fill="#ecfdf5" stroke="#059669" stroke-width="1"/>
+  <text x="87" y="28" fill="#374151" text-anchor="middle">F₁ <tspan fill="#059669">✓</tspan></text>
+  <text x="87" y="45" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="middle">5</text>
+  <rect x="114" y="14" width="44" height="38" rx="5" fill="#ecfdf5" stroke="#059669" stroke-width="1"/>
+  <text x="136" y="28" fill="#374151" text-anchor="middle">F₂ <tspan fill="#059669">✓</tspan></text>
+  <text x="136" y="45" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="middle">17</text>
+  <rect x="163" y="14" width="44" height="38" rx="5" fill="#ecfdf5" stroke="#059669" stroke-width="1"/>
+  <text x="185" y="28" fill="#374151" text-anchor="middle">F₃ <tspan fill="#059669">✓</tspan></text>
+  <text x="185" y="45" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="middle">257</text>
+  <rect x="212" y="14" width="44" height="38" rx="5" fill="#ecfdf5" stroke="#059669" stroke-width="1"/>
+  <text x="234" y="28" fill="#374151" text-anchor="middle">F₄ <tspan fill="#059669">✓</tspan></text>
+  <text x="234" y="45" font-family="Source Code Pro, ui-monospace, monospace" text-anchor="middle">65537</text>
+  <rect x="261" y="14" width="44" height="38" rx="5" fill="#fef2f2" stroke="#dc2626" stroke-width="1"/>
+  <text x="283" y="28" fill="#374151" text-anchor="middle">F₅ <tspan fill="#dc2626">✗</tspan></text>
+  <text x="283" y="45" text-anchor="middle">2³²+1</text>
+  <line x1="287" y1="52" x2="212" y2="74" stroke="#dc2626" stroke-width="1.2" stroke-dasharray="3 2"/>
+  <rect x="108" y="70" width="104" height="24" rx="5" fill="#ffffff" stroke="#374151" stroke-width="1"/>
+  <text x="160" y="87" font-family="Source Code Pro, ui-monospace, monospace" font-size="13" text-anchor="middle">4294967297</text>
+  <line x1="140" y1="94" x2="102" y2="128" stroke="#9ca3af" stroke-width="1.5"/>
+  <line x1="180" y1="94" x2="216" y2="128" stroke="#9ca3af" stroke-width="1.5"/>
+  <rect x="72" y="128" width="60" height="24" rx="5" fill="#fef3c7" stroke="#d97706" stroke-width="1"/>
+  <text x="102" y="145" font-family="Source Code Pro, ui-monospace, monospace" font-size="13" fill="#d97706" text-anchor="middle" font-weight="bold">641</text>
+  <text x="154" y="145" font-size="13" fill="#374151" text-anchor="middle">×</text>
+  <rect x="176" y="128" width="80" height="24" rx="5" fill="#ffffff" stroke="#374151" stroke-width="1"/>
+  <text x="216" y="145" font-family="Source Code Pro, ui-monospace, monospace" font-size="13" text-anchor="middle">6700417</text>
+  <text x="160" y="170" fill="#6b7280" text-anchor="middle">Euler 1732</text>
+</svg>

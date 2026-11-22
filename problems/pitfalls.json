@@ -1,0 +1,145 @@
+[
+  {
+    "id": "pit-flt-zero",
+    "level": "L1",
+    "runner": "lite",
+    "title": [
+      "A false Fermat's Last Theorem",
+      "一個錯的費馬最後定理"
+    ],
+    "summary": [
+      "Kevin Buzzard's example (Xena blog, \"…and the proof is checked in Lean\", 12 November 2026): the Lean statement `∀ a b c n : ℕ, n ≥ 3 → a ^ n + b ^ n ≠ c ^ n` compiles, but it is **false**, because $0^3 + 0^3 = 0^3$. Fermat's Last Theorem itself is true (Wiles, 1995); what is wrong is the statement, which dropped the condition that $a, b, c$ are positive. Mathlib's version (`FermatLastTheoremWith`) asks for $a, b, c \\ne 0$. Prove the typed statement false, then check the corrected one on small numbers. Lesson: a proof can only be as right as its statement.",
+      "Kevin Buzzard 的例子（Xena 部落格〈…and the proof is checked in Lean〉，2026 年 11 月 12 日）：Lean 陳述 `∀ a b c n : ℕ, n ≥ 3 → a ^ n + b ^ n ≠ c ^ n` 可以編譯，但它是 **錯的**，因為 $0^3 + 0^3 = 0^3$。費馬最後定理本身是對的（Wiles，1995）；錯的是這個陳述，它漏掉了 $a, b, c$ 為正數的條件。Mathlib 的版本（`FermatLastTheoremWith`）要求 $a, b, c \\ne 0$。先證明打錯的陳述是錯的，再在小的數上檢查改正後的陳述。教訓：證明最多只能和它的陳述一樣正確。"
+    ],
+    "tags": [
+      [
+        "Statement error",
+        "陳述錯誤"
+      ],
+      [
+        "Buzzard 2026",
+        "Buzzard 2026"
+      ]
+    ],
+    "statements": [
+      "theorem flt_misstated : ¬ ∀ a b c n : Nat, n ≥ 3 → a ^ n + b ^ n ≠ c ^ n",
+      "theorem flt_three_small : ∀ a, a < 10 → ∀ b, b < 10 → ∀ c, c < 10 →\n    0 < a ∧ 0 < b ∧ 0 < c → a ^ 3 + b ^ 3 ≠ c ^ 3"
+    ],
+    "theorems": [
+      "flt_misstated",
+      "flt_three_small"
+    ],
+    "start": "-- Fermat's Last Theorem as it is easy to type it in (Kevin Buzzard's example)\ntheorem flt_misstated : ¬ ∀ a b c n : Nat, n ≥ 3 → a ^ n + b ^ n ≠ c ^ n := by\n  sorry\n\n-- the hypotheses put back (a, b, c positive), checked for n = 3 and a, b, c < 10: evidence, not a proof\ntheorem flt_three_small : ∀ a, a < 10 → ∀ b, b < 10 → ∀ c, c < 10 →\n    0 < a ∧ 0 < b ∧ 0 < c → a ^ 3 + b ^ 3 ≠ c ^ 3 := by\n  sorry\n",
+    "tactics": [
+      "intro h",
+      "exact h 0 0 0 3 (by decide) rfl",
+      "decide"
+    ],
+    "steps": [
+      "intro h"
+    ],
+    "hint": [
+      "To prove a `¬`, assume the statement (`intro h`) and reach a contradiction: `h 0 0 0 3` claims $0^3 + 0^3 \\ne 0^3$, and `rfl` shows they are equal. The second theorem is a finite check, so `decide` runs it. Try deleting `0 < b ∧` from it: `decide` then reports the statement is false ($1^3 + 0^3 = 1^3$).",
+      "要證明 `¬`，先假設那個陳述（`intro h`），再推出矛盾：`h 0 0 0 3` 宣稱 $0^3 + 0^3 \\ne 0^3$，而 `rfl` 說明兩邊相等。第二個定理是有限的檢查，用 `decide` 跑完。試著把其中的 `0 < b ∧` 刪掉：`decide` 會回報這個陳述是錯的（$1^3 + 0^3 = 1^3$）。"
+    ],
+    "solution": "-- Fermat's Last Theorem as it is easy to type it in (Kevin Buzzard's example)\ntheorem flt_misstated : ¬ ∀ a b c n : Nat, n ≥ 3 → a ^ n + b ^ n ≠ c ^ n := by\n  intro h\n  exact h 0 0 0 3 (by decide) rfl\n\n-- the hypotheses put back (a, b, c positive), checked for n = 3 and a, b, c < 10: evidence, not a proof\ntheorem flt_three_small : ∀ a, a < 10 → ∀ b, b < 10 → ∀ c, c < 10 →\n    0 < a ∧ 0 < b ∧ 0 < c → a ^ 3 + b ^ 3 ≠ c ^ 3 := by\n  decide\n"
+  },
+  {
+    "id": "pit-fermat-641",
+    "level": "L2",
+    "runner": "lite",
+    "title": [
+      "Fermat's primes: 641 says no",
+      "費馬質數：641 說不"
+    ],
+    "summary": [
+      "In 1640 Fermat wrote (in a letter to Frénicle) that he believed every number $F_n = 2^{2^n} + 1$ is prime. $F_0, \\dots, F_4 = 3, 5, 17, 257, 65537$ are. He did not claim a proof. In 1732 Euler found $F_5 = 2^{32} + 1 = 641 \\times 6700417$. This is a false **conjecture**, not a faulty proof: one computation settles it, and Lean can do the computation. (No Fermat prime beyond $F_4$ is known.) Sources: Wikipedia, \"Fermat number\"; Euler, *Observationes de theoremate quodam Fermatiano* (E26).",
+      "1640 年費馬（在給 Frénicle 的信中）寫道，他相信每個 $F_n = 2^{2^n} + 1$ 都是質數。$F_0, \\dots, F_4 = 3, 5, 17, 257, 65537$ 確實是。他沒有宣稱有證明。1732 年歐拉發現 $F_5 = 2^{32} + 1 = 641 \\times 6700417$。這是一個錯的 **猜想**，不是一個有漏洞的證明：一次計算就能判定，而 Lean 可以做這個計算。（$F_4$ 之後還沒有發現任何費馬質數。）出處：Wikipedia〈Fermat number〉；歐拉《Observationes de theoremate quodam Fermatiano》（E26）。"
+    ],
+    "tags": [
+      [
+        "False conjecture",
+        "錯的猜想"
+      ],
+      [
+        "Euler 1732",
+        "歐拉 1732"
+      ]
+    ],
+    "statements": [
+      "def isPrime (p : Nat) : Prop := 2 ≤ p ∧ ∀ d, d ∣ p → d = 1 ∨ d = p",
+      "theorem euler_641 : 641 ∣ 2 ^ 2 ^ 5 + 1",
+      "theorem fermat_claim_false : ¬ ∀ n : Nat, isPrime (2 ^ 2 ^ n + 1)"
+    ],
+    "theorems": [
+      "euler_641",
+      "fermat_claim_false"
+    ],
+    "start": "/-- `p` is prime: at least 2, and its only divisors are 1 and itself -/\ndef isPrime (p : Nat) : Prop := 2 ≤ p ∧ ∀ d, d ∣ p → d = 1 ∨ d = p\n\n-- Euler (1732): 641 divides the fifth Fermat number 2 ^ 32 + 1\ntheorem euler_641 : 641 ∣ 2 ^ 2 ^ 5 + 1 := by\n  sorry\n\n-- so the claim \"every 2 ^ (2 ^ n) + 1 is prime\" is false\ntheorem fermat_claim_false : ¬ ∀ n : Nat, isPrime (2 ^ 2 ^ n + 1) := by\n  sorry\n",
+    "tactics": [
+      "exact ⟨6700417, by decide⟩",
+      "intro h",
+      "have h5 := (h 5).2 641 euler_641",
+      "revert h5",
+      "decide"
+    ],
+    "steps": [
+      "intro h",
+      "have h5 := (h 5).2 641 euler_641",
+      "revert h5"
+    ],
+    "hint": [
+      "`a ∣ b` means $b = a \\cdot k$ for some $k$: give $k = 6700417$ and let `decide` multiply. For the second theorem, assume the claim (`intro h`); at $n = 5$ it says every divisor of $F_5$ is $1$ or $F_5$, so `641 = 1 ∨ 641 = 2 ^ 2 ^ 5 + 1`. Both sides are numbers: `revert` the fact and `decide` finds it false.",
+      "`a ∣ b` 的意思是存在 $k$ 使 $b = a \\cdot k$：給出 $k = 6700417$，讓 `decide` 去乘。第二個定理先假設那個說法（`intro h`）；在 $n = 5$ 時它說 $F_5$ 的每個因數都是 $1$ 或 $F_5$，所以 `641 = 1 ∨ 641 = 2 ^ 2 ^ 5 + 1`。兩邊都是數字：用 `revert` 把這個事實放回目標，`decide` 就會發現它是假的。"
+    ],
+    "solution": "/-- `p` is prime: at least 2, and its only divisors are 1 and itself -/\ndef isPrime (p : Nat) : Prop := 2 ≤ p ∧ ∀ d, d ∣ p → d = 1 ∨ d = p\n\n-- Euler (1732): 641 divides the fifth Fermat number 2 ^ 32 + 1\ntheorem euler_641 : 641 ∣ 2 ^ 2 ^ 5 + 1 := by\n  exact ⟨6700417, by decide⟩\n\n-- so the claim \"every 2 ^ (2 ^ n) + 1 is prime\" is false\ntheorem fermat_claim_false : ¬ ∀ n : Nat, isPrime (2 ^ 2 ^ n + 1) := by\n  intro h\n  have h5 := (h 5).2 641 euler_641\n  revert h5\n  decide\n"
+  },
+  {
+    "id": "pit-horses",
+    "level": "L2",
+    "runner": "lite",
+    "title": [
+      "All horses are the same colour?",
+      "所有的馬都同一個顏色？"
+    ],
+    "summary": [
+      "A classic broken induction (George Pólya, *Induction and Analogy in Mathematics*, 1954, asked \"Are any $n$ numbers equal?\"; Joel E. Cohen told it with horses in 1961). The \"proof\": one horse has one colour. Given $n + 1$ horses, the first $n$ share a colour and so do the last $n$; the two groups overlap, so all $n + 1$ agree. The step silently needs the overlap: for $n + 1 = 2$ the first horse and the last horse have nothing in common. Here the claim is false **and** the argument has a gap, at exactly one step. Lean accepts the base case (`one_horse` is proved) but will not let the step through: show that it fails at $n = 1$.",
+      "一個經典的錯誤歸納法（George Pólya 在 1954 年的《Induction and Analogy in Mathematics》中問「任意 $n$ 個數都相等嗎？」；Joel E. Cohen 在 1961 年改用馬來講）。「證明」：一匹馬只有一種顏色。給定 $n + 1$ 匹馬，前 $n$ 匹同色，後 $n$ 匹也同色；兩群有重疊，所以 $n + 1$ 匹全部同色。這一步暗中需要重疊：當 $n + 1 = 2$ 時，第一匹與最後一匹馬沒有共同的成員。這裡的說法是錯的，**而且** 論證有漏洞，恰好在一步上。Lean 接受基礎情形（`one_horse` 已證明），但不會讓歸納步驟過關：證明它在 $n = 1$ 時失敗。"
+    ],
+    "tags": [
+      [
+        "Gap in a proof",
+        "證明的漏洞"
+      ],
+      [
+        "Pólya 1954",
+        "Pólya 1954"
+      ]
+    ],
+    "statements": [
+      "def allSame (l : List Nat) : Bool := l.all (· == l.headD 0)",
+      "def sameColour (n : Nat) : Prop := ∀ l : List Nat, l.length = n → allSame l = true",
+      "theorem step_fails : ¬ ∀ n, sameColour n → sameColour (n + 1)"
+    ],
+    "theorems": [
+      "step_fails"
+    ],
+    "start": "/-- every colour in the list equals the first one -/\ndef allSame (l : List Nat) : Bool := l.all (· == l.headD 0)\n\n/-- \"any n horses have the same colour\" (a horse is its colour, a number) -/\ndef sameColour (n : Nat) : Prop := ∀ l : List Nat, l.length = n → allSame l = true\n\n-- the base case is fine: one horse has one colour\ntheorem one_horse : sameColour 1 := by\n  intro l hl\n  match l, hl with\n  | [a], _ => simp [allSame]\n\n-- the inductive step \"n horses → n + 1 horses\" does not hold for every n\ntheorem step_fails : ¬ ∀ n, sameColour n → sameColour (n + 1) := by\n  sorry\n",
+    "tactics": [
+      "intro h",
+      "have two := h 1 one_horse [0, 1] rfl",
+      "revert two",
+      "decide"
+    ],
+    "steps": [
+      "intro h",
+      "have two := h 1 one_horse [0, 1] rfl",
+      "revert two"
+    ],
+    "hint": [
+      "Assume the step holds for every $n$ (`intro h`). At $n = 1$, with the base case `one_horse`, it says any two horses match, in particular a horse of colour $0$ and one of colour $1$: `h 1 one_horse [0, 1] rfl : allSame [0, 1] = true`. That is a computation, and `decide` finds it false. If you try to prove the step instead, Lean leaves you stuck at exactly this case.",
+      "假設歸納步驟對每個 $n$ 都成立（`intro h`）。在 $n = 1$，配上基礎情形 `one_horse`，它說任意兩匹馬同色，特別是顏色 $0$ 與顏色 $1$ 的兩匹：`h 1 one_horse [0, 1] rfl : allSame [0, 1] = true`。這是一個計算，`decide` 會發現它是假的。如果改成去證明歸納步驟，Lean 正好會卡在這個情形。"
+    ],
+    "solution": "/-- every colour in the list equals the first one -/\ndef allSame (l : List Nat) : Bool := l.all (· == l.headD 0)\n\n/-- \"any n horses have the same colour\" (a horse is its colour, a number) -/\ndef sameColour (n : Nat) : Prop := ∀ l : List Nat, l.length = n → allSame l = true\n\n-- the base case is fine: one horse has one colour\ntheorem one_horse : sameColour 1 := by\n  intro l hl\n  match l, hl with\n  | [a], _ => simp [allSame]\n\n-- the inductive step \"n horses → n + 1 horses\" does not hold for every n\ntheorem step_fails : ¬ ∀ n, sameColour n → sameColour (n + 1) := by\n  intro h\n  have two := h 1 one_horse [0, 1] rfl\n  revert two\n  decide\n"
+  }
+]

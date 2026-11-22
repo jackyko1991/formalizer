@@ -1,5 +1,6 @@
 /** Coding Skills ▸ Finding lemmas (#/skills/search[/<section>]). Lean code: lean/Formalizer/Pages/Search.lean. */
-import { Callout, Lean, List, P, Page, Section, SiteLink, Sources, Table, TryIn, snippet, type SectionInfo } from "../kit";
+import { Callout, Figure, Lean, List, P, Page, Section, SiteLink, Sources, Table, TryIn, snippet, type SectionInfo } from "../kit";
+import { NameDecoder, SearchMap } from "./SearchFigures";
 
 const PAGE = "search";
 
@@ -31,10 +32,19 @@ export default function SearchSkill({ section }: { section: string | null }) {
       <Section page={PAGE} id="why" n={1} title={SECTIONS[0].title}>
         <P
           t={[
-            "A fact in the library is called a **lemma** or **theorem**; each has a name, like `Nat.add_comm`, and a statement, like `n + m = m + n`. Using it is one line: `exact Nat.add_comm a b`. Proving it yourself might take ten. So before proving a small fact, look for it. There are three ways:",
-            "函式庫裡的事實叫做 **引理** 或 **定理**；每一條都有名字（例如 `Nat.add_comm`）和陳述（例如 `n + m = m + n`）。使用它只要一行：`exact Nat.add_comm a b`；自己證可能要十行。所以在證明小事實之前，先找找看。有三種方法：",
+            "A fact in the library is called a **lemma** or **theorem**; each has a name, like `Nat.add_comm`, and a statement, like `n + m = m + n`. Using it is one line: `exact Nat.add_comm a b`. Proving it yourself might take ten. So before proving a small fact, look for it. The map shows where to look, in order:",
+            "函式庫裡的事實叫做 **引理** 或 **定理**；每一條都有名字（例如 `Nat.add_comm`）和陳述（例如 `n + m = m + n`）。使用它只要一行：`exact Nat.add_comm a b`；自己證可能要十行。所以在證明小事實之前，先找找看。下面的地圖依序標出該去哪裡找：",
           ]}
         />
+        <Figure
+          caption={[
+            "The whole page in one picture: try the cheap, local searches first; each *nothing* falls to the next box; any *yes* leaves with a name you can `#check`. The routine in section 10 spells it out.",
+            "整頁濃縮成一張圖：先試便宜、在本機就能做的搜尋；每個「找不到」往下掉到下一格；任何「有」都帶著一個可以 `#check` 的名字離開。第 10 節把這套流程逐條寫出。",
+          ]}
+        >
+          <SearchMap />
+        </Figure>
+        <P t={["In short, three ways:", "簡單說，有三種方法："]} />
         <List
           ordered
           items={[
@@ -150,6 +160,14 @@ export default function SearchSkill({ section }: { section: string | null }) {
             "函式庫的名字不是隨便取的：名字就是把陳述用固定詞彙唸出來。開頭是它所談的型別（`Nat.`、`List.`、`Int.`），接著描述陳述的左邊，詞與詞之間用 `_` 隔開。",
           ]}
         />
+        <Figure
+          caption={[
+            "A name is its statement read aloud. Pick a name; hover a piece to see which part of the statement it describes. Statements as `#check` prints them in core Lean.",
+            "名字就是把陳述唸出來。挑一個名字；把游標移到某一段上，看它描述陳述的哪一部分。陳述是核心 Lean 中 `#check` 印出的樣子。",
+          ]}
+        >
+          <NameDecoder />
+        </Figure>
         <Table
           head={[
             ["Name", "名稱"],
@@ -283,6 +301,9 @@ export default function SearchSkill({ section }: { section: string | null }) {
             "在 Loogle 裡，用逗號隔開的條件必須全部符合；`|-`（或 `⊢`）表示「結論長得像」。這些網站搜尋的是 Mathlib（其中包含核心 Lean），所以它們給出的名字可能需要 Full 執行器：在你使用的執行器上用 `#check` 確認。",
           ]}
         />
+        <p>
+          <SiteLink to={["skills", "mathlib"]} label={["A map of Mathlib: where things live", "Mathlib 地圖：東西放在哪裡"]} />
+        </p>
         <Sources
           items={[
             { label: "Mathlib documentation", url: "https://leanprover-community.github.io/mathlib4_docs/" },
@@ -293,6 +314,12 @@ export default function SearchSkill({ section }: { section: string | null }) {
       </Section>
 
       <Section page={PAGE} id="workflow" n={10} title={SECTIONS[9].title}>
+        <P
+          t={[
+            "The same order as the map in section 1, written as steps:",
+            "與第 1 節的地圖同樣的順序，寫成步驟：",
+          ]}
+        />
         <List
           ordered
           items={[

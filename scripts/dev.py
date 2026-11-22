@@ -62,6 +62,11 @@ def port_busy(port: int) -> bool:
 
 def main() -> None:
     signal.signal(signal.SIGTERM, lambda *_: (_ for _ in ()).throw(KeyboardInterrupt))  # kill: stop both, as Ctrl+C
+    # the site imports @learnkit/web from the vendor/learnkit submodule; a plain clone leaves it empty and the page
+    # renders nothing (Vite: "Failed to resolve import @learnkit/web")
+    if not (ROOT / "vendor" / "learnkit" / "web" / "src" / "index.ts").is_file():
+        print("[dev] vendor/learnkit is empty; checking out the submodule (git submodule update --init)", flush=True)
+        subprocess.run(["git", "submodule", "update", "--init"], cwd=ROOT, check=True)
     if not (ROOT / "frontend" / "node_modules").is_dir():
         subprocess.run([NPM, "install", "--no-audit", "--no-fund"], cwd=ROOT / "frontend", check=True)
     if port_busy(8790):  # a runner started by hand: use it, and leave it alone
