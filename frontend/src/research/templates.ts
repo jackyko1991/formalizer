@@ -5,6 +5,7 @@
  * provable on the Lite runner (tests/test_templates.py). Larger research problems are planned (Product roadmap).
  */
 import type { L } from "../pages/kit";
+import { declLines, findDecl, givenLinks, type DeclLinks, type GivenLink } from "./links.ts";
 import type { LeanFile } from "../runner";
 
 export interface Template {
@@ -18,6 +19,9 @@ export interface Template {
   /** the lemmas' finished proofs (replacing `:= by\n  sorry`): the showcase shows the project done, and
    *  tests/test_templates.py checks that they make the main theorem proved on the Lite runner */
   proofs?: Record<string, string>;
+  /** hand-written text ↔ code links of the finished version, per declaration (links.ts givenLinks): a fragment that
+   *  picks the sentence in each language, and the Lean lines it is tied to; tests check every one is found */
+  links?: Record<string, readonly GivenLink[]>;
 }
 
 /** A demo with every lemma proved (its showcase). */
@@ -31,6 +35,23 @@ export function finishedFiles(t: Template): LeanFile[] {
     }
     return { ...f, code };
   });
+}
+
+/**
+ * A demo's hand-written links as the meta keeps them, for its notes in one language (0 English, 1 中文). `files`: the
+ * files they are placed in (the finished ones for a showcase; in a started copy, the lines still there are found).
+ */
+export function templateLinks(t: Template, which: 0 | 1, files: LeanFile[] = finishedFiles(t)): Record<string, DeclLinks> {
+  const out: Record<string, DeclLinks> = {};
+  for (const [name, given] of Object.entries(t.links ?? {})) {
+    const note = t.notes[name]?.[which];
+    const d = note ? findDecl(files, name) : null;
+    if (!note || !d) continue;
+    const lines = declLines(files.find((f) => f.name === d.file)!.code, d);
+    const manual = givenLinks(note, given, which, lines).filter((l) => l.lean.length);
+    if (manual.length) out[name] = { manual };
+  }
+  return out;
 }
 
 /** The demos that have a finished version to show. */
@@ -82,6 +103,27 @@ export const TEMPLATES: Template[] = [
       oddSum_succ: "rfl",
       square_succ: "by\n  simp only [Nat.add_mul, Nat.mul_add, Nat.mul_one, Nat.one_mul]\n  omega",
     },
+    links: {
+      oddSum: [
+        [["The sum of the first", "個奇數的和"], ["/-- `oddSum n` = 1 + 3 + 5 + … + (2n − 1), the first n odd numbers -/", "def oddSum : Nat → Nat", "| 0 => 0"]],
+        [["to go from", "時加上"], ["| n + 1 => oddSum n + (2 * n + 1)"]],
+      ],
+      oddSum_succ: [
+        [["One more odd number", "多加一個奇數"], ["theorem oddSum_succ (n : Nat) : oddSum (n + 1) = oddSum n + (2 * n + 1) := rfl"]],
+        [["the sum up to", "的和，等於"], ["theorem oddSum_succ (n : Nat) : oddSum (n + 1) = oddSum n + (2 * n + 1) := rfl"]],
+        [["read aloud", "唸出來"], ["theorem oddSum_succ (n : Nat) : oddSum (n + 1) = oddSum n + (2 * n + 1) := rfl"]],
+      ],
+      square_succ: [
+        [["(n+1)^2 = n^2", "(n+1)^2 = n^2"], ["theorem square_succ (n : Nat) : (n + 1) * (n + 1) = n * n + (2 * n + 1) := by"]],
+        [["expand the product", "把乘積展開"], ["simp only [Nat.add_mul, Nat.mul_add, Nat.mul_one, Nat.one_mul]", "omega"]],
+      ],
+      odd_sum_eq_square: [
+        [["Main theorem", "主定理"], ["theorem odd_sum_eq_square (n : Nat) : oddSum n = n * n := by"]],
+        [["By induction", "做歸納"], ["induction n with"]],
+        [["both sides are", "兩邊都是"], ["| zero => rfl"]],
+        [["use the two lemmas", "兩條引理"], ["| succ k ih => rw [oddSum_succ, ih, square_succ]"]],
+      ],
+    },
   },
   {
     id: "nicomachus",
@@ -128,6 +170,33 @@ export const TEMPLATES: Template[] = [
       triangle_sq_succ:
         "by\n  have h := two_triangle n\n  show (triangle n + (n + 1)) * (triangle n + (n + 1)) = _\n  generalize triangle n = t at *\n  have expand : (t + (n + 1)) * (t + (n + 1)) = t * t + 2 * t * (n + 1) + (n + 1) * (n + 1) := by\n    simp only [Nat.add_mul, Nat.mul_add, Nat.two_mul, Nat.mul_one, Nat.one_mul, Nat.mul_comm n t]\n    omega\n  rw [expand, h, Nat.mul_assoc n, Nat.mul_assoc (n + 1), Nat.succ_mul n ((n + 1) * (n + 1)), Nat.add_assoc]",
     },
+    links: {
+      triangle: [[["triangular numbers", "三角形數"], ["/-- `triangle n` = 1 + 2 + … + n -/", "def triangle : Nat → Nat", "| 0 => 0", "| n + 1 => triangle n + (n + 1)"]]],
+      cubeSum: [[["cubes", "立方數"], ["/-- `cubeSum n` = 1³ + 2³ + … + n³ -/", "def cubeSum : Nat → Nat", "| 0 => 0", "| n + 1 => cubeSum n + (n + 1) * (n + 1) * (n + 1)"]]],
+      two_triangle: [
+        [["Gauss", "高斯"], ["theorem two_triangle (n : Nat) : 2 * triangle n = n * (n + 1) := by"]],
+        [["2T_n = n(n+1)", "2T_n = n(n+1)"], ["theorem two_triangle (n : Nat) : 2 * triangle n = n * (n + 1) := by"]],
+        [["Induction on", "歸納"], ["induction n with", "| zero => rfl"]],
+        [["in the step", "遞推步驟"], ["| succ k ih =>", "simp only [triangle, Nat.mul_add, ih, Nat.add_mul, Nat.mul_one, Nat.one_mul]", "omega"]],
+      ],
+      triangle_sq_succ: [
+        [["turns the middle term", "把中間項變成"], [
+          "have h := two_triangle n",
+          "show (triangle n + (n + 1)) * (triangle n + (n + 1)) = _",
+          "generalize triangle n = t at *",
+          "have expand : (t + (n + 1)) * (t + (n + 1)) = t * t + 2 * t * (n + 1) + (n + 1) * (n + 1) := by",
+          "simp only [Nat.add_mul, Nat.mul_add, Nat.two_mul, Nat.mul_one, Nat.one_mul, Nat.mul_comm n t]",
+          "omega",
+        ]],
+        [["together", "合起來"], ["rw [expand, h, Nat.mul_assoc n, Nat.mul_assoc (n + 1), Nat.succ_mul n ((n + 1) * (n + 1)), Nat.add_assoc]"]],
+        [["heart of the proof", "證明的核心"], ["theorem triangle_sq_succ (n : Nat) :", "triangle (n + 1) * triangle (n + 1) = triangle n * triangle n + (n + 1) * (n + 1) * (n + 1) := by"]],
+      ],
+      nicomachus: [
+        [["Main theorem", "主定理"], ["theorem nicomachus (n : Nat) : cubeSum n = triangle n * triangle n := by"]],
+        [["Induction on", "歸納"], ["induction n with", "| zero => rfl"]],
+        [["each step", "每一步"], ["| succ k ih => rw [cubeSum, ih, triangle_sq_succ]"]],
+      ],
+    },
   },
   {
     id: "fib-coprime",
@@ -153,7 +222,7 @@ export const TEMPLATES: Template[] = [
       },
     ],
     notes: {
-      fib: ["$F_0 = 0$, $F_1 = 1$, and each next number is the sum of the two before.", "$F_0 = 0$、$F_1 = 1$，之後每個數都是前兩個的和。"],
+      fib: ["$F_0 = 0$ and $F_1 = 1$; each next number is the sum of the two before.", "$F_0 = 0$、$F_1 = 1$；之後每個數都是前兩個的和。"],
       fib_add_two: [
         "The definition read aloud; `rfl` proves it because Lean computes the left side to the right side.",
         "把定義唸出來；`rfl` 就能證明，因為 Lean 會把左邊算成右邊。",
@@ -163,12 +232,34 @@ export const TEMPLATES: Template[] = [
         "$\\gcd(F_{n+1}, F_n + F_{n+1}) = \\gcd(F_{n+1}, F_n) = \\gcd(F_n, F_{n+1})$：把一個數的倍數加到另一個數上，最大公因數不變。在 Lean 裡：先用 `fib_add_two`，再用 `Nat.gcd_comm` 和像 `Nat.gcd_add_self_right` 這樣的引理（試試 `exact?` 或 `rw?`）。",
       ],
       fib_coprime: [
-        "**Main theorem.** Induction on $n$: $\\gcd(F_0, F_1) = \\gcd(0, 1) = 1$, and `gcd_fib_step` moves each step back to the previous one.",
-        "**主定理。** 對 $n$ 歸納：$\\gcd(F_0, F_1) = \\gcd(0, 1) = 1$，而 `gcd_fib_step` 把每一步帶回前一步。",
+        "**Main theorem.** Induction on $n$: $\\gcd(F_0, F_1) = \\gcd(0, 1) = 1$; `gcd_fib_step` moves each step back to the previous one.",
+        "**主定理。** 對 $n$ 歸納：$\\gcd(F_0, F_1) = \\gcd(0, 1) = 1$；而 `gcd_fib_step` 把每一步帶回前一步。",
       ],
     },
     proofs: {
       gcd_fib_step: "by\n  rw [fib_add_two, Nat.gcd_comm (fib n) (fib (n + 1)), Nat.add_comm, Nat.gcd_add_self_right]",
+    },
+    links: {
+      fib: [
+        [["F_1 = 1", "F_1 = 1"], ["/-- the Fibonacci numbers 0, 1, 1, 2, 3, 5, 8, … -/", "def fib : Nat → Nat", "| 0 => 0", "| 1 => 1"]],
+        [["each next number", "前兩個的和"], ["| n + 2 => fib n + fib (n + 1)"]],
+      ],
+      fib_add_two: [
+        [["definition read aloud", "把定義唸出來"], ["theorem fib_add_two (n : Nat) : fib (n + 2) = fib n + fib (n + 1) := rfl"]],
+        [["proves it", "就能證明"], ["theorem fib_add_two (n : Nat) : fib (n + 2) = fib n + fib (n + 1) := rfl"]],
+      ],
+      gcd_fib_step: [
+        [["gcd(F_{n+1}, F_n + F_{n+1})", "gcd(F_{n+1}, F_n + F_{n+1})"], ["theorem gcd_fib_step (n : Nat) :", "Nat.gcd (fib (n + 1)) (fib (n + 2)) = Nat.gcd (fib n) (fib (n + 1)) := by"]],
+        [["adding a multiple", "倍數加到"], ["rw [fib_add_two, Nat.gcd_comm (fib n) (fib (n + 1)), Nat.add_comm, Nat.gcd_add_self_right]"]],
+        [["In Lean:", "在 Lean 裡："], ["rw [fib_add_two, Nat.gcd_comm (fib n) (fib (n + 1)), Nat.add_comm, Nat.gcd_add_self_right]"]],
+        [["then `Nat.gcd_comm`", "再用 `Nat.gcd_comm`"], ["rw [fib_add_two, Nat.gcd_comm (fib n) (fib (n + 1)), Nat.add_comm, Nat.gcd_add_self_right]"]],
+      ],
+      fib_coprime: [
+        [["Main theorem", "主定理"], ["theorem fib_coprime (n : Nat) : Nat.gcd (fib n) (fib (n + 1)) = 1 := by"]],
+        [["Induction on", "歸納"], ["induction n with"]],
+        [["gcd(0, 1) = 1", "gcd(0, 1) = 1"], ["| zero => rfl"]],
+        [["moves each step back", "帶回前一步"], ["| succ k ih => rw [gcd_fib_step, ih]"]],
+      ],
     },
   },
   {
