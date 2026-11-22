@@ -59,10 +59,54 @@ const KIND: Record<Kind, { dot: string; chip: string; legend: L }> = {
   sceptic: { dot: "bg-amber-500", chip: "bg-amber-50 text-amber-900 ring-amber-200", legend: ["sceptical", "持懷疑態度"] },
   slow: { dot: "bg-violet-500", chip: "bg-violet-50 text-violet-800 ring-violet-200", legend: ["human checking is slow; machines' help is coming", "人工檢查很慢；機器的幫助正在到來"] },
 };
-const EVENTS: { year: string; kind: Kind; who: L; said: L; chip: L }[] = [
+/** A freely licensed photo from Wikimedia Commons (public/people/CREDITS.md; Buzzard's is the Views page's). */
+interface Photo {
+  src: string;
+  author: string;
+  licence: string;
+  licenceUrl: string;
+  /** the Commons file page */
+  file: string;
+}
+/** A person shown beside a timeline entry: their photo, or their initials where Commons has no free photo. */
+interface Face {
+  name: string;
+  photo?: Photo;
+}
+const COMMONS = "https://commons.wikimedia.org/wiki/File:";
+const MFO_LICENCE = { licence: "CC BY-SA 2.0 de", licenceUrl: "https://creativecommons.org/licenses/by-sa/2.0/de/deed.en" };
+const FACES = {
+  voevodsky: {
+    name: "Vladimir Voevodsky",
+    photo: { src: "people/voevodsky.webp", author: "Renate Schmid (MFO)", ...MFO_LICENCE, file: `${COMMONS}VladimirVoevodsky.jpg` },
+  },
+  simpson: { name: "Carlos Simpson" },
+  gouezel: { name: "Sébastien Gouëzel" },
+  shchur: { name: "Vladimir Shchur" },
+  buzzard: {
+    name: "Kevin Buzzard",
+    photo: {
+      src: "views/buzzard.webp",
+      author: "Paula Buzzard",
+      licence: "CC BY-SA 3.0",
+      licenceUrl: "https://creativecommons.org/licenses/by-sa/3.0/",
+      file: `${COMMONS}Kevin_buzzard_in_2007.jpg`,
+    },
+  },
+  harris: { name: "Michael Harris" },
+  chambertLoir: { name: "Antoine Chambert-Loir" },
+  masullo: { name: "Alessandro Maria Masullo" },
+  vakil: {
+    name: "Ravi Vakil",
+    photo: { src: "people/vakil.webp", author: "Renate Schmid (MFO)", ...MFO_LICENCE, file: `${COMMONS}Ravi_Vakil.jpg` },
+  },
+} satisfies Record<string, Face>;
+
+const EVENTS: { year: string; kind: Kind; who: L; said: L; chip: L; faces: Face[] }[] = [
   {
     year: "1989",
     kind: "leans",
+    faces: [FACES.voevodsky, FACES.simpson],
     who: ["**Vladimir Voevodsky** (Fields Medal 2002)", "**Vladimir Voevodsky**（2002 年菲爾茲獎）"],
     said: [
       'In 1998 Carlos Simpson posted a preprint showing that the property claimed for the construction in the paper by Kapranov and Voevodsky on ∞-groupoids (1989) cannot hold; his argument applies "in particular … to the realization functor of Kapranov-Voevodsky". It was "a flaw that Voevodsky confirmed fifteen years later"; Voevodsky also found a mistake in a key lemma of his own paper. Voevodsky asked: "Who would ensure that I did not forget something and did not make a mistake, if even the mistakes in much more simple arguments take years to uncover?" He turned to computer-checked foundations.',
@@ -73,6 +117,7 @@ const EVENTS: { year: string; kind: Kind; who: L; said: L; chip: L }[] = [
   {
     year: "2013 → 2019",
     kind: "found",
+    faces: [FACES.gouezel, FACES.shchur],
     who: ["**Evidence:** the Morse lemma", "**證據：** Morse 引理"],
     said: [
       'Gouëzel and Shchur: "There is a gap in the proof of the main theorem" of a 2013 paper on hyperbolic spaces (an inequality pointing the wrong way), brought to light by the careful checking a formalization needs. They repaired it, the theorem survived, and the result was certified in Isabelle/HOL.',
@@ -83,6 +128,7 @@ const EVENTS: { year: string; kind: Kind; who: L; said: L; chip: L }[] = [
   {
     year: "2019",
     kind: "leans",
+    faces: [FACES.buzzard],
     who: ["**Kevin Buzzard** (Imperial College)", "**Kevin Buzzard**（帝國理工學院）"],
     said: [
       "In 2019: \"I think there is a non-zero chance that some of our great castles are built on sand ... But I think it's small.\" Kevin Buzzard leads the Lean formalization of Fermat's Last Theorem, and wrote the four questions of the Checkers page.",
@@ -93,6 +139,7 @@ const EVENTS: { year: string; kind: Kind; who: L; said: L; chip: L }[] = [
   {
     year: "2022",
     kind: "sceptic",
+    faces: [FACES.harris],
     who: ["**Michael Harris** (Columbia)", "**Michael Harris**（哥倫比亞大學）"],
     said: [
       'A number theorist openly sceptical of the push to mechanize mathematics: his newsletter *Silicon Reckoner* asks whose interests drive it, and argues that "the future of mathematics is a political question".',
@@ -103,6 +150,7 @@ const EVENTS: { year: string; kind: Kind; who: L; said: L; chip: L }[] = [
   {
     year: "2024",
     kind: "found",
+    faces: [FACES.chambertLoir],
     who: ["**Evidence:** a 1965 lemma (FLT project)", "**證據：** 一條 1965 年的引理（FLT 專案）"],
     said: [
       'While formalizing the theory of divided powers in Lean, Antoine Chambert-Loir found that Lemme 8 of Roby\'s 1965 paper "seems to be false". The argument was rescued by an alternative proof from the literature (Berthelot–Ogus), itself in need of fixes.',
@@ -113,6 +161,7 @@ const EVENTS: { year: string; kind: Kind; who: L; said: L; chip: L }[] = [
   {
     year: "20 Nov 2026",
     kind: "slow",
+    faces: [FACES.masullo, FACES.vakil],
     who: ["**Evidence:** Masullo's GRH", "**證據：** Masullo 的 GRH"],
     said: [
       "Months of expert reading, then problems reported within hours by readers using AI (section 3). Whether they are fatal is still open, as of 22 November 2026.",
@@ -121,6 +170,50 @@ const EVENTS: { year: string; kind: Kind; who: L; said: L; chip: L }[] = [
     chip: ["human checking is slow; machine help is arriving", "人工檢查很慢；機器的幫助正在到來"],
   },
 ];
+
+/** One person beside a timeline entry: a round photo with its credit (author · licence · Commons), or the initials. */
+function FaceCard({ f }: { f: Face }) {
+  const { pick } = useLang();
+  const words = f.name.split(" ");
+  const cls = "h-16 w-16 rounded-full";
+  return (
+    <figure className="w-[6.5rem] text-center" data-testid="rh-face">
+      {f.photo ? (
+        <img
+          src={`${import.meta.env.BASE_URL}${f.photo.src}`}
+          alt={f.name}
+          width={64}
+          height={64}
+          loading="lazy"
+          className={`${cls} mx-auto bg-gray-200 object-cover`}
+        />
+      ) : (
+        <span className={`${cls} mx-auto flex items-center justify-center bg-teal-600 text-base font-semibold text-white`} aria-hidden>
+          {words[0][0] + words[words.length - 1][0]}
+        </span>
+      )}
+      <figcaption className="mt-1 text-[11px] leading-tight">
+        <span className="block font-medium text-gray-800">{f.name}</span>
+        {f.photo && (
+          <span className="mt-0.5 block text-[10px] text-gray-500">
+            {pick(["Photo: ", "照片："])}
+            <a href={f.photo.file} target="_blank" rel="noreferrer" className="hover:underline">
+              {f.photo.author}
+            </a>
+            {" · "}
+            <a href={f.photo.licenceUrl} target="_blank" rel="noreferrer" className="hover:underline">
+              {f.photo.licence}
+            </a>
+            {" · "}
+            <a href={f.photo.file} target="_blank" rel="noreferrer" className="hover:underline">
+              Wikimedia Commons
+            </a>
+          </span>
+        )}
+      </figcaption>
+    </figure>
+  );
+}
 
 function Timeline() {
   const { pick } = useLang();
@@ -139,18 +232,27 @@ function Timeline() {
           <li key={e.year + e.kind} className="relative">
             <span aria-hidden className={`absolute top-1.5 -left-[27px] h-3 w-3 rounded-full border-2 border-white ${KIND[e.kind].dot}`} />
             <p className="text-xs font-semibold text-(--lk-accent)">{e.year}</p>
-            <h3 className="font-semibold text-gray-900">
-              <RichText text={pick(e.who)} />
-            </h3>
-            <p className="mt-1">
-              <RichText text={pick(e.said)} />
-            </p>
-            <span className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[11px] ring-1 ${KIND[e.kind].chip}`}>{pick(e.chip)}</span>
-            {e.kind === "sceptic" && (
-              <span className="ml-3 text-sm">
-                <SiteLink to={["concept", "views", "sceptic"]} label={["The sceptic's case, point by point", "懷疑者的論點，逐點看"]} />
-              </span>
-            )}
+            <div className="flex flex-col gap-2 sm:flex-row-reverse sm:items-start sm:gap-4">
+              <div className="flex shrink-0 gap-2">
+                {e.faces.map((f) => (
+                  <FaceCard key={f.name} f={f} />
+                ))}
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-gray-900">
+                  <RichText text={pick(e.who)} />
+                </h3>
+                <p className="mt-1">
+                  <RichText text={pick(e.said)} />
+                </p>
+                <span className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[11px] ring-1 ${KIND[e.kind].chip}`}>{pick(e.chip)}</span>
+                {e.kind === "sceptic" && (
+                  <span className="ml-3 text-sm">
+                    <SiteLink to={["concept", "views", "sceptic"]} label={["The sceptic's case, point by point", "懷疑者的論點，逐點看"]} />
+                  </span>
+                )}
+              </div>
+            </div>
           </li>
         ))}
       </ol>
