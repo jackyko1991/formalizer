@@ -598,10 +598,11 @@ export default function RhMaps({ page, n, title }: { page: string; n: number; ti
                 <SiteLink to={["concept", "checkers"]} label={["The checkers and the four questions", "檢查器與四個問題"]} />
               </Callout>
               <Scale />
-              <ComputeCost />
           </>
         }
       />
+      {/* what the full Lean run takes: shown under the card, whichever map is open */}
+      <ComputeCost />
     </Section>
   );
 }
