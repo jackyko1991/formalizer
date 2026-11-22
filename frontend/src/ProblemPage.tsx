@@ -1,16 +1,19 @@
 /**
- * The Problems page in Tensorizer's layout. Wide screens (≥ xl), three columns at full height:
- *   1. the library (foldable),
- *   2. the problem: title, chips, summary, ‹ › through the track; below, Statement / Hint tabs,
- *   3. the proof: Proof.lean with a Tactics panel (chips + Run, like Tensorizer's Parameters), then Goals and Result.
- * Phones show one part at a time (Problem / Proof / Result tabs) and pick problems from a menu.
- * The left column has a second tab, Research (like Tensorizer's Workspace): the research projects, opened in the main
- * area at #/problems/research/<project>.
+ * The Problems page, in learnkit's full-height workspace (WorkspaceFrame.tsx). Wide screens (≥ xl), four columns:
+ *   1. the library (folds itself to a rail once a problem is open, unless the reader keeps it open),
+ *   2. the problem: title, chips, summary, picture, ‹ › through the track; below, Statement / Hint / Natural tabs,
+ *   3. the editor: Proof.lean at the column's full height, one toolbar line (Run, the answer switch, Reset); tactics
+ *      come as completion at the target sorry ("Tactic ▾", tacticCompletion.ts), AI's suggestion as its last row,
+ *   4. the feedback: a verdict chip, then tabs Goals | Messages | Checkers | Map at full height.
+ * Phones show one part at a time (Problem / Proof / Result tabs) and pick problems from a menu. Tutorial mode keeps
+ * this page as it is and adds one floating guide window (tutorial/GuideWindow.tsx).
+ * The left column has a second tab, Research: the research projects, opened in the main area at
+ * #/problems/research/<project>.
  */
 import { go, plainText, ProblemPicture, RelatedProblems, RichText, useLang, type Localized } from "@learnkit/web";
 import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { mergeFiles, onAgentFiles, setAgentContext, type AgentContext } from "./agent/bus";
 import CheckersPanel, { LIGHT_LOOK, type CheckersLight } from "./CheckersPanel";
 import { useAsync } from "./mathlib/hooks";
@@ -18,11 +21,14 @@ import { loadProblemMap } from "./problemMap";
 import TwoLayerMap, { type ProofSource } from "./TwoLayerMap";
 import ProblemLibrary, { LEVEL_STYLE } from "./ProblemLibrary";
 import { CATEGORIES, collectionsOf, PROBLEMS, readOnlyOn, type Problem } from "./problems";
-import { check, insertChip, joinFiles, RunnerError, sorryOffsets, type CheckResult, type Issue, type LeanFile } from "./runner";
+import { check, joinFiles, RunnerError, sorryOffsets, type CheckResult, type Issue, type LeanFile } from "./runner";
 import { runnerReady, useRunner, type RunnerState } from "./RunnerPanel";
 import { lean } from "./leanLanguage";
 import { sorryAt, sorryMarks } from "./sorryMarks";
 import { explainTactic, statementParts } from "./tactics";
+import { askAiForSorry, tacticItems, type TacticItem } from "./tacticComplete";
+import { agentStatus } from "./agent/api";
+import { openTactics, tacticCompletion } from "./tacticCompletion";
 import ResearchList from "./research/ResearchList";
 import ResearchPage from "./research/ResearchPage";
 import { LEFT_TAB_KEY, parseRecent, problemsView, pushRecent, RECENT_KEY, store, stored, type LeftTab } from "./routes";
@@ -35,7 +41,8 @@ import { PlainStatementMirror } from "./tutorial/StatementMirror";
 import { mirrorFor } from "./proofMirror";
 import { stepMarks } from "./tutorial/stepMarks";
 import { coachShown, DONE, initialGoal, locateSteps, reopenGuide, stepAtLine, isRevealed, markRevealed, markSolved, reachStep, setStep, stepOf, unlock, unlocksNow, visibleChips } from "./tutorial/progress";
-import { CoachCard, LockedRow, NoGoals, TacticReveal, TutorialBar, UnlockNote } from "./tutorial/Tutorial";
+import { LockedRow, TutorialBar } from "./tutorial/Tutorial";
+import GuideWindow from "./tutorial/GuideWindow";
 import { updateTutorial, useTutorial } from "./tutorial/useTutorial";
 import { LibraryColumn, PANEL_HEAD, PANEL_TITLE, tabClass, VerdictChip, Workspace, WorkspaceFrame, type PhonePart, type Tone } from "./WorkspaceFrame";
 
@@ -63,7 +70,7 @@ const PHONE_PART: Record<MobileTab, PhonePart> = { problem: "problem", proof: "w
 const COACH_TAB: MobileTab[] = ["problem", "result", "proof", "result"];
 /** the feedback column's tabs */
 type FeedTab = "goals" | "messages" | "map" | "checkers";
-const FEED_TABS: FeedTab[] = ["goals", "checkers", "messages", "map"];
+const FEED_TABS: FeedTab[] = ["goals", "messages", "checkers", "map"];
 /** the library: folded or open by the reader's hand (remembered); untouched, it folds itself once a problem is picked */
 const LIBRARY_KEY = "formalizer.library";
 
@@ -196,9 +203,6 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
   // proved, the checkers
   const [feedTab, setFeedTab] = useState<FeedTab>("goals");
   const [checkersLight, setCheckersLight] = useState<CheckersLight>("not-yet");
-  // the toolbar's popovers: the tactics that don't fit on its line, the list of sorrys
-  const [moreOpen, setMoreOpen] = useState(false);
-  const [sorryOpen, setSorryOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>("problem");
   const { runner, open: openRunner } = useRunner();
   const ready = runnerReady(runner);
@@ -235,6 +239,7 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
   async function run(source = code, extra = files, auto = false) {
     setRunning(true);
     setProblemText(null);
+    setJustUnlocked([]);
     try {
       const joined = joinFiles([...extra, { name: MAIN, code: source }]);
       const next = await check(joined.code, problem.theorems, problem.statements);
@@ -365,20 +370,73 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
     tutorial && guide
       ? visibleChips(problem.tactics, guide.first, progress.unlocked, progress.unlockedIn.includes(problem.id))
       : { shown: problem.tactics, locked: [] as string[] };
-  const coachChip = chips.shown.find((c) => guide?.first.includes(c)) ?? chips.shown[0];
   // the goal read off the statement, shown before the first run (Lean's own replaces it)
   const preGoal = initialGoal(statementParts(problem.start));
-  const coachBox = (step: number) => (coach === step ? { className: "tut-coach", "data-coach-active": "" } : { className: "" });
-  const coachCard = (step: number) => guide && coach === step && <CoachCard guide={guide} problemId={problem.id} step={step} onStep={goStep} />;
   const onBadge = (i: number) => (setBadge(i), setStepPin(i));
+  // tactic completion at the sorry (tacticCompletion.ts): the "Tactic ▾" pill after the target, the list, the preview
+  const picked = useRef<(next: string, item: TacticItem) => void>(() => {});
+  picked.current = (next) => {
+    setPreview(null);
+    setActive(MAIN);
+    setCode(next);
+    scrollToTarget.current = true;
+    advance(3);
+    if (ready) void run(next);
+  };
+  const previewed = useRef<(tactic: string | null) => void>(() => {});
+  previewed.current = (tactic) => {
+    setPreview(tactic);
+    // tutorial mode: a tool's first look opens its two-step reveal
+    if (tactic && tutorial && !isRevealed(progress, problem.id, tactic)) {
+      setExplained(tactic);
+      updateTutorial((p) => markRevealed(p, problem.id, tactic));
+    }
+  };
+  const langIndex = lang === "en" ? 0 : 1;
+  // the reader's own agent connected (Ask AI's Local mode): the list's AI row asks it; otherwise it says how to connect
+  const { data: agents } = useAsync(() => agentStatus().catch(() => null), "agents");
+  const agentConnected = !!agents?.enabled && agents.agents.some((a) => a.available);
+  const asked = useRef<(line: number) => void>(() => {});
+  asked.current = (line) => {
+    const g = result?.goals.find((x) => at(x.line).file === MAIN && at(x.line).line === String(line));
+    askAiForSorry(langIndex, { file: MAIN, line, goal: g ? [...g.hypotheses, `⊢ ${g.target}`].join("\n") : undefined });
+  };
+  // after a tactic goes in, bring the sorry to fill next into view
+  const scrollToTarget = useRef(false);
+  useEffect(() => {
+    const view = editorView.current;
+    if (!scrollToTarget.current || !view) return;
+    scrollToTarget.current = false;
+    const all = sorryOffsets(code);
+    const at = all[Math.min(hole, all.length - 1)];
+    if (at !== undefined) requestAnimationFrame(() => view.dispatch({ effects: EditorView.scrollIntoView(at, { y: "center" }) }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code]);
+  const chipKey = chips.shown.join("\n");
+  const completion = useMemo(
+    () =>
+      tacticCompletion({
+        items: tacticItems(chips.shown, problem.steps),
+        locked: chips.locked.length,
+        lang: langIndex,
+        onPick: (next, _hole, item) => picked.current(next, item),
+        onPreview: (tactic) => previewed.current(tactic),
+        ai: { connected: agentConnected, onAsk: (line) => asked.current(line) },
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [chipKey, chips.locked.length, langIndex, problem.steps, agentConnected],
+  );
+  const pillLabel = pick(["Tactic ▾", "戰術 ▾"]);
   const extensions = useMemo(
     () =>
       [
         lean(),
-        ...(editing ? [sorryMarks(hole, preview)] : []),
+        ...(editing
+          ? [sorryMarks(hole, preview, { label: pillLabel, onOpen: (view, at) => openTactics(view, at) }), completion]
+          : []),
         ...(active === MAIN && anchors.length ? [stepMarks(anchors, activeStep, onBadge)] : []),
       ],
-    [editing, hole, preview, anchors, activeStep, active],
+    [editing, hole, preview, anchors, activeStep, active, completion, pillLabel],
   );
   // a paper step pointed at: bring its Lean lines into view
   const pointed = stepHover ?? stepPin;
@@ -432,24 +490,6 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
   // hypotheses that weren't there at the same goal last time: the step's effect
   const before = new Set(previous?.goals.flatMap((g) => g.hypotheses) ?? []);
   const next = PROBLEMS[PROBLEMS.findIndex((p) => p.id === problem.id) + 1];
-  // the tactic pills that fit on the toolbar's line; the rest go under "more"
-  const pillBox = useRef<HTMLDivElement | null>(null);
-  const [fit, setFit] = useState(Infinity);
-  useLayoutEffect(() => {
-    const el = pillBox.current;
-    if (!el) return;
-    const count = () => {
-      const kids = [...el.children] as HTMLElement[];
-      const top = kids[0]?.offsetTop ?? 0;
-      const n = kids.findIndex((k) => k.offsetTop > top + 2);
-      setFit(n < 0 ? kids.length : n);
-    };
-    count();
-    const ro = new ResizeObserver(count);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [chips.shown.join("\n")]);
-
   // --- the parts of the workspace (WorkspaceFrame.tsx puts them in their columns) ---
 
   const phoneBar = (
@@ -517,7 +557,7 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
 
       <div className="space-y-4 bg-gray-50/60 p-5 xl:min-h-0 xl:flex-1 xl:overflow-y-auto">
         <div role="tablist" className="flex gap-1">
-          {(["statement", "hint", ...(steps.length && !tutorial ? (["natural"] as const) : [])] as const).map((tab) => (
+          {(["statement", "hint", ...(steps.length ? (["natural"] as const) : [])] as const).map((tab) => (
             <button
               key={tab}
               role="tab"
@@ -531,7 +571,7 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
             </button>
           ))}
         </div>
-        {lowerTab === "natural" && !tutorial ? (
+        {lowerTab === "natural" ? (
           <div className="space-y-3" data-testid="natural-tab">
             <MirrorLegend />
             {naturalProof}
@@ -544,11 +584,8 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
             {(mirror?.statementMirror?.length || steps.length > 0) && <MirrorLegend />}
             {/* a simple `theorem … := by sorry` file is shown once, clickable part by part; anything else as plain text */}
             {showsAnatomy(problem) ? (
-              <div {...coachBox(0)} data-testid="coach-statement">
-                <div className={coach === 0 ? "p-1.5" : ""}>
-                  {coachCard(0)}
-                  <StatementAnatomy start={problem.start} beginner={problem.level === "L1"} onPick={() => advance(1)} mirror={mirror?.statementMirror} />
-                </div>
+              <div data-testid="coach-statement">
+                <StatementAnatomy start={problem.start} beginner={problem.level === "L1"} onPick={() => advance(1)} mirror={mirror?.statementMirror} />
               </div>
             ) : mirror?.statementMirror?.length ? (
               <PlainStatementMirror text={mirrorLeanText(problem.statements, problem.start, mirror.statementMirror)} pairs={mirror.statementMirror} />
@@ -560,7 +597,6 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
             <p className="text-xs text-gray-500">
               {t("statement.checked")} <span className="font-mono text-gray-700">{problem.theorems.join(", ")}</span>
             </p>
-            {tutorial && naturalProof}
           </div>
         ) : (
           <p className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm leading-relaxed text-gray-700" data-testid="hint">
@@ -618,101 +654,13 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
       >
         +
       </button>
-      {edited && (
-        <button onClick={reset} className="mb-1 ml-auto shrink-0 px-1 text-xs text-(--lk-accent) hover:underline" data-testid="reset">
-          {t("run.reset")}
-        </button>
-      )}
     </div>
   );
 
-  /** a tactic as a pill on the toolbar, or as a row with its meaning in the "more" list */
-  const tacticChip = (tactic: string, row = false) => {
-    const step = problem.steps.includes(tactic) || /\bsorry\b/.test(tactic);
-    const first = tactic.split("\n")[0];
-    const max = row ? 26 : 18;
-    const label = first.length > max || first !== tactic ? `${first.slice(0, max - 2).trimEnd()} …` : tactic;
-    const info = explainTactic(tactic);
-    // tutorial mode: a chip's first hover or focus opens its two-step reveal
-    const firstLook = () => {
-      if (!tutorial || isRevealed(progress, problem.id, tactic)) return;
-      setExplained(tactic);
-      updateTutorial((p) => markRevealed(p, problem.id, tactic));
-    };
-    const box = tactic === coachChip ? coachBox(2) : { className: "" };
-    const meaning = info ? plainText(pick(info.short)).replace(/`/g, "") : "";
-    return (
-      <span
-        key={tactic}
-        {...box}
-        className={`flex shrink-0 items-stretch overflow-hidden border border-gray-200 bg-white hover:border-(--lk-accent) ${row ? "w-full rounded-md" : "h-6 rounded-full"} ${box.className} ${justUnlocked.includes(tactic) ? "tut-slide-in" : ""}`}
-        data-chip={tactic}
-      >
-        <button
-          onClick={() => {
-            // after a finishing try there's no sorry left: start again from the problem's file
-            const fresh = !/\bsorry\b/.test(code);
-            const nextCode = insertChip(fresh ? problem.start : code, tactic, problem.steps.includes(tactic), fresh ? 0 : hole);
-            setPreview(null);
-            setActive(MAIN);
-            setCode(nextCode);
-            setMoreOpen(false);
-            advance(3);
-            if (ready) void run(nextCode);
-          }}
-          disabled={running || readOnly}
-          title={`${meaning ? `${meaning}\n\n` : ""}${t(step ? "run.stepHint" : "run.tryHint")}\n\n${tactic}`}
-          data-testid="tactic"
-          onMouseEnter={() => (firstLook(), editing && holes.length && setPreview(tactic))}
-          onMouseLeave={() => setPreview(null)}
-          onFocus={() => (firstLook(), editing && holes.length && setPreview(tactic))}
-          onBlur={() => setPreview(null)}
-          className={`min-w-0 flex-1 text-left disabled:opacity-40 ${row ? "px-2 py-1" : "px-2"}`}
-        >
-          <span className="flex items-center gap-1.5 font-mono text-xs whitespace-nowrap text-gray-800">
-            <span
-              className={`shrink-0 rounded px-1 font-sans text-[10px] font-medium ${step ? "bg-sky-50 text-sky-700" : "bg-teal-50 text-(--lk-accent)"}`}
-            >
-              {t(step ? "run.step" : "run.try")}
-            </span>
-            <span className="min-w-0 truncate">{label}</span>
-            {info?.mathlib && (
-              <span className="shrink-0 rounded bg-amber-50 px-1 font-sans text-[10px] font-medium text-amber-800" title="Mathlib">
-                {row ? "Mathlib" : "M"}
-              </span>
-            )}
-          </span>
-          {row && info && (
-            <span className="mt-0.5 block text-[11px] leading-snug text-gray-500" data-testid="tactic-meaning">
-              <RichText text={pick(info.short)} />
-            </span>
-          )}
-        </button>
-        {info && (
-          <button
-            type="button"
-            onClick={() => {
-              setExplained(explained === tactic ? null : tactic);
-              setMoreOpen(false);
-              if (tutorial) updateTutorial((p) => markRevealed(p, problem.id, tactic));
-            }}
-            aria-expanded={explained === tactic}
-            aria-label={pick(["What does this do?", "這是做什麼的？"])}
-            title={pick(["What does this do?", "這是做什麼的？"])}
-            className={`shrink-0 border-l border-gray-100 px-1.5 text-[11px] ${explained === tactic ? "text-(--lk-accent)" : "text-gray-400 hover:text-gray-700"}`}
-          >
-            ⓘ
-          </button>
-        )}
-      </span>
-    );
-  };
-  const hidden = chips.shown.slice(fit);
-  const explainedInfo = explained ? explainTactic(explained) : null;
-
-  // one line over the editor: Run, the sorry being filled, the tactics (the rest under "more"), the answer switch
+  // one line over the editor: Run, (tutorial: the locked tools), the answer switch, Reset; the tactics are in the editor,
+  // a "Tactic ▾" list at the target sorry
   const toolbar = (
-    <div {...coachBox(2)} className={`relative flex shrink-0 flex-wrap items-center gap-1.5 border-b border-gray-200 bg-white px-2 py-1.5 xl:h-10 xl:flex-nowrap xl:py-0 ${coachBox(2).className}`} data-testid="toolbar">
+    <div className="relative flex shrink-0 flex-wrap items-center gap-1.5 border-b border-gray-200 bg-white px-2 py-1.5 xl:h-10 xl:flex-nowrap xl:py-0" data-testid="toolbar">
       <button
         onClick={() => void run()}
         disabled={running || !ready || readOnly}
@@ -722,52 +670,8 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
       >
         {running ? t("run.running") : `▶ ${t("run.run")}`}
       </button>
-      {editing && holes.length > 0 && (
-        <button
-          type="button"
-          onClick={() => (holes.length > 1 ? setSorryOpen((o) => !o) : pickHole(hole))}
-          aria-expanded={holes.length > 1 ? sorryOpen : undefined}
-          title={pick(["The sorry the tactics fill: click to jump to it", "戰術要填的 sorry：點一下跳過去"])}
-          data-testid="sorry-target"
-          className="flex h-6 shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 text-[11px] text-amber-900 ring-1 ring-amber-300 hover:bg-amber-100"
-        >
-          {pick(["Filling", "正在填"])}{" "}
-          <span className="font-mono font-semibold">L{code.slice(0, holes[hole]).split("\n").length}</span>
-          <span className="font-mono underline decoration-amber-500 decoration-dotted underline-offset-2">sorry</span>
-          {holes.length > 1 && <span className="text-amber-700">{`${hole + 1}/${holes.length} ▾`}</span>}
-        </button>
-      )}
-      <div ref={pillBox} className="order-last flex h-6 min-w-0 basis-full flex-wrap items-center gap-1 overflow-hidden xl:order-none xl:basis-auto xl:flex-1" data-testid="tactic-pills">
-        {chips.shown.map((c) => tacticChip(c))}
-      </div>
+      <span className="min-w-0 flex-1" />
       {guide && tutorial && <LockedRow count={chips.locked.length} rule={guide.unlock} pill />}
-      <span className="relative shrink-0">
-        <button
-          type="button"
-          onClick={() => setMoreOpen((o) => !o)}
-          aria-expanded={moreOpen}
-          data-testid="more-tools"
-          className={`flex h-6 items-center gap-1 rounded-full px-2 text-[11px] ring-1 ${moreOpen ? "bg-gray-800 text-white ring-gray-800" : "text-gray-600 ring-gray-300 hover:bg-gray-50"}`}
-        >
-          {hidden.length > 0 ? pick([`+${hidden.length} more`, `還有 ${hidden.length} 個`]) : pick(["More", "更多"])} ▾
-        </button>
-        {moreOpen && (
-          <div className="absolute top-8 right-0 z-30 w-72 space-y-1.5 rounded-md border border-gray-200 bg-white p-2 shadow-lg" data-testid="more-panel">
-            {hidden.map((c) => tacticChip(c, true))}
-            {!hidden.length && <p className="text-[11px] text-gray-500">{t("run.tryHint")}</p>}
-            {guide && tutorial && <LockedRow count={chips.locked.length} rule={guide.unlock} />}
-            {/* Formalizer Pro (pending): live suggestions from Lean's search, a local prover, or the visitor's agent */}
-            <button
-              onClick={() => go("agents", "roadmap")}
-              data-testid="pro-pending"
-              className="flex w-full items-center justify-between gap-2 rounded-md border border-dashed border-gray-300 px-2.5 py-1.5 text-left text-xs text-gray-500 hover:border-(--lk-accent) hover:text-gray-800"
-            >
-              <span>✨ {t("pro.suggest")}</span>
-              <span className="rounded bg-amber-50 px-1 text-[10px] font-medium text-amber-800">{t("pro.pending")}</span>
-            </button>
-          </div>
-        )}
-      </span>
       <button
         type="button"
         role="switch"
@@ -782,6 +686,11 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
           <span className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform ${showProof ? "translate-x-3" : ""}`} />
         </span>
       </button>
+      {edited && (
+        <button onClick={reset} className="shrink-0 rounded px-1.5 text-[11px] text-(--lk-accent) hover:bg-teal-50" data-testid="reset">
+          {t("run.reset")}
+        </button>
+      )}
     </div>
   );
 
@@ -794,7 +703,6 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
   );
   const drawer = (
     <div className="max-h-[45%] shrink-0 overflow-y-auto empty:hidden">
-      {coach === 2 && <div className="border-b border-gray-100 p-2">{coachCard(2)}</div>}
       {readOnly && active === MAIN && (
         <p className={`${strip} bg-indigo-50 text-indigo-900`} data-testid="needs-full">
           {pick(NEEDS_FULL)}
@@ -802,39 +710,6 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
       )}
       {!readOnly && <RunnerHint runner={runner} onOpen={openRunner} />}
       {active !== MAIN && <p className={`${strip} text-gray-500`}>{activeFile?.readonly ? t("files.readonly") : t("files.about")}</p>}
-      {justUnlocked.length > 0 && guide && (
-        <div className="border-b border-gray-100 p-2">
-          <UnlockNote note={guide.unlockNote} />
-        </div>
-      )}
-      {sorryOpen && editing && holes.length > 1 && (
-        <div className={strip}>
-          <div className="min-w-0 flex-1">
-            <SorryList code={code} holes={holes} active={hole} onPick={pickHole} />
-          </div>
-          {close(() => setSorryOpen(false))}
-        </div>
-      )}
-      {explained && explainedInfo && (
-        <div className={`${strip} bg-gray-50/70 text-[11px] leading-relaxed text-gray-700`} data-testid="tactic-explained">
-          <div className="min-w-0 flex-1 space-y-1.5">
-            <p className="font-mono text-xs font-medium text-gray-900">{explained.split("\n")[0]}</p>
-            {tutorial && guide ? (
-              <TacticReveal info={explainedInfo} here={guide.here[explained]} />
-            ) : (
-              <p>
-                <RichText text={pick(explainedInfo.long)} />
-              </p>
-            )}
-            {explainedInfo.link && (
-              <button type="button" onClick={() => go("skills", explainedInfo.link![0], explainedInfo.link![1])} className="font-medium text-(--lk-accent) hover:underline">
-                {pick(["More in Coding Skills →", "在「程式技巧」看更多 →"])}
-              </button>
-            )}
-          </div>
-          {close(() => setExplained(null))}
-        </div>
-      )}
       {showProof && (
         <div className={`${strip} bg-gray-50/60`} data-testid="reference-proof">
           <div className="min-w-0 flex-1 space-y-1.5">
@@ -908,7 +783,7 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
           });
         }}
         // no boxes on every other `sorry` when one is selected: the dotted underlines mark them
-        basicSetup={{ foldGutter: false, highlightSelectionMatches: false }}
+        basicSetup={{ foldGutter: false, highlightSelectionMatches: false, autocompletion: false }}
         extensions={extensions}
         className="font-mono text-sm"
         aria-label={t("run.editor")}
@@ -919,10 +794,10 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
 
   // the feedback column: the verdict, then tabs Goals | Messages | Map | Checkers at full height
   const tabWord: Record<FeedTab, string> = {
-    goals: tutorial ? pick(["Goal", "目標"]) : t("panel.goals"),
+    goals: t("panel.goals"),
     messages: t("result.messages"),
     map: t("result.map"),
-    checkers: pick(tutorial ? ["Judges", "裁判"] : ["Checkers", "檢查器"]),
+    checkers: pick(["Checkers", "檢查器"]),
   };
   const feedback = (
     <>
@@ -959,8 +834,7 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
             aria-selected={feedTab === tab}
             onClick={() => setFeedTab(tab)}
             data-testid={`result-tab-${tab}`}
-            {...(tab === "goals" ? coachBox(1) : tab === "checkers" ? coachBox(3) : {})}
-            className={`${tabClass(feedTab === tab)} ${tab === "goals" ? coachBox(1).className : tab === "checkers" ? coachBox(3).className : ""}`}
+            className={tabClass(feedTab === tab)}
           >
             {tabWord[tab]}
             {tab === "goals" && result && <span className="text-[10px] text-gray-400 tabular-nums">{result.goals.length}</span>}
@@ -968,12 +842,6 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
               <span className="rounded-full bg-red-100 px-1 text-[10px] text-red-700 tabular-nums">{result.errors.length}</span>
             )}
             {tab === "checkers" && <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${LIGHT_LOOK[checkersLight][0]}`} data-testid="checkers-dot" />}
-            {/* tutorial mode: the judges' one light, in words */}
-            {tab === "checkers" && tutorial && (
-              <span className="font-normal text-gray-600" data-testid="checkers-light" data-light={checkersLight}>
-                {pick(LIGHT_LOOK[checkersLight][1])}
-              </span>
-            )}
           </button>
         ))}
       </div>
@@ -986,10 +854,7 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
         {problemText && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-sm text-red-800">{problemText}</p>}
         {feedTab === "goals" && (
           <div className="space-y-1.5" data-testid="goals">
-            {coachCard(1)}
-            {tutorial && solved ? (
-              <NoGoals />
-            ) : preGoal && !result?.goals.length && !solved && (!result || tutorial) ? (
+            {preGoal && !result ? (
               <div className="overflow-hidden rounded-md border border-gray-200" data-testid="goal-preview">
                 <p className="border-b border-gray-100 bg-gray-50 px-2.5 py-0.5 text-[11px] text-gray-500">
                   {pick(running ? ["Asking Lean…", "正在問 Lean……"] : ["From the statement, before any step", "從陳述得出，還沒做任何一步"])}
@@ -1029,26 +894,8 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
                 {pick([`${result.errors.length} error(s) in Messages →`, `訊息裡有 ${result.errors.length} 個錯誤 →`])}
               </button>
             )}
-            {tutorial && !solved && (
-              <p className="text-[11px] leading-snug text-gray-500" data-testid="goal-legend">
-                <RichText
-                  text={pick(
-                    preGoal?.hypotheses.length || result?.goals.some((g) => g.hypotheses.length)
-                      ? [
-                          "Above the line: what you are given. After `⊢`: what is left to prove. A tactic changes it; the proof is done when no goal is left.",
-                          "橫線上方：已知的東西。`⊢` 後面：還要證明的。戰術會改變它；沒有目標時，證明就完成了。",
-                        ]
-                      : [
-                          "After `⊢`: what is left to prove. A tactic changes it; the proof is done when no goal is left.",
-                          "`⊢` 後面：還要證明的。戰術會改變它；沒有目標時，證明就完成了。",
-                        ],
-                  )}
-                />
-              </p>
-            )}
           </div>
         )}
-        {feedTab === "checkers" && coachCard(3)}
         {feedTab === "messages" && (
           <>
             {!result ? (
@@ -1109,8 +956,34 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
     </>
   );
 
+  const nextTitle = next ? pick(next.title) : "";
   return (
-    <Workspace
+    <>
+      {tutorial && guide && !progress.guideOff && (
+        <GuideWindow
+          guide={guide}
+          problemId={problem.id}
+          coach={coach}
+          onStep={goStep}
+          reveal={explained && explainTactic(explained) ? { tactic: explained, info: explainTactic(explained)! } : null}
+          onCloseReveal={() => setExplained(null)}
+          unlocked={justUnlocked.length > 0}
+          solved={solved}
+          next={next ? { title: nextTitle, go: () => onSelect(next.id) } : null}
+          goalWords={
+            preGoal?.hypotheses.length || result?.goals.some((g) => g.hypotheses.length)
+              ? [
+                  "Above the line: what you are given. After `⊢`: what is left to prove. A tactic changes it; the proof is done when no goal is left.",
+                  "橫線上方：已知的東西。`⊢` 後面：還要證明的。戰術會改變它；沒有目標時，證明就完成了。",
+                ]
+              : [
+                  "After `⊢`: what is left to prove. A tactic changes it; the proof is done when no goal is left.",
+                  "`⊢` 後面：還要證明的。戰術會改變它；沒有目標時，證明就完成了。",
+                ]
+          }
+        />
+      )}
+      <Workspace
       shape="full-height"
       phone={PHONE_PART[mobileTab]}
       phoneBar={phoneBar}
@@ -1120,7 +993,8 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
       drawer={drawer}
       editor={editor}
       feedback={feedback}
-    />
+      />
+    </>
   );
 }
 
@@ -1150,78 +1024,6 @@ const SOURCE: Record<"from" | "by" | "via" | "ported", Localized> = {
 };
 
 /** Tags (e.g. "IMO 1959 P1") and, for an imported proof, where it comes from: project, licence, authors, link. */
-/**
- * The sorrys still open, as their source lines (`L4  | inr hq => sorry`), linked both ways with the editor: pick one
- * here and the editor jumps to it; click one in the editor and it is picked here (and scrolled into view when the list
- * is long). The picked one is the sorry the tactics below fill.
- */
-function SorryList({ code, holes, active, onPick }: { code: string; holes: number[]; active: number; onPick: (i: number) => void }) {
-  const { pick } = useLang();
-  const list = useRef<HTMLOListElement | null>(null);
-  useEffect(() => {
-    list.current?.querySelector<HTMLElement>(`[data-hole="${active}"]`)?.scrollIntoView({ block: "nearest" });
-  }, [active]);
-  return (
-    <div className="space-y-1.5 pb-1" data-testid="sorry-target">
-      <p className="flex items-baseline justify-between gap-2 text-[11px] text-gray-500">
-        <span className="font-medium text-gray-700">{pick(["Filling", "正在填"])}</span>
-        <span>
-          {holes.length > 1 ? pick([`sorry ${active + 1} of ${holes.length}`, `第 ${active + 1} 個 sorry，共 ${holes.length} 個`]) : "sorry"}
-        </span>
-      </p>
-      <ol ref={list} className="max-h-36 space-y-0.5 overflow-y-auto rounded-md border border-gray-200 bg-gray-50/60 p-1">
-        {holes.map((at, i) => {
-          const start = code.lastIndexOf("\n", at - 1) + 1;
-          const stop = code.indexOf("\n", at);
-          const line = code.slice(0, at).split("\n").length;
-          // a long line is shown as a window that ends at its sorry, so the hole itself is always visible
-          const lead = code.slice(start, at).trimStart();
-          const before = lead.length > 22 ? `…${lead.slice(-21)}` : lead;
-          const after = code.slice(at + "sorry".length, stop < 0 ? code.length : stop);
-          const on = i === active;
-          return (
-            <li key={at}>
-              <button
-                type="button"
-                data-hole={i}
-                onClick={() => onPick(i)}
-                aria-current={on ? "true" : undefined}
-                title={pick(["Fill this sorry (the editor jumps to it)", "填這個 sorry（編輯器會跳到那裡）"])}
-                className={`flex w-full items-baseline gap-2 rounded px-1.5 py-1 text-left font-mono text-[11px] ${
-                  on ? "bg-amber-50 text-gray-900 ring-1 ring-amber-300" : "text-gray-600 hover:bg-white"
-                }`}
-              >
-                <span className={`shrink-0 font-sans text-[10px] ${on ? "font-semibold text-amber-800" : "text-gray-400"}`}>L{line}</span>
-                <span className="min-w-0 truncate">
-                  {before}
-                  <span
-                    className={`font-semibold text-amber-700 underline decoration-dotted underline-offset-4 ${on ? "decoration-amber-600 decoration-[3px]" : "decoration-amber-400 decoration-2"}`}
-                  >
-                    sorry
-                  </span>
-                  {after}
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ol>
-      <p className="text-[11px] leading-snug text-gray-500">
-        <RichText
-          text={pick([
-            holes.length > 1
-              ? "Hover a tactic to preview it there; click it to put it in and run. Pick another `sorry` here or in the editor."
-              : "Hover a tactic to preview it there; click it to put it in and run.",
-            holes.length > 1
-              ? "滑過戰術可在那裡預覽；點下去就放進去並執行。在這裡或編輯器裡點另一個 `sorry`，就改填那一個。"
-              : "滑過戰術可在那裡預覽；點下去就放進去並執行。",
-          ])}
-        />
-      </p>
-    </div>
-  );
-}
-
 function ProblemMeta({ problem }: { problem: Problem }) {
   const { pick } = useLang();
   const { tags, source } = problem;

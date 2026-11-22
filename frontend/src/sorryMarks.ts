@@ -24,34 +24,70 @@ class Preview extends WidgetType {
   }
 }
 
-function build(view: EditorView, target: number, preview: string | null): DecorationSet {
+/** The "Tactic ▾" pill after the target sorry: it opens the tactic list (tacticCompletion.ts). */
+class Pill extends WidgetType {
+  constructor(
+    readonly label: string,
+    readonly at: number,
+    readonly onOpen: (view: EditorView, at: number) => void,
+  ) {
+    super();
+  }
+  eq(other: Pill) {
+    return other.label === this.label && other.at === this.at;
+  }
+  toDOM(view: EditorView) {
+    const el = document.createElement("button");
+    el.type = "button";
+    el.className = "cm-tactic-pill";
+    el.textContent = this.label;
+    el.setAttribute("data-testid", "tactic-pill");
+    el.onmousedown = (e) => e.preventDefault();
+    el.onclick = (e) => (e.preventDefault(), this.onOpen(view, this.at));
+    return el;
+  }
+  ignoreEvent() {
+    return true;
+  }
+}
+
+export interface PillOptions {
+  label: string;
+  /** open the list on the sorry that ends at `at` */
+  onOpen: (view: EditorView, at: number) => void;
+}
+
+function build(view: EditorView, target: number, preview: string | null, pill?: PillOptions): DecorationSet {
   const builder = new RangeSetBuilder<Decoration>();
-  sorryOffsets(view.state.doc.toString()).forEach((from, i) => {
+  const all = sorryOffsets(view.state.doc.toString());
+  const aim = target < all.length ? target : 0;
+  all.forEach((from, i) => {
     const to = from + "sorry".length;
-    if (i === target && preview) builder.add(from, to, Decoration.replace({ widget: new Preview(preview) }));
+    if (i === aim && preview) builder.add(from, to, Decoration.replace({ widget: new Preview(preview) }));
     else
       builder.add(
         from,
         to,
         Decoration.mark({
-          class: i === target ? "cm-sorry cm-sorry-target" : "cm-sorry",
-          attributes: { title: i === target ? "the tactics fill this sorry" : "click to fill this sorry next" },
+          class: i === aim ? "cm-sorry cm-sorry-target" : "cm-sorry",
+          attributes: { title: i === aim ? "the tactics fill this sorry" : "click to fill this sorry next" },
         }),
       );
+    if (i === aim && pill && !preview) builder.add(to, to, Decoration.widget({ widget: new Pill(pill.label, to, pill.onOpen), side: 1 }));
   });
   return builder.finish();
 }
 
 /** Editor extension: highlight every sorry; `target` is the index of the one to fill; `preview` the hovered tactic. */
-export function sorryMarks(target: number, preview: string | null) {
+export function sorryMarks(target: number, preview: string | null, pill?: PillOptions) {
   return ViewPlugin.fromClass(
     class {
       decorations: DecorationSet;
       constructor(view: EditorView) {
-        this.decorations = build(view, target, preview);
+        this.decorations = build(view, target, preview, pill);
       }
       update(u: ViewUpdate) {
-        if (u.docChanged) this.decorations = build(u.view, target, preview);
+        if (u.docChanged) this.decorations = build(u.view, target, preview, pill);
       }
     },
     { decorations: (v) => v.decorations },

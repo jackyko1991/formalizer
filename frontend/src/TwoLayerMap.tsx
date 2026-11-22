@@ -11,7 +11,7 @@
 import { Graph3D, RichText, useLang, type G3Link, type G3Node } from "@learnkit/web";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import DepGraph from "./DepGraph";
-import { useViewMode } from "./mathlib/hooks";
+import { hasWebGL } from "./mathlib/hooks";
 import {
   colourOf,
   COLOURS,
@@ -29,6 +29,28 @@ import {
 import type { Graph } from "./runner";
 
 export type Layer = "statement" | "proof";
+
+/** 2D first (it reads at a glance; 3D is a click away), the reader's choice remembered per browser */
+const VIEW_KEY = "formalizer.map.view";
+function useMapView(): ["3d" | "tree", (m: "3d" | "tree") => void, boolean] {
+  const [webgl] = useState(() => hasWebGL());
+  const [mode, setModeState] = useState<"3d" | "tree">(() => {
+    try {
+      return localStorage.getItem(VIEW_KEY) === "3d" && hasWebGL() ? "3d" : "tree";
+    } catch {
+      return "tree";
+    }
+  });
+  const setMode = (m: "3d" | "tree") => {
+    setModeState(m);
+    try {
+      localStorage.setItem(VIEW_KEY, m);
+    } catch {
+      /* storage blocked: the choice lasts for this visit */
+    }
+  };
+  return [mode, setMode, webgl];
+}
 export interface ProofSource {
   key: string;
   label: L;
@@ -82,7 +104,7 @@ export default function TwoLayerMap({
   const { pick } = useLang();
   const [layer, setLayer] = useState<Layer>(initial);
   const [source, setSource] = useState<string | null>(null);
-  const [mode, setMode, webgl] = useViewMode();
+  const [mode, setMode, webgl] = useMapView();
   const proof = proofs.find((p) => p.key === source) ?? proofs[0] ?? null;
   const say = (x: L | string) => (typeof x === "string" ? x : pick(x));
 
@@ -118,7 +140,7 @@ export default function TwoLayerMap({
           ))}
         </span>
         <span className="ml-auto flex overflow-hidden rounded-md border border-gray-300 text-xs">
-          {(["3d", "tree"] as const).map((m) => (
+          {(["tree", "3d"] as const).map((m) => (
             <button
               key={m}
               disabled={m === "3d" && !webgl}
@@ -397,7 +419,7 @@ function FilledMap({
           ⓘ {pick(["Key", "圖例"])}
         </button>
         <span className={seg}>
-          {(["3d", "tree"] as const).map((m) => (
+          {(["tree", "3d"] as const).map((m) => (
             <button
               key={m}
               disabled={m === "3d" && !webgl}
