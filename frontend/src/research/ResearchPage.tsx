@@ -543,6 +543,13 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
   const [panel, setPanel] = useState<"goals" | "map">("goals");
   const [mapResult, setMapResult] = useState<{ code: string; result: CheckResult } | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
+  // when Lean passes, open the map by itself, once per proved version (the reader can go back to the goals)
+  const mapOpenedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (result?.verdict !== "proved" || mapOpenedFor.current === joined.code) return;
+    mapOpenedFor.current = joined.code;
+    setPanel("map");
+  }, [result?.verdict, joined.code]);
   useEffect(() => {
     if (panel !== "map" || !ready || !main || mapResult?.code === joined.code) return;
     const code = joined.code;
