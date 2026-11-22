@@ -360,7 +360,7 @@ function SearchBox({
   );
 }
 
-function TheoremGraph3D({
+export function TheoremGraph3D({
   graph,
   visible,
   highlight,
@@ -398,7 +398,7 @@ function TheoremGraph3D({
   return <Graph3D nodes={nodes} links={links} focus={focus} onSelect={onSelect} testId="mathlib-3d" side={side} card={(i) => <DeclHover graph={graph} i={i} />} />;
 }
 
-function TreeView({
+export function TreeView({
   graph,
   from,
   selected,
@@ -469,7 +469,7 @@ function Card({ children, onClose, testId }: { children: React.ReactNode; onClos
   );
 }
 
-function NodeCard({
+export function NodeCard({
   index,
   graph,
   i,

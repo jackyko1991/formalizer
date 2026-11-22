@@ -9,6 +9,13 @@ each run imports all of Mathlib (~10 s) and the graph run walks the proof terms 
 minutes). The raw output is kept in the system temp folder (fz-mathlib-raw) and `--reuse` skips the Lean runs, to
 tune the pruning below without waiting for Lean.
 
+    python scripts/mathlib_graph/generate.py --only RiemannHypothesis
+
+regenerates one curated theorem only (after adding it to curated.json, or changing its entry): one graph run and one
+info run for that theorem, then its t/<n>.json and its entry in index.json are rewritten in place (n = its position in
+curated.json) and every other file is left as it is. Its raw output goes to fz-mathlib-raw/only, so `--reuse` still
+reuses the last full run.
+
 What it writes (all plain JSON, gzip-friendly):
   index.json       meta (versions, date), the curated theorems (curated.json + statement, module, axioms, closure
                    size, areas), and the names of every declaration shown in some theorem's graph (for search)
@@ -19,8 +26,10 @@ What it writes (all plain JSON, gzip-friendly):
 
 Pruning (Gen.lean has already collapsed instances and auxiliary declarations): a theorem's full closure has
 thousands of declarations, so each graph keeps the root, a shortest path to each axiom it uses, its guided path and
-a path to a few landmarks (ℕ, ℤ, ℚ, ℝ, Cauchy sequences, quotients…), then fills up to --max-nodes with its nearest
-dependencies, most-used first. Each node records how many of its dependencies were left out.
+a path to a few landmarks (ℕ, ℤ, ℚ, ℝ, Cauchy sequences, quotients…, plus the theorem's own "keep" list in
+curated.json), then fills up to --max-nodes with its nearest
+dependencies, most-used first (up to --max-nodes, or the theorem's own "maxNodes"). Each node records how many
+of its dependencies were left out.
 """
 
 from __future__ import annotations
@@ -94,12 +103,12 @@ def wsl_path(p: Path) -> str:
     return f"/mnt/{drive.lower()}{rest.replace(os.sep, '/')}"
 
 
-def run_lean(args, mode: str, names: list[str] | None = None) -> None:
-    RAW.mkdir(parents=True, exist_ok=True)
+def run_lean(args, mode: str, names: list[str] | None = None, raw: Path = RAW) -> None:
+    raw.mkdir(parents=True, exist_ok=True)
     if names is not None:
-        (RAW / f"names_{mode}.txt").write_text("\n".join(names) + "\n", encoding="utf-8")
-    env = f"FZ_MODE={mode} FZ_OUT='{wsl_path(RAW)}'" + (
-        f" FZ_NAMES='{wsl_path(RAW / f'names_{mode}.txt')}'" if names else ""
+        (raw / f"names_{mode}.txt").write_text("\n".join(names) + "\n", encoding="utf-8")
+    env = f"FZ_MODE={mode} FZ_OUT='{wsl_path(raw)}'" + (
+        f" FZ_NAMES='{wsl_path(raw / f'names_{mode}.txt')}'" if names else ""
     )
     script = f". ~/.elan/env; cd {args.project} && {env} lake env lean '{wsl_path(HERE / 'Gen.lean')}'"
     cmd = ["wsl.exe", "-d", args.distro, "--", "bash", "-lc", script] if os.name == "nt" else ["bash", "-lc", script]
@@ -161,7 +170,7 @@ def path_to(parent: dict[int, int], v: int) -> list[int]:
     return out[::-1]
 
 
-def prune(g, root: int, tour: list[str], idx: dict[str, int], max_nodes: int, indeg_global: list[int]):
+def prune(g, root: int, tour: list[str], idx: dict[str, int], max_nodes: int, indeg_global: list[int], keep_names=()):
     adj = g["adj"]
     dist, parent = bfs(adj, root)
     keep: dict[int, None] = {root: None}
@@ -186,6 +195,11 @@ def prune(g, root: int, tour: list[str], idx: dict[str, int], max_nodes: int, in
         if ax and g["nodes"][chain[-1]][1] != "axiom":
             chain += path_to(p2, min(ax, key=lambda a: d2[a]))[1:]
     keep.update(dict.fromkeys(chain))
+    for name in keep_names:
+        if name in idx and idx[name] in dist:
+            keep.update(dict.fromkeys(path_to(parent, idx[name])))
+        else:
+            print(f"   keep {name} not below {g['nodes'][root][0]}: skipped", file=sys.stderr)
     for name in LANDMARKS:
         if name in idx and idx[name] in dist and len(keep) < max_nodes * 0.6:
             keep.update(dict.fromkeys(path_to(parent, idx[name])))
@@ -213,22 +227,13 @@ def prune(g, root: int, tour: list[str], idx: dict[str, int], max_nodes: int, in
     return kept, pos, dist, edges, hidden, [pos[c] for c in chain], axioms + other_axioms, parent
 
 
-def main() -> None:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--distro", default="Ubuntu-24.04")
-    ap.add_argument("--project", default="~/fz/mathproj")
-    ap.add_argument("--max-nodes", type=int, default=110)
-    ap.add_argument("--reuse", action="store_true", help="reuse the raw Lean output of the last run")
-    args = ap.parse_args()
+def clip(s: str, n: int) -> str:
+    s = re.sub(r"[ \t]+\n", "\n", s.strip())
+    return s if len(s) <= n else s[: n - 1].rstrip() + "…"
 
-    curated = json.loads((HERE / "curated.json").read_text(encoding="utf-8"))["theorems"]
-    names = [t["name"] for t in curated]
-    waypoints = sorted({w for t in curated for w in t.get("tour", [])} | set(LANDMARKS) | set(AXIOMS))
-    if not args.reuse:
-        run_lean(args, "graph", names)
-        run_lean(args, "modules")
-    g = json.loads((RAW / "raw_graph.json").read_text(encoding="utf-8"))
-    modules = json.loads((RAW / "raw_modules.json").read_text(encoding="utf-8"))
+
+def analyse(args, curated: list[dict], g: dict) -> list[tuple]:
+    """Prune every root of the raw graph `g` (curated: the curated.json entries, by name)."""
     if g["missing"]:
         print("missing in Mathlib:", g["missing"], file=sys.stderr)
     mods, nodes, adj = g["mods"], g["nodes"], g["adj"]
@@ -237,16 +242,18 @@ def main() -> None:
     for a in adj:
         for w in a:
             indeg[w] += 1
+    waypoints = sorted(
+        {w for t in curated for w in t.get("tour", []) + t.get("keep", [])} | set(LANDMARKS) | set(AXIOMS)
+    )
     for w in waypoints:
         if w not in idx:
             print(f"landmark / waypoint {w} is in no closure", file=sys.stderr)
-
     by_name = {t["name"]: t for t in curated}
     results = []
     for name, root, closure in g["roots"]:
         t = by_name[name]
         kept, _pos, dist, edges, hidden, chain, axioms, _ = prune(
-            g, root, t.get("tour", []), idx, args.max_nodes, indeg
+            g, root, t.get("tour", []), idx, t.get("maxNodes", args.max_nodes), indeg, t.get("keep", [])
         )
         areas = collections.Counter(area(mods[nodes[v][2]]) for v in dist if nodes[v][2] >= 0)
         results.append((t, root, closure, kept, dist, edges, hidden, chain, axioms, areas))
@@ -254,70 +261,134 @@ def main() -> None:
             f"{name}: closure {closure}, kept {len(kept)}, edges {len(edges) // 2}, axioms "
             f"{[nodes[a][0] for a in axioms]}, path {len(chain)}"
         )
+    return results
 
-    shown = sorted({nodes[v][0] for r in results for v in r[3]})
-    info_file = RAW / "raw_info.json"
+
+def load_info(args, results: list[tuple], g: dict, raw: Path) -> dict:
+    shown = sorted({g["nodes"][v][0] for r in results for v in r[3]})
+    info_file = raw / "raw_info.json"
     if (
         not args.reuse
         or not info_file.exists()
         or not set(shown) <= set(json.loads(info_file.read_text(encoding="utf-8")))
     ):
-        run_lean(args, "info", shown)
-    info = json.loads(info_file.read_text(encoding="utf-8"))
+        run_lean(args, "info", shown, raw)
+    return json.loads(info_file.read_text(encoding="utf-8"))
 
-    def clip(s: str, n: int) -> str:
-        s = re.sub(r"[ \t]+\n", "\n", s.strip())
-        return s if len(s) <= n else s[: n - 1].rstrip() + "…"
+
+def write_theorem(k: int, result: tuple, g: dict, info: dict) -> tuple[dict, list[str]]:
+    """Write t/<k>.json; return the theorem's index.json entry and the names its graph shows."""
+    t, root, closure, kept, dist, edges, hidden, chain, axioms, areas = result
+    mods, nodes = g["mods"], g["nodes"]
+    rows, shown = [], []
+    for i, v in enumerate(kept):
+        n, kind, m = nodes[v]
+        inf = info.get(n, {})
+        rows.append(
+            [
+                n,
+                kind,
+                mods[m] if m >= 0 else "",
+                dist[v],
+                hidden[i],
+                clip(inf.get("sig", ""), SIG_MAX),
+                clip(inf.get("doc", ""), DOC_MAX),
+                inf.get("line", 0),
+            ]
+        )
+        shown.append(n)
+    doc = {
+        "root": t["name"],
+        "fields": ["name", "kind", "module", "depth", "hidden", "sig", "doc", "line"],
+        "nodes": rows,
+        "edges": edges,
+        "path": chain,
+        "axioms": [nodes[a][0] for a in axioms],
+    }
+    (OUT / "t" / f"{k}.json").write_text(json.dumps(doc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    inf = info.get(t["name"], {})
+    entry = {
+        "name": t["name"],
+        "en": t["en"],
+        "zh": t["zh"],
+        "module": mods[nodes[root][2]],
+        "sig": clip(inf.get("sig", ""), SIG_MAX),
+        "line": inf.get("line", 0),
+        "closure": closure,
+        "axioms": [nodes[a][0] for a in axioms],
+        "areas": dict(areas.most_common(8)),
+        "depth": max(dist.values()),
+        "file": f"t/{k}.json",
+    }
+    return entry, shown
+
+
+def only(args, curated: list[dict]) -> None:
+    """Regenerate the named curated theorems in place, leaving the rest of frontend/public/mathlib as it is."""
+    raw = RAW / "only"
+    pos = {t["name"]: k for k, t in enumerate(curated)}
+    unknown = [n for n in args.only if n not in pos]
+    if unknown:
+        raise SystemExit(f"not in curated.json: {unknown}")
+    chosen = [curated[pos[n]] for n in args.only]
+    if not args.reuse:
+        run_lean(args, "graph", [t["name"] for t in chosen], raw)
+    g = json.loads((raw / "raw_graph.json").read_text(encoding="utf-8"))
+    results = analyse(args, chosen, g)
+    info = load_info(args, results, g, raw)
+    index = json.loads((OUT / "index.json").read_text(encoding="utf-8"))
+    theorems, names = index["theorems"], index["names"]
+    for result in results:
+        k = pos[result[0]["name"]]
+        if k > len(theorems):
+            raise SystemExit(f"{result[0]['name']} is at position {k} of curated.json: run the full generator first")
+        entry, shown = write_theorem(k, result, g, info)
+        if k == len(theorems):
+            theorems.append(entry)
+        else:
+            theorems[k] = entry
+        for ks in names.values():
+            if k in ks:
+                ks.remove(k)
+        for n in shown:
+            names.setdefault(n, []).append(k)
+            names[n].sort()
+    index["names"] = {n: ks for n, ks in sorted(names.items()) if ks}
+    index["meta"]["updated"] = datetime.date.today().isoformat()
+    (OUT / "index.json").write_text(json.dumps(index, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    print(f"updated {OUT}: {', '.join(args.only)}")
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--distro", default="Ubuntu-24.04")
+    ap.add_argument("--project", default="~/fz/mathproj")
+    ap.add_argument("--max-nodes", type=int, default=110)
+    ap.add_argument("--reuse", action="store_true", help="reuse the raw Lean output of the last run")
+    ap.add_argument("--only", nargs="+", metavar="NAME", help="regenerate only these curated theorems, in place")
+    args = ap.parse_args()
+
+    curated = json.loads((HERE / "curated.json").read_text(encoding="utf-8"))["theorems"]
+    if args.only:
+        return only(args, curated)
+    names = [t["name"] for t in curated]
+    if not args.reuse:
+        run_lean(args, "graph", names)
+        run_lean(args, "modules")
+    g = json.loads((RAW / "raw_graph.json").read_text(encoding="utf-8"))
+    modules = json.loads((RAW / "raw_modules.json").read_text(encoding="utf-8"))
+    results = analyse(args, curated, g)
+    info = load_info(args, results, g, RAW)
 
     if OUT.exists():
         shutil.rmtree(OUT)
     (OUT / "t").mkdir(parents=True)
     theorems, where = [], collections.defaultdict(list)
-    for k, (t, root, closure, kept, dist, edges, hidden, chain, axioms, areas) in enumerate(results):
-        rows = []
-        for i, v in enumerate(kept):
-            n, kind, m = nodes[v]
-            inf = info.get(n, {})
-            rows.append(
-                [
-                    n,
-                    kind,
-                    mods[m] if m >= 0 else "",
-                    dist[v],
-                    hidden[i],
-                    clip(inf.get("sig", ""), SIG_MAX),
-                    clip(inf.get("doc", ""), DOC_MAX),
-                    inf.get("line", 0),
-                ]
-            )
+    for k, result in enumerate(results):
+        entry, shown = write_theorem(k, result, g, info)
+        theorems.append(entry)
+        for n in shown:
             where[n].append(k)
-        doc = {
-            "root": t["name"],
-            "fields": ["name", "kind", "module", "depth", "hidden", "sig", "doc", "line"],
-            "nodes": rows,
-            "edges": edges,
-            "path": chain,
-            "axioms": [nodes[a][0] for a in axioms],
-        }
-        (OUT / "t" / f"{k}.json").write_text(
-            json.dumps(doc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
-        )
-        inf = info.get(t["name"], {})
-        theorems.append(
-            {
-                "name": t["name"],
-                "en": t["en"],
-                "zh": t["zh"],
-                "module": mods[nodes[root][2]],
-                "sig": clip(inf.get("sig", ""), SIG_MAX),
-                "line": inf.get("line", 0),
-                "closure": closure,
-                "axioms": [nodes[a][0] for a in axioms],
-                "areas": dict(areas.most_common(8)),
-                "depth": max(dist.values()),
-                "file": f"t/{k}.json",
-            }
-        )
 
     # galaxy: modules and districts
     mod_names = [m[0] for m in modules]

@@ -6,6 +6,7 @@
  * Fast-moving facts are dated "as of 22 November 2026"; sources were fetched that day. Pictures: RhFigures.tsx.
  */
 import { RichText, useLang } from "@learnkit/web";
+import { lazy, Suspense } from "react";
 import { Callout, Figure, List, P, Page, Section, SiteLink, Sources, Table, type L, type SectionInfo } from "../kit";
 import {
   CriticalStrip,
@@ -22,6 +23,8 @@ const AS_OF: [string, string] = [
   "本頁關於這些宣稱的事實，截至 2026 年 11 月 22 日。",
 ];
 
+const RhMaps = lazy(() => import("./RhMaps"));
+
 const SECTIONS: SectionInfo[] = [
   {
     id: "picture",
@@ -36,6 +39,7 @@ const SECTIONS: SectionInfo[] = [
     title: ["The mirror case, the same day", "同一天的鏡像案例"],
   },
   { id: "stand", title: ["Where we stand", "我們的立場"] },
+  { id: "maps", title: ["Two maps: the statement and the proof", "兩張地圖：陳述與證明"] },
   {
     id: "more",
     title: ["Further: six views, and the history", "延伸：六種觀點與歷史"],
@@ -464,7 +468,13 @@ export default function RhConcept({ section }: { section: string | null }) {
       </Section>
 
       {/* ------------------------------------------------------------------------------------------------ 5 */}
-      <Section page={PAGE} id="more" n={5} title={SECTIONS[4].title}>
+      {/* the two 3D maps load their data and the 3D library only when the page is opened */}
+      <Suspense fallback={null}>
+        <RhMaps page={PAGE} n={5} title={SECTIONS[4].title} />
+      </Suspense>
+
+      {/* ------------------------------------------------------------------------------------------------ 6 */}
+      <Section page={PAGE} id="more" n={6} title={SECTIONS[5].title}>
         <P
           t={[
             '3Blue1Brown asked mathematicians "What if AI solved the Riemann Hypothesis?" (video, 22 November 2026). Their answers range from running the comparator and two or three independent kernels, to wanting a human idea and a picture, to finding inscrutable proofs fascinating. Leo de Moura, the creator of Lean, put the theme of this page in five words: "a proof is not static". The views page groups those answers into six positions.',

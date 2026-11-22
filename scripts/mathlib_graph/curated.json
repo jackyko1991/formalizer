@@ -1,5 +1,5 @@
 {
-  "_doc": "The theorems of the Mathlib map (frontend/public/mathlib). name: the Mathlib declaration; en / zh: what it says; tour (optional): declarations the guided path must pass through, in order, on its way down to the axioms. Regenerate with scripts/mathlib_graph/generate.py.",
+  "_doc": "The theorems of the Mathlib map (frontend/public/mathlib). name: the Mathlib declaration; en / zh: what it says; tour (optional): declarations the guided path must pass through, in order, on its way down to the axioms; keep (optional): declarations whose path from the theorem is always drawn; maxNodes (optional): this graph's size (default --max-nodes). Regenerate with scripts/mathlib_graph/generate.py.",
   "theorems": [
     { "name": "EuclideanGeometry.dist_sq_eq_dist_sq_add_dist_sq_iff_angle_eq_pi_div_two", "en": "Pythagoras's theorem", "zh": "畢氏定理",
       "tour": ["InnerProductGeometry.norm_sub_sq_eq_norm_sq_add_norm_sq_iff_angle_eq_pi_div_two", "norm_sub_sq_eq_norm_sq_add_norm_sq_iff_real_inner_eq_zero", "Real", "CauSeq.Completion.Cauchy", "funext", "Quot.sound"] },
@@ -73,6 +73,10 @@
     { "name": "SimpleGraph.sum_degrees_eq_twice_card_edges", "en": "The handshake lemma", "zh": "握手引理" },
     { "name": "Classical.em", "en": "Excluded middle (Diaconescu: from choice)", "zh": "排中律（Diaconescu：由選擇公理推出）" },
     { "name": "funext", "en": "Function extensionality (from quotients)", "zh": "函數外延性（由商型別推出）" },
-    { "name": "Nat.add_comm", "en": "n + m = m + n (no axioms at all)", "zh": "n + m = m + n（完全不用公理）" }
+    { "name": "Nat.add_comm", "en": "n + m = m + n (no axioms at all)", "zh": "n + m = m + n（完全不用公理）" },
+    { "name": "RiemannHypothesis", "en": "The Riemann hypothesis (the statement only, no proof)", "zh": "黎曼猜想（只有陳述，沒有證明）",
+      "tour": ["riemannZeta", "HurwitzZeta.hurwitzZetaEven", "HurwitzZeta.completedHurwitzZetaEven", "mellin", "MeasureTheory.integral", "Real", "CauSeq.Completion.Cauchy", "funext", "Quot.sound"],
+      "keep": ["Complex", "Complex.re", "Complex.Gamma", "Complex.Gammaℝ", "Complex.cpow", "Complex.exp", "Real.pi", "HurwitzZeta.hurwitzEvenFEPair", "WeakFEPair", "WeakFEPair.Λ", "MeasureTheory.volume", "MeasureTheory.Measure", "MeasureTheory.lintegral", "CauSeq", "Quotient"],
+      "maxNodes": 150 }
   ]
 }
