@@ -10,9 +10,9 @@
 import { go, plainText, ProblemPicture, RelatedProblems, RichText, useLang, type Localized } from "@learnkit/web";
 import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { mergeFiles, onAgentFiles, setAgentContext, type AgentContext } from "./agent/bus";
-import CheckersPanel from "./CheckersPanel";
+import CheckersPanel, { LIGHT_LOOK, type CheckersLight } from "./CheckersPanel";
 import { useAsync } from "./mathlib/hooks";
 import { loadProblemMap } from "./problemMap";
 import TwoLayerMap, { type ProofSource } from "./TwoLayerMap";
@@ -37,28 +37,49 @@ import { stepMarks } from "./tutorial/stepMarks";
 import { coachShown, DONE, initialGoal, locateSteps, reopenGuide, stepAtLine, isRevealed, markRevealed, markSolved, reachStep, setStep, stepOf, unlock, unlocksNow, visibleChips } from "./tutorial/progress";
 import { CoachCard, LockedRow, NoGoals, TacticReveal, TutorialBar, UnlockNote } from "./tutorial/Tutorial";
 import { updateTutorial, useTutorial } from "./tutorial/useTutorial";
+import { LibraryColumn, PANEL_HEAD, PANEL_TITLE, tabClass, VerdictChip, Workspace, WorkspaceFrame, type PhonePart, type Tone } from "./WorkspaceFrame";
 
-const VERDICT_STYLE: Record<CheckResult["verdict"], string> = {
-  proved: "border-green-200 bg-green-50 text-green-800",
-  incomplete: "border-amber-200 bg-amber-50 text-amber-900",
-  error: "border-red-200 bg-red-50 text-red-800",
-  "needs-runner": "border-gray-200 bg-gray-50 text-gray-700",
+/** the verdict in a word or two, for the feedback header (the whole sentence is in its title and the Messages tab) */
+const VERDICT_CHIP: Record<CheckResult["verdict"], Localized> = {
+  proved: ["✓ Proved", "✓ 已證明"],
+  incomplete: ["⚠ sorry left", "⚠ 還有 sorry"],
+  error: ["✗ Error", "✗ 錯誤"],
+  "needs-runner": ["Needs Full", "需要 Full"],
+};
+const VERDICT_TONE: Record<CheckResult["verdict"], Tone> = { proved: "good", incomplete: "warn", error: "bad", "needs-runner": "plain" };
+const VERDICT_TEXT: Record<CheckResult["verdict"], string> = {
+  proved: "text-green-800",
+  incomplete: "text-amber-900",
+  error: "text-red-800",
+  "needs-runner": "text-gray-700",
 };
 /** the file with the problem's statement, checked last */
 const MAIN = "Proof.lean";
-const PANEL_HEAD = "flex h-8 shrink-0 items-center justify-between gap-2 border-b border-gray-200 bg-gray-50 px-3 text-xs";
-const PANEL_TITLE = "font-semibold tracking-wide text-gray-500 uppercase";
 
 type MobileTab = "problem" | "proof" | "result";
 const MOBILE_TABS: MobileTab[] = ["problem", "proof", "result"];
+const PHONE_PART: Record<MobileTab, PhonePart> = { problem: "problem", proof: "work", result: "results" };
 /** where each coach step is on a phone: statement, goal (with the results), tactic, result */
 const COACH_TAB: MobileTab[] = ["problem", "result", "proof", "result"];
+/** the feedback column's tabs */
+type FeedTab = "goals" | "messages" | "map" | "checkers";
+const FEED_TABS: FeedTab[] = ["goals", "checkers", "messages", "map"];
+/** the library: folded or open by the reader's hand (remembered); untouched, it folds itself once a problem is picked */
+const LIBRARY_KEY = "formalizer.library";
 
 export default function ProblemsPage({ tab, section }: { tab: string | null; section: string | null }) {
   const { t, pick } = useLang();
   const view = problemsView({ tab, section });
   const problem = PROBLEMS.find((p) => view.kind === "problem" && p.id === view.id) ?? PROBLEMS[0];
-  const [libraryOpen, setLibraryOpen] = useState(true);
+  const [libraryChoice, setLibraryChoice] = useState(() => stored(LIBRARY_KEY));
+  // untouched by the reader: open on the bare Problems page, folded to its rail once a problem is open
+  const [libraryOpen, setLibraryOpen] = useState(libraryChoice === "open" || (libraryChoice !== "folded" && !tab));
+  const toggleLibrary = () => {
+    const next = !libraryOpen;
+    setLibraryOpen(next);
+    setLibraryChoice(next ? "open" : "folded");
+    store(LIBRARY_KEY, next ? "open" : "folded");
+  };
   // the left column: the library (Problems) or the research projects, remembered; opening a project shows Research
   const [leftTab, setLeftTabState] = useState<LeftTab>(() => (stored(LEFT_TAB_KEY) === "research" ? "research" : "problems"));
   const setLeftTab = (next: LeftTab) => (setLeftTabState(next), store(LEFT_TAB_KEY, next));
@@ -70,6 +91,11 @@ export default function ProblemsPage({ tab, section }: { tab: string | null; sec
     if (view.kind === "problem") store(RECENT_KEY, JSON.stringify(pushRecent(parseRecent(stored(RECENT_KEY)), problem.id)));
   }, [view.kind, problem.id]);
   const select = (next: string) => go("problems", next);
+  // picked from the library: fold it to its rail (unless the reader keeps it open), giving the room to the workspace
+  const pickFromLibrary = (next: string) => {
+    if (libraryChoice !== "open") setLibraryOpen(false);
+    select(next);
+  };
   const tabs = (
     <div role="tablist" className="grid flex-1 grid-cols-2 gap-1" data-testid="left-tabs">
       {(["problems", "research"] as const).map((id) => (
@@ -89,72 +115,59 @@ export default function ProblemsPage({ tab, section }: { tab: string | null; sec
     </div>
   );
   return (
-    <div className="flex flex-col bg-white xl:h-full xl:min-h-0 xl:flex-row" data-testid="problem-page">
-      {/* phones and tablets: the same two tabs, then a menu of problems or the research list */}
-      <div className="space-y-2 border-b border-gray-200 p-3 xl:hidden">
-        <div className="flex rounded-lg bg-gray-100 p-1">{tabs}</div>
-        {leftTab === "problems" ? (
-          <select
-            value={view.kind === "problem" ? problem.id : ""}
-            onChange={(e) => select(e.target.value)}
-            aria-label={t("page.problems")}
-            className="w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm"
-          >
-            {view.kind === "research" && <option value="">{pick(["Pick a problem…", "選一題……"])}</option>}
-            {CATEGORIES.filter((c) => PROBLEMS.some((p) => p.category === c.id)).map((c) => (
-              <optgroup key={c.id} label={pick(c.title)}>
-                {PROBLEMS.filter((p) => p.category === c.id).map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.level} · {plainText(pick(p.title)).replace(/`/g, "")}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-        ) : (
-          <details className="rounded-md border border-gray-200" open={view.kind === "research" && !view.project}>
-            <summary className="cursor-pointer px-3 py-1.5 text-sm font-medium text-gray-700">
-              {pick(["Research projects and demos", "研究專案與範例"])}
-            </summary>
-            <div className="max-h-[55vh] overflow-y-auto p-2">
-              <ResearchList selected={view.kind === "research" ? view.project : undefined} />
-            </div>
-          </details>
-        )}
-      </div>
-
-      {/* 1. Library or research projects */}
-      <aside
-        className={`hidden shrink-0 flex-col border-r border-gray-200 bg-white transition-[width] xl:flex ${libraryOpen ? "w-64" : "w-10"}`}
-      >
-        <div className="flex h-9 shrink-0 items-center gap-1 border-b border-gray-200 bg-gray-50 px-1.5">
-          {libraryOpen && tabs}
-          <button
-            onClick={() => setLibraryOpen((o) => !o)}
-            title={t(libraryOpen ? "library.fold" : "library.open")}
-            className="rounded px-1.5 text-gray-500 hover:bg-gray-200 hover:text-gray-800"
-          >
-            {libraryOpen ? "«" : "»"}
-          </button>
+    <WorkspaceFrame
+      testId="problem-page"
+      phoneLibrary={
+        // phones and tablets: the same two tabs, then a menu of problems or the research list
+        <div className="space-y-2 border-b border-gray-200 p-3 xl:hidden">
+          <div className="flex rounded-lg bg-gray-100 p-1">{tabs}</div>
+          {leftTab === "problems" ? (
+            <select
+              value={view.kind === "problem" ? problem.id : ""}
+              onChange={(e) => select(e.target.value)}
+              aria-label={t("page.problems")}
+              className="w-full rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm"
+            >
+              {view.kind === "research" && <option value="">{pick(["Pick a problem…", "選一題……"])}</option>}
+              {CATEGORIES.filter((c) => PROBLEMS.some((p) => p.category === c.id)).map((c) => (
+                <optgroup key={c.id} label={pick(c.title)}>
+                  {PROBLEMS.filter((p) => p.category === c.id).map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.level} · {plainText(pick(p.title)).replace(/`/g, "")}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          ) : (
+            <details className="rounded-md border border-gray-200" open={view.kind === "research" && !view.project}>
+              <summary className="cursor-pointer px-3 py-1.5 text-sm font-medium text-gray-700">
+                {pick(["Research projects and demos", "研究專案與範例"])}
+              </summary>
+              <div className="max-h-[55vh] overflow-y-auto p-2">
+                <ResearchList selected={view.kind === "research" ? view.project : undefined} />
+              </div>
+            </details>
+          )}
         </div>
-        {libraryOpen ? (
-          <div className="min-h-0 flex-1 overflow-y-auto p-3">
-            {leftTab === "problems" ? (
-              <ProblemLibrary selected={view.kind === "problem" ? problem.id : null} onSelect={select} />
-            ) : (
-              <ResearchList selected={view.kind === "research" ? view.project : undefined} />
-            )}
-          </div>
-        ) : (
-          <button
-            onClick={() => setLibraryOpen(true)}
-            className="flex-1 py-3 text-xs font-medium tracking-wide text-gray-500 [writing-mode:vertical-rl] hover:text-gray-800"
-          >
-            {t(leftTab === "problems" ? "library" : "page.research")}
-          </button>
-        )}
-      </aside>
-
+      }
+      library={
+        // 1. Library or research projects
+        <LibraryColumn
+          open={libraryOpen}
+          onToggle={toggleLibrary}
+          head={tabs}
+          rail={t(leftTab === "problems" ? "library" : "page.research")}
+          foldLabel={t(libraryOpen ? "library.fold" : "library.open")}
+        >
+          {leftTab === "problems" ? (
+            <ProblemLibrary selected={view.kind === "problem" ? problem.id : null} onSelect={pickFromLibrary} />
+          ) : (
+            <ResearchList selected={view.kind === "research" ? view.project : undefined} />
+          )}
+        </LibraryColumn>
+      }
+    >
       {view.kind === "research" ? (
         <div className="min-w-0 flex-1 bg-gray-50/60 xl:min-h-0 xl:overflow-y-auto" data-testid="research-main">
           <ResearchPage id={view.project} />
@@ -162,7 +175,7 @@ export default function ProblemsPage({ tab, section }: { tab: string | null; sec
       ) : (
         <ProblemView key={problem.id} problem={problem} onSelect={select} />
       )}
-    </div>
+    </WorkspaceFrame>
   );
 }
 
@@ -179,10 +192,14 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
   const [running, setRunning] = useState(false);
   const [problemText, setProblemText] = useState<string | null>(null);
   const [lowerTab, setLowerTab] = useState<"statement" | "hint" | "natural">("statement");
-  // results: Lean's messages, or the two-layer map (TwoLayerMap.tsx; shown by itself once the proof is done)
-  const [resultTab, setResultTab] = useState<"messages" | "map">("messages");
+  // the feedback column: the goals while writing, Lean's messages on errors, the two-layer map (TwoLayerMap.tsx) once
+  // proved, the checkers
+  const [feedTab, setFeedTab] = useState<FeedTab>("goals");
+  const [checkersLight, setCheckersLight] = useState<CheckersLight>("not-yet");
+  // the toolbar's popovers: the tactics that don't fit on its line, the list of sorrys
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [sorryOpen, setSorryOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>("problem");
-  const onPhone = (tab: MobileTab, display = "xl:block") => (mobileTab === tab ? "" : `hidden ${display}`);
   const { runner, open: openRunner } = useRunner();
   const ready = runnerReady(runner);
   // a Mathlib problem without a Full runner: its reference proof, read-only (the Lite runner has no Mathlib)
@@ -200,6 +217,8 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
   useEffect(() => {
     if (!tutorial || coach >= DONE) return;
     setMobileTab(COACH_TAB[coach]);
+    if (coach === 1) setFeedTab("goals");
+    if (coach === 3) setFeedTab("checkers");
     // after the first step, bring the highlighted part into view (a phone has just switched tabs)
     if (coachMoved.current)
       requestAnimationFrame(() => document.querySelector("[data-coach-active]")?.scrollIntoView({ block: "nearest", behavior: "smooth" }));
@@ -222,7 +241,8 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
       setWhere(() => joined.where);
       setPrevious(result);
       setResult(next);
-      setResultTab(next.verdict === "proved" && next.graph ? "map" : "messages");
+      // after a Run, the checkers first: their chips are the verdict to read (the page's own first run keeps the goal)
+      if (!auto) setFeedTab("checkers");
       if (!auto) setMobileTab((tab) => (tab === "problem" ? "result" : tab));
       if (tutorial && guide) {
         if (next.verdict === "proved") updateTutorial((p) => markSolved(p, problem.id));
@@ -232,6 +252,7 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
         }
       }
     } catch (e) {
+      setFeedTab("messages");
       setProblemText(e instanceof RunnerError && e.message === "offline" ? t("run.offline") : String(e instanceof Error ? e.message : e));
     } finally {
       setRunning(false);
@@ -345,7 +366,8 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
       ? visibleChips(problem.tactics, guide.first, progress.unlocked, progress.unlockedIn.includes(problem.id))
       : { shown: problem.tactics, locked: [] as string[] };
   const coachChip = chips.shown.find((c) => guide?.first.includes(c)) ?? chips.shown[0];
-  const preGoal = tutorial ? initialGoal(statementParts(problem.start)) : null;
+  // the goal read off the statement, shown before the first run (Lean's own replaces it)
+  const preGoal = initialGoal(statementParts(problem.start));
   const coachBox = (step: number) => (coach === step ? { className: "tut-coach", "data-coach-active": "" } : { className: "" });
   const coachCard = (step: number) => guide && coach === step && <CoachCard guide={guide} problemId={problem.id} step={step} onStep={goStep} />;
   const onBadge = (i: number) => (setBadge(i), setStepPin(i));
@@ -390,8 +412,8 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
   const { data: refMap, error: refMapError } = useAsync(() => loadProblemMap(problem.id), problem.id);
   const solved = result?.verdict === "proved";
   const proofs: ProofSource[] = [
-    ...(result?.graph && !readOnly ? [{ key: "yours", label: ["Your proof", "你的證明"] as const, graph: result.graph }] : []),
-    ...(refMap && (solved || readOnly) ? [{ key: "reference", label: ["The reference proof", "參考證明"] as const, graph: refMap.proof }] : []),
+    ...(result?.graph && !readOnly ? [{ key: "yours", label: ["Your proof", "你的證明"] as const, short: ["Yours", "你的"] as const, graph: result.graph }] : []),
+    ...(refMap && (solved || readOnly) ? [{ key: "reference", label: ["The reference proof", "參考證明"] as const, short: ["Reference", "參考"] as const, graph: refMap.proof }] : []),
   ];
   const mapView = (
     <TwoLayerMap
@@ -404,612 +426,701 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
         "檢查你的證明，就能看到它怎麼組成。證明完成後，這裡也會出現參考證明的地圖。",
       ]}
       initial={solved || readOnly ? "proof" : "statement"}
+      fill
     />
   );
   // hypotheses that weren't there at the same goal last time: the step's effect
   const before = new Set(previous?.goals.flatMap((g) => g.hypotheses) ?? []);
+  const next = PROBLEMS[PROBLEMS.findIndex((p) => p.id === problem.id) + 1];
+  // the tactic pills that fit on the toolbar's line; the rest go under "more"
+  const pillBox = useRef<HTMLDivElement | null>(null);
+  const [fit, setFit] = useState(Infinity);
+  useLayoutEffect(() => {
+    const el = pillBox.current;
+    if (!el) return;
+    const count = () => {
+      const kids = [...el.children] as HTMLElement[];
+      const top = kids[0]?.offsetTop ?? 0;
+      const n = kids.findIndex((k) => k.offsetTop > top + 2);
+      setFit(n < 0 ? kids.length : n);
+    };
+    count();
+    const ro = new ResizeObserver(count);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [chips.shown.join("\n")]);
 
-  return (
+  // --- the parts of the workspace (WorkspaceFrame.tsx puts them in their columns) ---
+
+  const phoneBar = (
+    <div className="sticky top-0 z-10 flex border-b border-gray-200 bg-white xl:hidden" role="tablist">
+      {MOBILE_TABS.map((tab) => (
+        <button
+          key={tab}
+          role="tab"
+          aria-selected={mobileTab === tab}
+          onClick={() => setMobileTab(tab)}
+          className={`flex-1 border-b-2 py-2.5 text-sm font-medium ${
+            mobileTab === tab ? "border-(--lk-accent) text-(--lk-accent)" : "border-transparent text-gray-500"
+          }`}
+        >
+          {t(`mtab.${tab}`)}
+        </button>
+      ))}
+      {tutorial && (
+        <button
+          type="button"
+          onClick={() => updateTutorial((p) => reopenGuide(p, problem.id))}
+          disabled={coach < DONE}
+          data-testid="guide-button-phone"
+          title={pick(["Guide", "導覽"])}
+          className="shrink-0 px-3 text-sm text-amber-800 disabled:text-gray-300"
+        >
+          🧭 <span className="text-xs">{pick(["Guide", "導覽"])}</span>
+        </button>
+      )}
+    </div>
+  );
+
+  // the problem: title, chips, summary pinned; Statement / Hint scroll
+  const problemPart = (
     <>
-      <div className="sticky top-0 z-10 flex border-b border-gray-200 bg-white xl:hidden" role="tablist">
-        {MOBILE_TABS.map((tab) => (
+      <div className="shrink-0 border-b border-gray-200 bg-white px-5 py-4">
+        <h2 className="text-xl font-semibold tracking-tight text-gray-900">
+          <RichText text={pick(problem.title)} />
+        </h2>
+        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-medium text-(--lk-accent)">{pick(category.title)}</span>
+          <span className={`flex items-center gap-1.5 rounded-full border border-gray-200 px-2.5 py-0.5 text-xs font-medium ${level.text}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${level.dot}`} />
+            {problem.level} · {t(`level.${problem.level}`)}
+          </span>
+          <span className="rounded-full border border-gray-200 px-2.5 py-0.5 text-xs text-gray-500">
+            {problem.runner === "lite" ? t("runner.lite") : t("runner.full")}
+          </span>
+        </div>
+        {guide && <TutorialBar problemId={problem.id} />}
+        <p className="mt-2 text-sm leading-relaxed text-gray-600">
+          <RichText text={pick(problem.summary)} />
+        </p>
+        {/* the problem's maths picture (frontend/public/problems/<id>.svg, as Tensorizer's diagram.svg): what the
+            statement is about, drawn before any Lean; tests/pictures.test.ts requires one for every problem */}
+        <ProblemPicture
+          src={`${import.meta.env.BASE_URL}problems/${problem.id}.svg`}
+          alt={pick(["The picture of: ", "題目的圖："]) + plainText(pick(problem.title)).replace(/`/g, "")}
+        />
+        <ProblemMeta problem={problem} />
+        <CollectionNav problemId={problem.id} onSelect={onSelect} />
+        {/* the same idea on a sister site (learnkit interlinks.ts; nothing is drawn when there is none) */}
+        <RelatedProblems site="formalizer" id={problem.id} />
+      </div>
+
+      <div className="space-y-4 bg-gray-50/60 p-5 xl:min-h-0 xl:flex-1 xl:overflow-y-auto">
+        <div role="tablist" className="flex gap-1">
+          {(["statement", "hint", ...(steps.length && !tutorial ? (["natural"] as const) : [])] as const).map((tab) => (
+            <button
+              key={tab}
+              role="tab"
+              aria-selected={lowerTab === tab}
+              onClick={() => setLowerTab(tab)}
+              className={`rounded-md px-3 py-1 text-xs font-medium ${
+                lowerTab === tab ? "bg-white text-(--lk-accent) shadow-sm ring-1 ring-gray-200" : "text-gray-600 hover:bg-white/70"
+              }`}
+            >
+              {tab === "natural" ? pick(["Natural-language proof", "自然語言證明"]) : t(`tab.${tab}`)}
+            </button>
+          ))}
+        </div>
+        {lowerTab === "natural" && !tutorial ? (
+          <div className="space-y-3" data-testid="natural-tab">
+            <MirrorLegend />
+            {naturalProof}
+          </div>
+        ) : lowerTab !== "hint" ? (
+          <div className="space-y-3" data-testid="statement">
+            <p className="text-sm leading-relaxed text-gray-700">
+              <RichText text={t("problems.intro")} />
+            </p>
+            {(mirror?.statementMirror?.length || steps.length > 0) && <MirrorLegend />}
+            {/* a simple `theorem … := by sorry` file is shown once, clickable part by part; anything else as plain text */}
+            {showsAnatomy(problem) ? (
+              <div {...coachBox(0)} data-testid="coach-statement">
+                <div className={coach === 0 ? "p-1.5" : ""}>
+                  {coachCard(0)}
+                  <StatementAnatomy start={problem.start} beginner={problem.level === "L1"} onPick={() => advance(1)} mirror={mirror?.statementMirror} />
+                </div>
+              </div>
+            ) : mirror?.statementMirror?.length ? (
+              <PlainStatementMirror text={mirrorLeanText(problem.statements, problem.start, mirror.statementMirror)} pairs={mirror.statementMirror} />
+            ) : (
+              <pre className="rounded-lg border border-gray-200 bg-white px-4 py-3 font-mono text-sm leading-relaxed break-words whitespace-pre-wrap text-gray-900">
+                {problem.statements.join("\n\n")}
+              </pre>
+            )}
+            <p className="text-xs text-gray-500">
+              {t("statement.checked")} <span className="font-mono text-gray-700">{problem.theorems.join(", ")}</span>
+            </p>
+            {tutorial && naturalProof}
+          </div>
+        ) : (
+          <p className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm leading-relaxed text-gray-700" data-testid="hint">
+            <RichText text={pick(problem.hint)} />
+          </p>
+        )}
+      </div>
+    </>
+  );
+
+  // the editor's own tab bar: Proof.lean, the lemma files, +
+  const fileTabs = (
+    <div className="flex shrink-0 items-end gap-1 overflow-x-auto border-b border-gray-200 bg-gray-50 px-2 pt-1.5" role="tablist">
+      {[...files.map((f) => f.name), MAIN].map((name) => {
+        const dirty =
+          name === MAIN ? code !== problem.start : files.find((f) => f.name === name)?.code !== problem.files?.find((f) => f.name === name)?.code;
+        return (
+          <span
+            key={name}
+            className={`flex shrink-0 items-center rounded-t-md border border-b-0 font-mono text-xs ${
+              active === name ? "border-gray-200 bg-white text-gray-900" : "border-transparent text-gray-500 hover:text-gray-800"
+            }`}
+          >
+            <button
+              role="tab"
+              aria-selected={active === name}
+              onClick={() => setActive(name)}
+              title={name === MAIN ? t("proof.about") : undefined}
+              className="py-1 pr-2 pl-3"
+              data-testid="file-tab"
+            >
+              {name}
+              {dirty && <span className="ml-1 text-amber-600">●</span>}
+            </button>
+            {name !== MAIN && !own.has(name) && (
+              <button
+                onClick={() => {
+                  setFiles((fs) => fs.filter((f) => f.name !== name));
+                  setActive(MAIN);
+                }}
+                title={t("files.remove")}
+                className="pr-2 text-gray-400 hover:text-red-600"
+              >
+                ×
+              </button>
+            )}
+          </span>
+        );
+      })}
+      <button
+        onClick={addFile}
+        title={t("files.add")}
+        data-testid="add-file"
+        className="mb-1 shrink-0 rounded px-2 text-sm text-gray-500 hover:bg-gray-200 hover:text-gray-800"
+      >
+        +
+      </button>
+      {edited && (
+        <button onClick={reset} className="mb-1 ml-auto shrink-0 px-1 text-xs text-(--lk-accent) hover:underline" data-testid="reset">
+          {t("run.reset")}
+        </button>
+      )}
+    </div>
+  );
+
+  /** a tactic as a pill on the toolbar, or as a row with its meaning in the "more" list */
+  const tacticChip = (tactic: string, row = false) => {
+    const step = problem.steps.includes(tactic) || /\bsorry\b/.test(tactic);
+    const first = tactic.split("\n")[0];
+    const max = row ? 26 : 18;
+    const label = first.length > max || first !== tactic ? `${first.slice(0, max - 2).trimEnd()} …` : tactic;
+    const info = explainTactic(tactic);
+    // tutorial mode: a chip's first hover or focus opens its two-step reveal
+    const firstLook = () => {
+      if (!tutorial || isRevealed(progress, problem.id, tactic)) return;
+      setExplained(tactic);
+      updateTutorial((p) => markRevealed(p, problem.id, tactic));
+    };
+    const box = tactic === coachChip ? coachBox(2) : { className: "" };
+    const meaning = info ? plainText(pick(info.short)).replace(/`/g, "") : "";
+    return (
+      <span
+        key={tactic}
+        {...box}
+        className={`flex shrink-0 items-stretch overflow-hidden border border-gray-200 bg-white hover:border-(--lk-accent) ${row ? "w-full rounded-md" : "h-6 rounded-full"} ${box.className} ${justUnlocked.includes(tactic) ? "tut-slide-in" : ""}`}
+        data-chip={tactic}
+      >
+        <button
+          onClick={() => {
+            // after a finishing try there's no sorry left: start again from the problem's file
+            const fresh = !/\bsorry\b/.test(code);
+            const nextCode = insertChip(fresh ? problem.start : code, tactic, problem.steps.includes(tactic), fresh ? 0 : hole);
+            setPreview(null);
+            setActive(MAIN);
+            setCode(nextCode);
+            setMoreOpen(false);
+            advance(3);
+            if (ready) void run(nextCode);
+          }}
+          disabled={running || readOnly}
+          title={`${meaning ? `${meaning}\n\n` : ""}${t(step ? "run.stepHint" : "run.tryHint")}\n\n${tactic}`}
+          data-testid="tactic"
+          onMouseEnter={() => (firstLook(), editing && holes.length && setPreview(tactic))}
+          onMouseLeave={() => setPreview(null)}
+          onFocus={() => (firstLook(), editing && holes.length && setPreview(tactic))}
+          onBlur={() => setPreview(null)}
+          className={`min-w-0 flex-1 text-left disabled:opacity-40 ${row ? "px-2 py-1" : "px-2"}`}
+        >
+          <span className="flex items-center gap-1.5 font-mono text-xs whitespace-nowrap text-gray-800">
+            <span
+              className={`shrink-0 rounded px-1 font-sans text-[10px] font-medium ${step ? "bg-sky-50 text-sky-700" : "bg-teal-50 text-(--lk-accent)"}`}
+            >
+              {t(step ? "run.step" : "run.try")}
+            </span>
+            <span className="min-w-0 truncate">{label}</span>
+            {info?.mathlib && (
+              <span className="shrink-0 rounded bg-amber-50 px-1 font-sans text-[10px] font-medium text-amber-800" title="Mathlib">
+                {row ? "Mathlib" : "M"}
+              </span>
+            )}
+          </span>
+          {row && info && (
+            <span className="mt-0.5 block text-[11px] leading-snug text-gray-500" data-testid="tactic-meaning">
+              <RichText text={pick(info.short)} />
+            </span>
+          )}
+        </button>
+        {info && (
+          <button
+            type="button"
+            onClick={() => {
+              setExplained(explained === tactic ? null : tactic);
+              setMoreOpen(false);
+              if (tutorial) updateTutorial((p) => markRevealed(p, problem.id, tactic));
+            }}
+            aria-expanded={explained === tactic}
+            aria-label={pick(["What does this do?", "這是做什麼的？"])}
+            title={pick(["What does this do?", "這是做什麼的？"])}
+            className={`shrink-0 border-l border-gray-100 px-1.5 text-[11px] ${explained === tactic ? "text-(--lk-accent)" : "text-gray-400 hover:text-gray-700"}`}
+          >
+            ⓘ
+          </button>
+        )}
+      </span>
+    );
+  };
+  const hidden = chips.shown.slice(fit);
+  const explainedInfo = explained ? explainTactic(explained) : null;
+
+  // one line over the editor: Run, the sorry being filled, the tactics (the rest under "more"), the answer switch
+  const toolbar = (
+    <div {...coachBox(2)} className={`relative flex shrink-0 flex-wrap items-center gap-1.5 border-b border-gray-200 bg-white px-2 py-1.5 xl:h-10 xl:flex-nowrap xl:py-0 ${coachBox(2).className}`} data-testid="toolbar">
+      <button
+        onClick={() => void run()}
+        disabled={running || !ready || readOnly}
+        data-testid="run"
+        title={readOnly ? pick(NEEDS_FULL) : undefined}
+        className="h-7 shrink-0 rounded-md bg-(--lk-accent) px-3 text-xs font-medium text-white hover:opacity-90 disabled:cursor-not-allowed disabled:bg-gray-300"
+      >
+        {running ? t("run.running") : `▶ ${t("run.run")}`}
+      </button>
+      {editing && holes.length > 0 && (
+        <button
+          type="button"
+          onClick={() => (holes.length > 1 ? setSorryOpen((o) => !o) : pickHole(hole))}
+          aria-expanded={holes.length > 1 ? sorryOpen : undefined}
+          title={pick(["The sorry the tactics fill: click to jump to it", "戰術要填的 sorry：點一下跳過去"])}
+          data-testid="sorry-target"
+          className="flex h-6 shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 text-[11px] text-amber-900 ring-1 ring-amber-300 hover:bg-amber-100"
+        >
+          {pick(["Filling", "正在填"])}{" "}
+          <span className="font-mono font-semibold">L{code.slice(0, holes[hole]).split("\n").length}</span>
+          <span className="font-mono underline decoration-amber-500 decoration-dotted underline-offset-2">sorry</span>
+          {holes.length > 1 && <span className="text-amber-700">{`${hole + 1}/${holes.length} ▾`}</span>}
+        </button>
+      )}
+      <div ref={pillBox} className="order-last flex h-6 min-w-0 basis-full flex-wrap items-center gap-1 overflow-hidden xl:order-none xl:basis-auto xl:flex-1" data-testid="tactic-pills">
+        {chips.shown.map((c) => tacticChip(c))}
+      </div>
+      {guide && tutorial && <LockedRow count={chips.locked.length} rule={guide.unlock} pill />}
+      <span className="relative shrink-0">
+        <button
+          type="button"
+          onClick={() => setMoreOpen((o) => !o)}
+          aria-expanded={moreOpen}
+          data-testid="more-tools"
+          className={`flex h-6 items-center gap-1 rounded-full px-2 text-[11px] ring-1 ${moreOpen ? "bg-gray-800 text-white ring-gray-800" : "text-gray-600 ring-gray-300 hover:bg-gray-50"}`}
+        >
+          {hidden.length > 0 ? pick([`+${hidden.length} more`, `還有 ${hidden.length} 個`]) : pick(["More", "更多"])} ▾
+        </button>
+        {moreOpen && (
+          <div className="absolute top-8 right-0 z-30 w-72 space-y-1.5 rounded-md border border-gray-200 bg-white p-2 shadow-lg" data-testid="more-panel">
+            {hidden.map((c) => tacticChip(c, true))}
+            {!hidden.length && <p className="text-[11px] text-gray-500">{t("run.tryHint")}</p>}
+            {guide && tutorial && <LockedRow count={chips.locked.length} rule={guide.unlock} />}
+            {/* Formalizer Pro (pending): live suggestions from Lean's search, a local prover, or the visitor's agent */}
+            <button
+              onClick={() => go("agents", "roadmap")}
+              data-testid="pro-pending"
+              className="flex w-full items-center justify-between gap-2 rounded-md border border-dashed border-gray-300 px-2.5 py-1.5 text-left text-xs text-gray-500 hover:border-(--lk-accent) hover:text-gray-800"
+            >
+              <span>✨ {t("pro.suggest")}</span>
+              <span className="rounded bg-amber-50 px-1 text-[10px] font-medium text-amber-800">{t("pro.pending")}</span>
+            </button>
+          </div>
+        )}
+      </span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={showProof}
+        onClick={() => setShowProof((v) => !v)}
+        title={t("proof.switchHint")}
+        data-testid="proof-switch"
+        className="flex shrink-0 items-center gap-1 text-[11px] text-gray-600 hover:text-gray-900"
+      >
+        {t("proof.switch")}
+        <span aria-hidden className={`relative h-4 w-7 shrink-0 rounded-full transition-colors ${showProof ? "bg-(--lk-accent)" : "bg-gray-300"}`}>
+          <span className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform ${showProof ? "translate-x-3" : ""}`} />
+        </span>
+      </button>
+    </div>
+  );
+
+  // strips under the toolbar, only while there is something to say; the editor keeps the rest
+  const strip = "flex shrink-0 items-start gap-2 border-b border-gray-100 px-3 py-1.5 text-xs";
+  const close = (onClose: () => void) => (
+    <button type="button" onClick={onClose} aria-label={pick(["Close", "關閉"])} className="shrink-0 text-gray-400 hover:text-gray-900">
+      ×
+    </button>
+  );
+  const drawer = (
+    <div className="max-h-[45%] shrink-0 overflow-y-auto empty:hidden">
+      {coach === 2 && <div className="border-b border-gray-100 p-2">{coachCard(2)}</div>}
+      {readOnly && active === MAIN && (
+        <p className={`${strip} bg-indigo-50 text-indigo-900`} data-testid="needs-full">
+          {pick(NEEDS_FULL)}
+        </p>
+      )}
+      {!readOnly && <RunnerHint runner={runner} onOpen={openRunner} />}
+      {active !== MAIN && <p className={`${strip} text-gray-500`}>{activeFile?.readonly ? t("files.readonly") : t("files.about")}</p>}
+      {justUnlocked.length > 0 && guide && (
+        <div className="border-b border-gray-100 p-2">
+          <UnlockNote note={guide.unlockNote} />
+        </div>
+      )}
+      {sorryOpen && editing && holes.length > 1 && (
+        <div className={strip}>
+          <div className="min-w-0 flex-1">
+            <SorryList code={code} holes={holes} active={hole} onPick={pickHole} />
+          </div>
+          {close(() => setSorryOpen(false))}
+        </div>
+      )}
+      {explained && explainedInfo && (
+        <div className={`${strip} bg-gray-50/70 text-[11px] leading-relaxed text-gray-700`} data-testid="tactic-explained">
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <p className="font-mono text-xs font-medium text-gray-900">{explained.split("\n")[0]}</p>
+            {tutorial && guide ? (
+              <TacticReveal info={explainedInfo} here={guide.here[explained]} />
+            ) : (
+              <p>
+                <RichText text={pick(explainedInfo.long)} />
+              </p>
+            )}
+            {explainedInfo.link && (
+              <button type="button" onClick={() => go("skills", explainedInfo.link![0], explainedInfo.link![1])} className="font-medium text-(--lk-accent) hover:underline">
+                {pick(["More in Coding Skills →", "在「程式技巧」看更多 →"])}
+              </button>
+            )}
+          </div>
+          {close(() => setExplained(null))}
+        </div>
+      )}
+      {showProof && (
+        <div className={`${strip} bg-gray-50/60`} data-testid="reference-proof">
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <p className="text-[11px] leading-snug text-gray-500">{t("proof.reference")}</p>
+            <pre className="max-h-40 overflow-auto rounded-md border border-gray-200 bg-white px-3 py-1.5 font-mono text-xs leading-relaxed text-gray-800">
+              {proofBody(problem)}
+            </pre>
+            <button
+              onClick={() => {
+                setCode(problem.solution);
+                setActive(MAIN);
+                if (ready) void run(problem.solution);
+              }}
+              disabled={running}
+              data-testid="use-proof"
+              className="rounded-md border border-(--lk-accent) bg-white px-2.5 py-1 text-xs font-medium text-(--lk-accent) hover:bg-teal-50 disabled:opacity-40"
+            >
+              {t("proof.use")}
+            </button>
+          </div>
+          {close(() => setShowProof(false))}
+        </div>
+      )}
+      {badge !== null && steps[badge] && active === MAIN && (
+        <div className={`${strip} bg-amber-50/60 text-gray-800`} data-testid="badge-step">
+          <span className="mt-0.5 rounded bg-gray-700 px-1 text-[10px] font-bold text-white">{badge + 1}</span>
+          <span className="min-w-0 flex-1">
+            <RichText text={pick(steps[badge].text)} />
+          </span>
+          {close(() => (setBadge(null), setStepPin(null)))}
+        </div>
+      )}
+    </div>
+  );
+
+  // the editor: the column's whole height (on phones most of the screen)
+  const editor = (
+    <div className="h-[70dvh] min-h-64 overflow-auto xl:h-auto xl:min-h-0 xl:flex-1" data-testid="editor-box">
+      <CodeMirror
+        key={active}
+        onCreateEditor={(view) => {
+          editorView.current = view;
+          // open on the sorry being filled, so the target line is in view without scrolling
+          const at = holes[hole];
+          if (active === MAIN && !readOnly && at !== undefined)
+            requestAnimationFrame(() => view.dispatch({ effects: EditorView.scrollIntoView(at, { y: "center" }) }));
+        }}
+        value={active === MAIN ? (readOnly ? problem.solution : code) : (activeFile?.code ?? "")}
+        onChange={(nextCode) => (active === MAIN ? setCode(nextCode) : setFiles((fs) => fs.map((f) => (f.name === active ? { ...f, code: nextCode } : f))))}
+        editable={active === MAIN ? !readOnly : !activeFile?.readonly}
+        onUpdate={(u) => {
+          if (!u.selectionSet) return;
+          // a click on a sorry makes it the one the tactics fill
+          if (active === MAIN) {
+            const picked = sorryAt(u.state.doc.toString(), u.state.selection.main.head);
+            if (picked >= 0) setTarget(picked);
+            // the cursor on a line of a paper step lights that step on the left
+            if (steps.length) {
+              const line = u.state.doc.lineAt(u.state.selection.main.head).number;
+              setCursorStep(stepAtLine(locateSteps(u.state.doc.toString(), steps), line));
+              // a step picked on the left gives way to where the reader now is (a tapped badge pins it again)
+              if (u.transactions.some((tr) => tr.isUserEvent("select"))) setStepPin(null);
+            }
+          }
+          const r = u.state.selection.main;
+          const line = (pos: number) => u.state.doc.lineAt(pos).number;
+          const text = u.state.sliceDoc(r.from, r.to);
+          setSel({
+            cursor: { file: active, line: line(r.head) },
+            selection: text.trim() ? { file: active, from_line: line(r.from), to_line: line(r.to), text: text.slice(0, 4000) } : undefined,
+          });
+        }}
+        // no boxes on every other `sorry` when one is selected: the dotted underlines mark them
+        basicSetup={{ foldGutter: false, highlightSelectionMatches: false }}
+        extensions={extensions}
+        className="font-mono text-sm"
+        aria-label={t("run.editor")}
+        data-testid="lean-editor"
+      />
+    </div>
+  );
+
+  // the feedback column: the verdict, then tabs Goals | Messages | Map | Checkers at full height
+  const tabWord: Record<FeedTab, string> = {
+    goals: tutorial ? pick(["Goal", "目標"]) : t("panel.goals"),
+    messages: t("result.messages"),
+    map: t("result.map"),
+    checkers: pick(tutorial ? ["Judges", "裁判"] : ["Checkers", "檢查器"]),
+  };
+  const feedback = (
+    <>
+      <div className={PANEL_HEAD}>
+        <span className="flex min-w-0 items-center gap-2">
+          <span className={PANEL_TITLE}>{t("panel.result")}</span>
+          {result && (
+            <VerdictChip tone={VERDICT_TONE[result.verdict]} title={t(`verdict.${result.verdict}`)} testId="verdict">
+              {pick(VERDICT_CHIP[result.verdict])}
+            </VerdictChip>
+          )}
+          {running && <span className="animate-pulse text-gray-500">{t("run.running")}</span>}
+        </span>
+        <span className="flex shrink-0 items-center gap-2">
+          {solved && next && (
+            <button
+              type="button"
+              onClick={() => onSelect(next.id)}
+              title={`${t("next.title")}: ${plainText(pick(next.title)).replace(/`/g, "")}`}
+              data-testid="next-chip"
+              className="font-medium text-green-700 hover:underline"
+            >
+              {pick(["Next ›", "下一題 ›"])}
+            </button>
+          )}
+          {result && <span className="text-gray-500 tabular-nums">{result.ms} ms</span>}
+        </span>
+      </div>
+      <div className="flex h-8 shrink-0 items-center gap-0.5 overflow-x-auto border-b border-gray-200 bg-gray-50/60 px-2 text-xs" role="tablist">
+        {FEED_TABS.map((tab) => (
           <button
             key={tab}
             role="tab"
-            aria-selected={mobileTab === tab}
-            onClick={() => setMobileTab(tab)}
-            className={`flex-1 border-b-2 py-2.5 text-sm font-medium ${
-              mobileTab === tab ? "border-(--lk-accent) text-(--lk-accent)" : "border-transparent text-gray-500"
-            }`}
+            aria-selected={feedTab === tab}
+            onClick={() => setFeedTab(tab)}
+            data-testid={`result-tab-${tab}`}
+            {...(tab === "goals" ? coachBox(1) : tab === "checkers" ? coachBox(3) : {})}
+            className={`${tabClass(feedTab === tab)} ${tab === "goals" ? coachBox(1).className : tab === "checkers" ? coachBox(3).className : ""}`}
           >
-            {t(`mtab.${tab}`)}
+            {tabWord[tab]}
+            {tab === "goals" && result && <span className="text-[10px] text-gray-400 tabular-nums">{result.goals.length}</span>}
+            {tab === "messages" && !!result?.errors.length && (
+              <span className="rounded-full bg-red-100 px-1 text-[10px] text-red-700 tabular-nums">{result.errors.length}</span>
+            )}
+            {tab === "checkers" && <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${LIGHT_LOOK[checkersLight][0]}`} data-testid="checkers-dot" />}
+            {/* tutorial mode: the judges' one light, in words */}
+            {tab === "checkers" && tutorial && (
+              <span className="font-normal text-gray-600" data-testid="checkers-light" data-light={checkersLight}>
+                {pick(LIGHT_LOOK[checkersLight][1])}
+              </span>
+            )}
           </button>
         ))}
-        {tutorial && (
-          <button
-            type="button"
-            onClick={() => updateTutorial((p) => reopenGuide(p, problem.id))}
-            disabled={coach < DONE}
-            data-testid="guide-button-phone"
-            title={pick(["Guide", "導覽"])}
-            className="shrink-0 px-3 text-sm text-amber-800 disabled:text-gray-300"
-          >
-            🧭 <span className="text-xs">{pick(["Guide", "導覽"])}</span>
-          </button>
-        )}
       </div>
-
-      {/* 2. The problem: title, chips, summary pinned; Statement / Hint scroll */}
-      <main className={`flex min-w-0 flex-col border-r border-gray-200 xl:min-h-0 xl:flex-1 ${onPhone("problem", "xl:flex")}`}>
-        <div className="shrink-0 border-b border-gray-200 bg-white px-5 py-4">
-          <h2 className="text-xl font-semibold tracking-tight text-gray-900">
-            <RichText text={pick(problem.title)} />
-          </h2>
-          <div className="mt-1.5 flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-medium text-(--lk-accent)">{pick(category.title)}</span>
-            <span
-              className={`flex items-center gap-1.5 rounded-full border border-gray-200 px-2.5 py-0.5 text-xs font-medium ${level.text}`}
-            >
-              <span className={`h-1.5 w-1.5 rounded-full ${level.dot}`} />
-              {problem.level} · {t(`level.${problem.level}`)}
-            </span>
-            <span className="rounded-full border border-gray-200 px-2.5 py-0.5 text-xs text-gray-500">
-              {problem.runner === "lite" ? t("runner.lite") : t("runner.full")}
-            </span>
-          </div>
-          {guide && <TutorialBar problemId={problem.id} />}
-          <p className="mt-2 text-sm leading-relaxed text-gray-600">
-            <RichText text={pick(problem.summary)} />
-          </p>
-          {/* the problem's maths picture (frontend/public/problems/<id>.svg, as Tensorizer's diagram.svg): what the
-              statement is about, drawn before any Lean; tests/pictures.test.ts requires one for every problem */}
-          <ProblemPicture
-            src={`${import.meta.env.BASE_URL}problems/${problem.id}.svg`}
-            alt={pick(["The picture of: ", "題目的圖："]) + plainText(pick(problem.title)).replace(/`/g, "")}
-          />
-          <ProblemMeta problem={problem} />
-          <CollectionNav problemId={problem.id} onSelect={onSelect} />
-          {/* the same idea on a sister site (learnkit interlinks.ts; nothing is drawn when there is none) */}
-          <RelatedProblems site="formalizer" id={problem.id} />
-        </div>
-
-        <div className="space-y-4 bg-gray-50/60 p-5 xl:min-h-0 xl:flex-1 xl:overflow-y-auto">
-          <div role="tablist" className="flex gap-1">
-            {(["statement", "hint", ...(steps.length && !tutorial ? (["natural"] as const) : [])] as const).map((tab) => (
-              <button
-                key={tab}
-                role="tab"
-                aria-selected={lowerTab === tab}
-                onClick={() => setLowerTab(tab)}
-                className={`rounded-md px-3 py-1 text-xs font-medium ${
-                  lowerTab === tab ? "bg-white text-(--lk-accent) shadow-sm ring-1 ring-gray-200" : "text-gray-600 hover:bg-white/70"
-                }`}
-              >
-                {tab === "natural" ? pick(["Natural-language proof", "自然語言證明"]) : t(`tab.${tab}`)}
-              </button>
-            ))}
-          </div>
-          {lowerTab === "natural" && !tutorial ? (
-            <div className="space-y-3" data-testid="natural-tab">
-              <MirrorLegend />
-              {naturalProof}
-            </div>
-          ) : lowerTab !== "hint" ? (
-            <div className="space-y-3" data-testid="statement">
-              <p className="text-sm leading-relaxed text-gray-700">
-                <RichText text={t("problems.intro")} />
-              </p>
-              {(mirror?.statementMirror?.length || steps.length > 0) && <MirrorLegend />}
-              {/* a simple `theorem … := by sorry` file is shown once, clickable part by part; anything else as plain text */}
-              {showsAnatomy(problem) ? (
-                <div {...coachBox(0)} data-testid="coach-statement">
-                  <div className={coach === 0 ? "p-1.5" : ""}>
-                    {coachCard(0)}
-                    <StatementAnatomy
-                      start={problem.start}
-                      beginner={problem.level === "L1"}
-                      onPick={() => advance(1)}
-                      mirror={mirror?.statementMirror}
-                    />
-                  </div>
-                </div>
-              ) : (
-                mirror?.statementMirror?.length ? (
-                  <PlainStatementMirror
-                    text={mirrorLeanText(problem.statements, problem.start, mirror.statementMirror)}
-                    pairs={mirror.statementMirror}
-                  />
-                ) : (
-                  <pre className="rounded-lg border border-gray-200 bg-white px-4 py-3 font-mono text-sm leading-relaxed break-words whitespace-pre-wrap text-gray-900">
-                    {problem.statements.join("\n\n")}
-                  </pre>
-                )
-              )}
-              <p className="text-xs text-gray-500">
-                {t("statement.checked")} <span className="font-mono text-gray-700">{problem.theorems.join(", ")}</span>
-              </p>
-              {tutorial && naturalProof}
-            </div>
-          ) : (
-            <p className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm leading-relaxed text-gray-700" data-testid="hint">
-              <RichText text={pick(problem.hint)} />
-            </p>
-          )}
-        </div>
-      </main>
-
-      {/* 3. The proof: Proof.lean + Tactics, then Goals and Result */}
-      <section className="flex min-w-0 flex-col xl:min-h-0 xl:w-[54%] xl:shrink-0">
-        <div className={`flex flex-col overflow-hidden bg-white xl:min-h-0 xl:flex-[1.4] xl:flex-row ${onPhone("proof", "xl:flex")}`}>
-          <div className="flex min-w-0 flex-1 flex-col">
-            <div className="flex shrink-0 items-end gap-1 overflow-x-auto border-b border-gray-200 bg-gray-50 px-2 pt-2" role="tablist">
-              {[...files.map((f) => f.name), MAIN].map((name) => {
-                const dirty =
-                  name === MAIN
-                    ? code !== problem.start
-                    : files.find((f) => f.name === name)?.code !== problem.files?.find((f) => f.name === name)?.code;
-                return (
-                  <span
-                    key={name}
-                    className={`flex shrink-0 items-center rounded-t-md border border-b-0 font-mono text-xs ${
-                      active === name ? "border-gray-200 bg-white text-gray-900" : "border-transparent text-gray-500 hover:text-gray-800"
-                    }`}
-                  >
-                    <button
-                      role="tab"
-                      aria-selected={active === name}
-                      onClick={() => setActive(name)}
-                      className="py-1.5 pl-3 pr-2"
-                      data-testid="file-tab"
-                    >
-                      {name}
-                      {dirty && <span className="ml-1 text-amber-600">●</span>}
-                    </button>
-                    {name !== MAIN && !own.has(name) && (
-                      <button
-                        onClick={() => {
-                          setFiles((fs) => fs.filter((f) => f.name !== name));
-                          setActive(MAIN);
-                        }}
-                        title={t("files.remove")}
-                        className="pr-2 text-gray-400 hover:text-red-600"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </span>
-                );
-              })}
-              <button
-                onClick={addFile}
-                title={t("files.add")}
-                data-testid="add-file"
-                className="mb-1 shrink-0 rounded px-2 text-sm text-gray-500 hover:bg-gray-200 hover:text-gray-800"
-              >
-                +
-              </button>
-            </div>
-            <div className="flex h-7 shrink-0 items-center justify-between gap-3 border-b border-gray-100 px-3 text-xs text-gray-500">
-              <span className="truncate">
-                {active === MAIN && readOnly
-                  ? pick(NEEDS_FULL)
-                  : active === MAIN
-                    ? t("proof.about")
-                    : activeFile?.readonly
-                      ? t("files.readonly")
-                      : t("files.about")}
-              </span>
-              {edited && (
-                <button onClick={reset} className="shrink-0 text-(--lk-accent) hover:underline">
-                  {t("run.reset")}
-                </button>
-              )}
-            </div>
-            {badge !== null && steps[badge] && active === MAIN && (
-              <div className="flex shrink-0 items-start gap-2 border-b border-gray-100 bg-amber-50/60 px-3 py-1.5 text-xs text-gray-800" data-testid="badge-step">
-                <span className="mt-0.5 rounded bg-gray-700 px-1 text-[10px] font-bold text-white">{badge + 1}</span>
-                <span className="min-w-0 flex-1">
-                  <RichText text={pick(steps[badge].text)} />
-                </span>
-                <button
-                  type="button"
-                  onClick={() => (setBadge(null), setStepPin(null))}
-                  aria-label={pick(["Close", "關閉"])}
-                  className="shrink-0 text-gray-500 hover:text-gray-900"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-            <div className="max-h-[60vh] min-h-48 flex-1 overflow-auto xl:max-h-none xl:min-h-0">
-              <CodeMirror
-                key={active}
-                onCreateEditor={(view) => (editorView.current = view)}
-                value={active === MAIN ? (readOnly ? problem.solution : code) : (activeFile?.code ?? "")}
-                onChange={(next) =>
-                  active === MAIN ? setCode(next) : setFiles((fs) => fs.map((f) => (f.name === active ? { ...f, code: next } : f)))
-                }
-                editable={active === MAIN ? !readOnly : !activeFile?.readonly}
-                onUpdate={(u) => {
-                  if (!u.selectionSet) return;
-                  // a click on a sorry makes it the one the tactics fill
-                  if (active === MAIN) {
-                    const picked = sorryAt(u.state.doc.toString(), u.state.selection.main.head);
-                    if (picked >= 0) setTarget(picked);
-                    // the cursor on a line of a paper step lights that step on the left
-                    if (steps.length) {
-                      const line = u.state.doc.lineAt(u.state.selection.main.head).number;
-                      setCursorStep(stepAtLine(locateSteps(u.state.doc.toString(), steps), line));
-                      // a step picked on the left gives way to where the reader now is (a tapped badge pins it again)
-                      if (u.transactions.some((tr) => tr.isUserEvent("select"))) setStepPin(null);
-                    }
-                  }
-                  const r = u.state.selection.main;
-                  const line = (pos: number) => u.state.doc.lineAt(pos).number;
-                  const text = u.state.sliceDoc(r.from, r.to);
-                  setSel({
-                    cursor: { file: active, line: line(r.head) },
-                    selection: text.trim()
-                      ? { file: active, from_line: line(r.from), to_line: line(r.to), text: text.slice(0, 4000) }
-                      : undefined,
-                  });
-                }}
-                // no boxes on every other `sorry` when one is selected: the dotted underlines mark them
-                basicSetup={{ foldGutter: false, highlightSelectionMatches: false }}
-                extensions={extensions}
-                className="font-mono text-sm"
-                aria-label={t("run.editor")}
-                data-testid="lean-editor"
-              />
-            </div>
-          </div>
-
-          {/* like Tensorizer's Parameters panel: tactics to try step by step; the switch reveals the complete proof */}
-          <aside className="flex w-full shrink-0 flex-col border-t border-gray-200 bg-white xl:w-64 xl:border-t-0 xl:border-l">
-            <div className={PANEL_HEAD}>
-              <span className={PANEL_TITLE}>{t("panel.tactics")}</span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={showProof}
-                onClick={() => setShowProof((v) => !v)}
-                title={t("proof.switchHint")}
-                data-testid="proof-switch"
-                className="flex items-center gap-1.5 text-gray-600 hover:text-gray-900"
-              >
-                {t("proof.switch")}
-                <span
-                  aria-hidden
-                  className={`relative h-4 w-7 shrink-0 rounded-full transition-colors ${showProof ? "bg-(--lk-accent)" : "bg-gray-300"}`}
-                >
-                  <span
-                    className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform ${showProof ? "translate-x-3" : ""}`}
-                  />
-                </span>
-              </button>
-            </div>
-            {showProof && (
-              <div className="shrink-0 space-y-2 border-b border-gray-200 bg-gray-50/60 p-3" data-testid="reference-proof">
-                <p className="text-[11px] leading-snug text-gray-500">{t("proof.reference")}</p>
-                <pre className="max-h-48 overflow-auto rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-xs leading-relaxed text-gray-800">
-                  {proofBody(problem)}
-                </pre>
-                <button
-                  onClick={() => {
-                    setCode(problem.solution);
-                    setActive(MAIN);
-                    if (ready) void run(problem.solution);
-                  }}
-                  disabled={running}
-                  data-testid="use-proof"
-                  className="w-full rounded-md border border-(--lk-accent) bg-white px-2.5 py-1.5 text-xs font-medium text-(--lk-accent) hover:bg-teal-50 disabled:opacity-40"
-                >
-                  {t("proof.use")}
-                </button>
-              </div>
-            )}
-            {
-              <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-3">
-                {editing && holes.length > 0 ? (
-                  <SorryList code={code} holes={holes} active={hole} onPick={pickHole} />
-                ) : (
-                  <p className="pb-1 text-[11px] leading-snug text-gray-500">{t("run.tryHint")}</p>
-                )}
-                {coachCard(2)}
-                {justUnlocked.length > 0 && guide && <UnlockNote note={guide.unlockNote} />}
-                {chips.shown.map((tactic) => {
-                  const step = problem.steps.includes(tactic) || /\bsorry\b/.test(tactic);
-                  const first = tactic.split("\n")[0];
-                  const label = first.length > 26 || first !== tactic ? `${first.slice(0, 24).trimEnd()} …` : tactic;
-                  const info = explainTactic(tactic);
-                  const open = explained === tactic;
-                  // tutorial mode: a chip's first hover or focus opens its two-step reveal
-                  const firstLook = () => {
-                    if (!tutorial || isRevealed(progress, problem.id, tactic)) return;
-                    setExplained(tactic);
-                    updateTutorial((p) => markRevealed(p, problem.id, tactic));
-                  };
-                  const box = tactic === coachChip ? coachBox(2) : { className: "" };
-                  return (
-                    <div
-                      key={tactic}
-                      {...box}
-                      className={`rounded-md border border-gray-200 bg-white hover:border-(--lk-accent) ${box.className} ${justUnlocked.includes(tactic) ? "tut-slide-in" : ""}`}
-                      data-chip={tactic}
-                    >
-                      <div className="flex items-stretch">
-                        <button
-                          onClick={() => {
-                            // after a finishing try there's no sorry left: start again from the problem's file
-                            const fresh = !/\bsorry\b/.test(code);
-                            const next = insertChip(fresh ? problem.start : code, tactic, problem.steps.includes(tactic), fresh ? 0 : hole);
-                            setPreview(null);
-                            setActive(MAIN);
-                            setCode(next);
-                            advance(3);
-                            if (ready) void run(next);
-                          }}
-                          disabled={running || readOnly}
-                          title={`${t(step ? "run.stepHint" : "run.tryHint")}\n\n${tactic}`}
-                          data-testid="tactic"
-                          onMouseEnter={() => (firstLook(), editing && holes.length && setPreview(tactic))}
-                          onMouseLeave={() => setPreview(null)}
-                          onFocus={() => (firstLook(), editing && holes.length && setPreview(tactic))}
-                          onBlur={() => setPreview(null)}
-                          className="min-w-0 flex-1 px-2.5 py-1.5 text-left disabled:opacity-40"
-                        >
-                          <span className="flex items-center gap-2 font-mono text-xs text-gray-800">
-                            <span
-                              className={`shrink-0 rounded px-1 font-sans text-[10px] font-medium ${step ? "bg-sky-50 text-sky-700" : "bg-teal-50 text-(--lk-accent)"}`}
-                            >
-                              {t(step ? "run.step" : "run.try")}
-                            </span>
-                            <span className="min-w-0 truncate">{label}</span>
-                            {info?.mathlib && (
-                              <span className="ml-auto shrink-0 rounded bg-amber-50 px-1 font-sans text-[10px] font-medium text-amber-800">
-                                Mathlib
-                              </span>
-                            )}
-                          </span>
-                          {info && (
-                            <span className="mt-0.5 block text-[11px] leading-snug text-gray-500" data-testid="tactic-meaning">
-                              <RichText text={pick(info.short)} />
-                            </span>
-                          )}
-                        </button>
-                        {info && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setExplained(open ? null : tactic);
-                              if (tutorial) updateTutorial((p) => markRevealed(p, problem.id, tactic));
-                            }}
-                            aria-expanded={open}
-                            aria-label={pick(["What does this do?", "這是做什麼的？"])}
-                            title={pick(["What does this do?", "這是做什麼的？"])}
-                            className={`shrink-0 border-l border-gray-100 px-2 text-xs ${open ? "text-(--lk-accent)" : "text-gray-400 hover:text-gray-700"}`}
-                          >
-                            ⓘ
-                          </button>
-                        )}
-                      </div>
-                      {open && info && (
-                        <div className="space-y-1.5 border-t border-gray-100 bg-gray-50/70 px-2.5 py-2 text-[11px] leading-relaxed text-gray-700">
-                          {tutorial && guide ? (
-                            <TacticReveal info={info} here={guide.here[tactic]} />
-                          ) : (
-                            <p>
-                              <RichText text={pick(info.long)} />
-                            </p>
-                          )}
-                          {info.link && (
-                            <button
-                              type="button"
-                              onClick={() => go("skills", info.link![0], info.link![1])}
-                              className="font-medium text-(--lk-accent) hover:underline"
-                            >
-                              {pick(["More in Coding Skills →", "在「程式技巧」看更多 →"])}
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-                {guide && tutorial && <LockedRow count={chips.locked.length} rule={guide.unlock} />}
-                {/* Formalizer Pro (pending): live suggestions from Lean's search, a local prover, or the visitor's agent */}
-                <button
-                  onClick={() => go("agents", "roadmap")}
-                  data-testid="pro-pending"
-                  className="mt-2 flex w-full items-center justify-between gap-2 rounded-md border border-dashed border-gray-300 px-2.5 py-1.5 text-left text-xs text-gray-500 hover:border-(--lk-accent) hover:text-gray-800"
-                >
-                  <span>✨ {t("pro.suggest")}</span>
-                  <span className="rounded bg-amber-50 px-1 text-[10px] font-medium text-amber-800">{t("pro.pending")}</span>
-                </button>
-              </div>
-            }
-            <div className="shrink-0 space-y-2 border-t border-gray-200 p-3">
-              {readOnly ? (
-                <p className="rounded-md border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-xs text-indigo-900" data-testid="needs-full">
-                  {pick(NEEDS_FULL)}
+      {/* the bottom of the column stays clear for the floating Ask AI button (wide screens) */}
+      <div
+        className={`min-h-0 flex-1 p-2.5 xl:pb-20 ${feedTab === "map" ? "flex flex-col" : "space-y-2 overflow-auto"}`}
+        aria-live="polite"
+        data-testid="result"
+      >
+        {problemText && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-sm text-red-800">{problemText}</p>}
+        {feedTab === "goals" && (
+          <div className="space-y-1.5" data-testid="goals">
+            {coachCard(1)}
+            {tutorial && solved ? (
+              <NoGoals />
+            ) : preGoal && !result?.goals.length && !solved && (!result || tutorial) ? (
+              <div className="overflow-hidden rounded-md border border-gray-200" data-testid="goal-preview">
+                <p className="border-b border-gray-100 bg-gray-50 px-2.5 py-0.5 text-[11px] text-gray-500">
+                  {pick(running ? ["Asking Lean…", "正在問 Lean……"] : ["From the statement, before any step", "從陳述得出，還沒做任何一步"])}
                 </p>
-              ) : (
-                <RunnerHint runner={runner} onOpen={openRunner} />
-              )}
-              <button
-                onClick={() => void run()}
-                disabled={running || !ready || readOnly}
-                data-testid="run"
-                className="w-full rounded-md bg-(--lk-accent) py-2 text-sm font-medium text-white hover:opacity-90 disabled:cursor-not-allowed disabled:bg-gray-300"
-              >
-                {running ? t("run.running") : `▶ ${t("run.run")}`}
-              </button>
-            </div>
-          </aside>
-        </div>
-
-        {/* with the map open, this row takes most of the column so the map is in view, not under the fold */}
-        <div
-          className={`flex flex-col border-t border-gray-200 xl:min-h-0 xl:flex-row ${resultTab === "map" ? "xl:flex-[2.4]" : "xl:flex-1"} ${onPhone("result", "xl:flex")}`}
-        >
-          {/* Goals: what Lean still wants, as the terminal is in Tensorizer */}
-          <section
-            {...coachBox(1)}
-            className={`flex min-w-0 flex-col bg-white xl:w-1/2 xl:shrink-0 ${coachBox(1).className}`}
-            data-testid="goals"
-          >
-            <div className={PANEL_HEAD}>
-              <span className={PANEL_TITLE}>{tutorial ? pick(["The goal to clear", "待消除的目標"]) : t("panel.goals")}</span>
-              {result && <span className="text-gray-500">{result.goals.length}</span>}
-            </div>
-            <div className="min-h-32 flex-1 space-y-2 overflow-auto p-3">
-              {coachCard(1)}
-              {tutorial && result?.verdict === "proved" ? (
-                <NoGoals />
-              ) : tutorial && preGoal && !result?.goals.length ? (
-                <div className="overflow-hidden rounded-lg border border-gray-200" data-testid="goal-preview">
-                  <p className="border-b border-gray-100 bg-gray-50 px-3 py-1 text-[11px] text-gray-500">
-                    {pick(running ? ["Asking Lean…", "正在問 Lean……"] : ["From the statement, before any step", "從陳述得出，還沒做任何一步"])}
+                <div className="px-2.5 py-1.5 font-mono text-xs leading-relaxed">
+                  {preGoal.hypotheses.map((h) => (
+                    <p key={h} className="text-gray-700">
+                      {h}
+                    </p>
+                  ))}
+                  <p className="mt-0.5 border-t border-gray-200 pt-0.5 text-gray-900">⊢ {preGoal.target}</p>
+                </div>
+              </div>
+            ) : !result || !result.goals.length ? (
+              <p className="text-xs text-gray-400">{t(solved ? "goals.done" : "goals.none")}</p>
+            ) : (
+              result.goals.map((g, i) => (
+                <div key={i} className="overflow-hidden rounded-md border border-gray-200" data-testid="goal">
+                  <p className="border-b border-gray-100 bg-gray-50 px-2.5 py-0.5 text-[11px] text-gray-500">
+                    {t("goal.at").replace("{file}", at(g.line).file).replace("{line}", at(g.line).line)}
+                    {g.case && <span className="ml-2 rounded bg-gray-200 px-1.5 font-mono text-gray-700">case {g.case}</span>}
                   </p>
-                  <div className="px-3 py-2 font-mono text-xs leading-relaxed">
-                    {preGoal.hypotheses.map((h) => (
-                      <p key={h} className="text-gray-700">
+                  <div className="px-2.5 py-1.5 font-mono text-xs leading-relaxed">
+                    {g.hypotheses.map((h) => (
+                      <p key={h} className={previous && !before.has(h) ? "rounded bg-green-50 text-green-800" : "text-gray-700"}>
                         {h}
                       </p>
                     ))}
-                    <p className="mt-0.5 border-t border-gray-200 pt-0.5 text-gray-900">⊢ {preGoal.target}</p>
+                    <p className="mt-0.5 border-t border-gray-200 pt-0.5 text-gray-900">⊢ {g.target}</p>
+                    {g.others.length > 0 && <p className="mt-1 font-sans text-[11px] text-gray-500">{t("goal.more").replace("{n}", String(g.others.length))}</p>}
                   </div>
                 </div>
-              ) : !result || !result.goals.length ? (
-                <p className="text-xs text-gray-400">{t(result?.verdict === "proved" ? "goals.done" : "goals.none")}</p>
-              ) : (
-                result.goals.map((g, i) => (
-                  <div key={i} className="overflow-hidden rounded-lg border border-gray-200" data-testid="goal">
-                    <p className="border-b border-gray-100 bg-gray-50 px-3 py-1 text-[11px] text-gray-500">
-                      {t("goal.at").replace("{file}", at(g.line).file).replace("{line}", at(g.line).line)}
-                      {g.case && <span className="ml-2 rounded bg-gray-200 px-1.5 font-mono text-gray-700">case {g.case}</span>}
-                    </p>
-                    <div className="px-3 py-2 font-mono text-xs leading-relaxed">
-                      {g.hypotheses.map((h) => (
-                        <p key={h} className={previous && !before.has(h) ? "rounded bg-green-50 text-green-800" : "text-gray-700"}>
-                          {h}
-                        </p>
-                      ))}
-                      <p className="mt-0.5 border-t border-gray-200 pt-0.5 text-gray-900">⊢ {g.target}</p>
-                      {g.others.length > 0 && (
-                        <p className="mt-1 font-sans text-[11px] text-gray-500">{t("goal.more").replace("{n}", String(g.others.length))}</p>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-              {tutorial && result?.verdict !== "proved" && (
-                <p className="text-[11px] leading-snug text-gray-500" data-testid="goal-legend">
-                  <RichText
-                    text={pick(
-                      preGoal?.hypotheses.length || result?.goals.some((g) => g.hypotheses.length)
-                        ? [
-                            "Above the line: what you are given. After `⊢`: what is left to prove. A tactic changes it; the proof is done when no goal is left.",
-                            "橫線上方：已知的東西。`⊢` 後面：還要證明的。戰術會改變它；沒有目標時，證明就完成了。",
-                          ]
-                        : [
-                            "After `⊢`: what is left to prove. A tactic changes it; the proof is done when no goal is left.",
-                            "`⊢` 後面：還要證明的。戰術會改變它；沒有目標時，證明就完成了。",
-                          ],
-                    )}
-                  />
-                </p>
-              )}
-            </div>
-          </section>
-
-          {/* Result: the verdict, errors, notes, axioms */}
-          <section
-            {...coachBox(3)}
-            className={`flex min-w-0 flex-col border-t border-gray-200 bg-white xl:min-h-0 xl:border-t-0 xl:border-l ${resultTab === "map" ? "xl:flex-[2.2]" : "xl:flex-1"} ${coachBox(3).className}`}
-            aria-live="polite"
-            data-testid="result"
-          >
-            <div className={PANEL_HEAD}>
-              <span className={PANEL_TITLE}>{t("panel.result")}</span>
-              <span className="ml-auto flex items-center gap-1" role="tablist">
-                {(["messages", "map"] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    role="tab"
-                    aria-selected={resultTab === tab}
-                    onClick={() => setResultTab(tab)}
-                    data-testid={`result-tab-${tab}`}
-                    className={`rounded px-2 py-0.5 ${resultTab === tab ? "bg-white font-medium text-(--lk-accent) shadow-sm ring-1 ring-gray-200" : "text-gray-500 hover:text-gray-800"}`}
-                  >
-                    {t(`result.${tab}`)}
-                  </button>
-                ))}
-              </span>
-              {result && <span className="text-gray-500">{result.ms} ms</span>}
-            </div>
-            <div className="min-h-32 flex-1 space-y-2 overflow-auto p-3">
-              {coachCard(3)}
-              {problemText && <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{problemText}</p>}
-              {!result && !problemText && resultTab === "messages" && <p className="text-xs text-gray-400">{t("run.none")}</p>}
-              {!result && resultTab === "map" && mapView}
-              {result && (
-                <>
-                  <p className={`rounded-lg border px-3 py-2 text-sm font-medium ${VERDICT_STYLE[result.verdict]}`} data-testid="verdict">
-                    {t(`verdict.${result.verdict}`)}
-                  </p>
-                  {resultTab === "map" ? (
-                    mapView
-                  ) : (
-                    <>
-                      {result.errors.map((e, i) => (
-                        <div key={i} className="rounded-lg border border-red-200 bg-white px-3 py-2" data-testid="lean-error">
-                          <p className="text-xs font-medium text-red-700">
-                            {e.line
-                              ? t("error.at").replace("{file}", at(e.line).file).replace("{line}", at(e.line).line)
-                              : t("error.title")}
-                          </p>
-                          <pre className="mt-1 font-mono text-xs whitespace-pre-wrap text-gray-800">{e.message}</pre>
-                        </div>
-                      ))}
-                      <Notes items={[...(result.infos ?? []), ...result.warnings]} at={at} />
-                      {Object.keys(result.axioms).length > 0 && (
-                        <p className="text-xs text-gray-500" data-testid="axioms">
-                          {t("axioms.label")}{" "}
-                          {Object.entries(result.axioms)
-                            .map(([name, list]) => `${name}: ${list.length ? list.join(", ") : t("axioms.none")}`)
-                            .join(" · ")}
-                        </p>
-                      )}
-                      {result.verdict === "error" && (
-                        <button onClick={() => setLowerTab("hint")} className="text-xs text-(--lk-accent) hover:underline">
-                          {t("hint.show")}
-                        </button>
-                      )}
-                      {result.graph && (
-                        <button onClick={() => setResultTab("map")} className="block text-xs text-(--lk-accent) hover:underline">
-                          {t("graph.open")} →
-                        </button>
-                      )}
-                    </>
+              ))
+            )}
+            {result && result.errors.length > 0 && (
+              <button onClick={() => setFeedTab("messages")} className="text-xs text-red-700 hover:underline">
+                {pick([`${result.errors.length} error(s) in Messages →`, `訊息裡有 ${result.errors.length} 個錯誤 →`])}
+              </button>
+            )}
+            {tutorial && !solved && (
+              <p className="text-[11px] leading-snug text-gray-500" data-testid="goal-legend">
+                <RichText
+                  text={pick(
+                    preGoal?.hypotheses.length || result?.goals.some((g) => g.hypotheses.length)
+                      ? [
+                          "Above the line: what you are given. After `⊢`: what is left to prove. A tactic changes it; the proof is done when no goal is left.",
+                          "橫線上方：已知的東西。`⊢` 後面：還要證明的。戰術會改變它；沒有目標時，證明就完成了。",
+                        ]
+                      : [
+                          "After `⊢`: what is left to prove. A tactic changes it; the proof is done when no goal is left.",
+                          "`⊢` 後面：還要證明的。戰術會改變它；沒有目標時，證明就完成了。",
+                        ],
                   )}
-                  {result.verdict === "proved" && <NextProblem id={problem.id} onSelect={onSelect} />}
-                </>
-              )}
-              {/* the independent checkers (Lite): the statement is the test, they are its runner */}
-              <CheckersPanel
-                code={joinFiles([...files, { name: MAIN, code }]).code}
-                theorems={problem.theorems}
-                statements={problem.statements}
-                challenge={joinFiles([...(problem.files ?? []), { name: MAIN, code: problem.start }]).code}
-                verdict={result?.verdict}
-                compact={tutorial}
-              />
-            </div>
-          </section>
+                />
+              </p>
+            )}
+          </div>
+        )}
+        {feedTab === "checkers" && coachCard(3)}
+        {feedTab === "messages" && (
+          <>
+            {!result ? (
+              !problemText && <p className="text-xs text-gray-400">{t("run.none")}</p>
+            ) : (
+              <>
+                <p className={`text-xs font-medium ${VERDICT_TEXT[result.verdict]}`} data-testid="verdict-text">
+                  {t(`verdict.${result.verdict}`)}
+                </p>
+                {result.errors.map((e, i) => (
+                  <div key={i} className="rounded-md border border-red-200 bg-white px-2.5 py-1.5" data-testid="lean-error">
+                    <p className="text-xs font-medium text-red-700">
+                      {e.line ? t("error.at").replace("{file}", at(e.line).file).replace("{line}", at(e.line).line) : t("error.title")}
+                    </p>
+                    <pre className="mt-0.5 font-mono text-xs whitespace-pre-wrap text-gray-800">{e.message}</pre>
+                  </div>
+                ))}
+                <Notes items={[...(result.infos ?? []), ...result.warnings]} at={at} />
+                {Object.keys(result.axioms).length > 0 && (
+                  <p className="text-xs text-gray-500" data-testid="axioms">
+                    {t("axioms.label")}{" "}
+                    {Object.entries(result.axioms)
+                      .map(([name, list]) => `${name}: ${list.length ? list.join(", ") : t("axioms.none")}`)
+                      .join(" · ")}
+                  </p>
+                )}
+                <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                  {result.verdict === "error" && (
+                    <button onClick={() => setLowerTab("hint")} className="text-(--lk-accent) hover:underline">
+                      {t("hint.show")}
+                    </button>
+                  )}
+                  {result.graph && (
+                    <button onClick={() => setFeedTab("map")} className="text-(--lk-accent) hover:underline">
+                      {t("graph.open")} →
+                    </button>
+                  )}
+                </p>
+                {solved && <NextProblem id={problem.id} onSelect={onSelect} />}
+              </>
+            )}
+          </>
+        )}
+        {feedTab === "map" && <div className="h-[65dvh] min-h-0 xl:h-auto xl:flex-1">{mapView}</div>}
+        {/* the independent checkers (Lite): the statement is the test, they are its runner; always mounted, so they
+            still run by themselves when Lean says proved, whichever tab is open */}
+        <div className={feedTab === "checkers" ? "" : "hidden"} data-testid="checkers-tab">
+          <CheckersPanel
+            code={joinFiles([...files, { name: MAIN, code }]).code}
+            theorems={problem.theorems}
+            statements={problem.statements}
+            challenge={joinFiles([...(problem.files ?? []), { name: MAIN, code: problem.start }]).code}
+            verdict={result?.verdict}
+            onStatus={setCheckersLight}
+          />
         </div>
-      </section>
+      </div>
     </>
+  );
+
+  return (
+    <Workspace
+      shape="full-height"
+      phone={PHONE_PART[mobileTab]}
+      phoneBar={phoneBar}
+      problem={problemPart}
+      editorTabs={fileTabs}
+      toolbar={toolbar}
+      drawer={drawer}
+      editor={editor}
+      feedback={feedback}
+    />
   );
 }
 

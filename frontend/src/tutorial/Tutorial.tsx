@@ -247,13 +247,28 @@ export function TacticReveal({ info, here }: { info: TacticInfo; here?: TacticHe
 }
 
 /** "🔒 n more tools unlock when …" */
-export function LockedRow({ count, rule }: { count: number; rule: ProblemGuide["unlock"] }) {
+export function LockedRow({ count, rule, pill = false }: { count: number; rule: ProblemGuide["unlock"]; pill?: boolean }) {
   const { pick } = useLang();
   if (!count) return null;
   const when: L =
     rule === "after-fail"
       ? ["you try one and Lean says no", "你試一個而 Lean 說不行時"]
       : ["you solve this problem", "你解出這一題時"];
+  const words = pick([
+    `${count} more ${count === 1 ? "tool unlocks" : "tools unlock"} when ${when[0]}.`,
+    `還有 ${count} 個工具，${when[1]}就會解鎖。`,
+  ]);
+  // the editor's toolbar: a small pill, the sentence on hover
+  if (pill)
+    return (
+      <span
+        className="flex h-6 shrink-0 items-center gap-1 rounded-full border border-dashed border-gray-300 bg-gray-50 px-2 text-[11px] text-gray-500"
+        title={words}
+        data-testid="locked-tools"
+      >
+        <span aria-hidden>🔒</span>+{count}
+      </span>
+    );
   return (
     <p
       className="flex items-center gap-1.5 rounded-md border border-dashed border-gray-300 bg-gray-50 px-2.5 py-1.5 text-[11px] text-gray-500"

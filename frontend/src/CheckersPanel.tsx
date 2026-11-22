@@ -12,6 +12,15 @@ import { check, RunnerError, type CheckOutcome } from "./runner";
 
 const PICKED_KEY = "formalizer.checkers";
 
+export type CheckersLight = "checking" | "passed" | "failed" | "not-yet";
+/** the one light: its dot and its words */
+export const LIGHT_LOOK = {
+  checking: ["bg-sky-400 animate-pulse motion-reduce:animate-none", ["Checking…", "檢查中……"]],
+  passed: ["bg-green-500", ["Passed ✓", "通過 ✓"]],
+  failed: ["bg-red-500", ["Not passed ✗", "沒有通過 ✗"]],
+  "not-yet": ["bg-gray-300", ["Not yet", "還沒有"]],
+} as const;
+
 function loadPicked(scope: string): string[] {
   try {
     const saved = JSON.parse(localStorage.getItem(`${PICKED_KEY}.${scope}`) ?? "null");
@@ -31,6 +40,7 @@ export default function CheckersPanel({
   verdict,
   scope = "problems",
   compact = false,
+  onStatus,
 }: {
   /** the whole file as the page checks it */
   code: string;
@@ -49,6 +59,8 @@ export default function CheckersPanel({
   scope?: string;
   /** tutorial mode: one status light, the full panel behind "View the judge's details" */
   compact?: boolean;
+  /** told the one-light status whenever it changes (the Problems page shows it in its results header) */
+  onStatus?: (light: CheckersLight) => void;
 }) {
   const { pick } = useLang();
   const { runner } = useRunner();
@@ -106,16 +118,14 @@ export default function CheckersPanel({
   const canRun = ready && runnable(picked, health, opts).length > 0 && !running;
   const opened = outcomes?.find((o) => o.id === open);
   const [details, setDetails] = useState(false);
+  const light: CheckersLight =
+    running ? "checking" : outcomes && !stale && colour === "green" ? "passed" : outcomes && !stale && colour === "red" ? "failed" : "not-yet";
+  const told = useRef(onStatus);
+  told.current = onStatus;
+  useEffect(() => told.current?.(light), [light]);
 
   if (compact && !details) {
-    const light =
-      running ? "checking" : outcomes && !stale && colour === "green" ? "passed" : outcomes && !stale && colour === "red" ? "failed" : "not-yet";
-    const look = {
-      checking: ["bg-sky-400 animate-pulse motion-reduce:animate-none", ["Checking…", "檢查中……"]],
-      passed: ["bg-green-500", ["Passed ✓", "通過 ✓"]],
-      failed: ["bg-red-500", ["Not passed ✗", "沒有通過 ✗"]],
-      "not-yet": ["bg-gray-300", ["Not yet", "還沒有"]],
-    } as const;
+    const look = LIGHT_LOOK;
     return (
       <section className="flex flex-wrap items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-xs" data-testid="checkers-panel" data-compact data-light={light}>
         <span aria-hidden className={`h-2.5 w-2.5 shrink-0 rounded-full ${look[light][0]}`} />
