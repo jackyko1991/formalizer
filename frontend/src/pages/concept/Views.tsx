@@ -720,8 +720,8 @@ export default function ViewsConcept({ section }: { section: string | null }) {
       <Section page={PAGE} id="honeycomb" n={2} title={SECTIONS[1].title}>
         <P
           t={[
-            "The answers fall into six views; the grouping is ours. Choose a hexagon to open one: a picture, the argument in short, and the speakers' own words, each opening the video above at that second. They answered the hypothetical question, not the November claim itself.",
-            "這些回答可以分成六種觀點，分類是我們的整理。點一個六角形打開一種：一張圖、論點摘要，以及受訪者的原話，每一句都會從上面影片的那一秒開始播放。他們回答的是假設性的問題，不是 11 月這份宣稱本身。",
+            "The answers fall into six views; the grouping is ours.",
+            "這些回答可以分成六種觀點，分類是我們的整理。",
           ]}
         />
         <Honeycomb onOpen={setOpen} open={open} hexRefs={hexRefs} />
