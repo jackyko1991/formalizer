@@ -14,7 +14,7 @@ export default defineConfig({
   resolve: {
     alias: { "@learnkit/web": LEARNKIT },
     // learnkit's files import react etc.; resolve them from this app's node_modules
-    dedupe: ["react", "react-dom", "katex", "@uiw/react-codemirror", "@codemirror/view", "@codemirror/state"],
+    dedupe: ["react", "react-dom", "katex", "@uiw/react-codemirror", "@codemirror/view", "@codemirror/state", "3d-force-graph", "three"],
   },
   server: { fs: { allow: [here, LEARNKIT, path.resolve(here, "../problems"), path.resolve(here, "../lean/Formalizer/Pages")] } },
 });

@@ -3,8 +3,8 @@
  * online through Loogle), a theorem's dependency graph in 3D (or as a tree), and the selected declaration's card:
  * statement, module, links to the documentation and the source, and its path down to the axioms.
  */
-import { RichText, useLang } from "@learnkit/web";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Graph3D, RichText, useLang, type G3Link, type G3Node } from "@learnkit/web";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AREAS,
   adjacency,
@@ -27,10 +27,7 @@ import {
   type TheoremGraph,
   type TreeNode,
 } from "./data";
-import type { G3Link, G3Node } from "./Graph3D";
 import { useAsync, useViewMode } from "./hooks";
-
-const Graph3D = lazy(() => import("./Graph3D"));
 
 export interface MapRequest {
   theorem: string;
@@ -216,9 +213,7 @@ export default function Explorer({ index, request }: { index: MathlibIndex; requ
           {error && <p className="text-xs text-red-700">{error}</p>}
           {!graph && !error && <p className="text-xs text-gray-500">{pick(["Loading the graph…", "載入圖中…"])}</p>}
           {graph && mode === "3d" && (
-            <Suspense fallback={<div className="h-[460px] rounded-lg bg-[#0b1020]" />}>
-              <TheoremGraph3D graph={graph} visible={visible} highlight={highlight} focus={sel} onSelect={(i) => setSelected(graph.nodes[i].name)} side={sidePanel} />
-            </Suspense>
+            <TheoremGraph3D graph={graph} visible={visible} highlight={highlight} focus={sel} onSelect={(i) => setSelected(graph.nodes[i].name)} side={sidePanel} />
           )}
           {graph && mode === "tree" && (
             <TreeView graph={graph} from={only ? (byName.get(only) ?? 0) : 0} selected={sel} highlight={highlight} onSelect={(i) => setSelected(graph.nodes[i].name)} />

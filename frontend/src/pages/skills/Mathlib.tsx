@@ -1,7 +1,7 @@
 /**
  * Coding Skills ▸ Mathlib map (#/skills/mathlib[/<section>]): mathematics as a dependency graph that bottoms out in
  * three axioms. The data (frontend/public/mathlib) is generated from Mathlib by scripts/mathlib_graph/generate.py; the
- * 3D view loads three.js on demand (src/mathlib/Graph3D.tsx).
+ * 3D view loads three.js on demand (learnkit Graph3D).
  */
 import { useLang } from "@learnkit/web";
 import { useState } from "react";

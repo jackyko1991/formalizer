@@ -5,11 +5,10 @@
  * scripts/rh_map/generate.py, which reads the Lean source as text and never builds or runs it). Both 3D views load
  * three.js on demand; each has a list / tree fallback.
  */
-import { go, RichText, useLang } from "@learnkit/web";
-import { lazy, Suspense, useMemo, useState, type ReactNode } from "react";
+import { go, Graph3D, RichText, useLang, type G3Link, type G3Node } from "@learnkit/web";
+import { useMemo, useState, type ReactNode } from "react";
 import { adjacency, areaOf, loadGraph, loadIndex, reachable, shortestPath, type MathlibIndex, type TheoremGraph } from "../../mathlib/data";
 import { AreaDot, Legend, NodeCard, TheoremGraph3D, TreeView } from "../../mathlib/Explorer";
-import type { G3Link, G3Node } from "../../mathlib/Graph3D";
 import { useAsync, useViewMode } from "../../mathlib/hooks";
 import {
   colourOf,
@@ -25,7 +24,6 @@ import {
 } from "../../rh/proofMap";
 import { Callout, Lean, P, Section, SiteLink, type L } from "../kit";
 
-const Graph3D = lazy(() => import("../../mathlib/Graph3D"));
 const ROOT = "RiemannHypothesis";
 const REPO = "https://github.com/leanprover-community/riemann-hypothesis";
 
@@ -142,9 +140,7 @@ function StatementGraph({ index, graph }: { index: MathlibIndex; graph: TheoremG
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="min-w-0 space-y-2">
           {mode === "3d" ? (
-            <Suspense fallback={<div className="h-[460px] rounded-lg bg-[#0b1020]" />}>
-              <TheoremGraph3D graph={graph} visible={visible} highlight={highlight} focus={sel} onSelect={select} side={card} />
-            </Suspense>
+            <TheoremGraph3D graph={graph} visible={visible} highlight={highlight} focus={sel} onSelect={select} side={card} />
           ) : (
             <TreeView graph={graph} from={only ?? 0} selected={sel} highlight={highlight} onSelect={select} />
           )}
@@ -213,18 +209,16 @@ function ProofGraph({ map }: { map: ProofMap }) {
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="min-w-0 space-y-2">
           {mode === "3d" ? (
-            <Suspense fallback={<div className="h-[460px] rounded-lg bg-[#0b1020]" />}>
-              <Graph3D
-                nodes={nodes}
-                links={links}
-                focus={sel}
-                onSelect={setSel}
-                arrows={false}
-                testId="rh-proof-3d"
-                side={card}
-                card={(i) => <DistrictHover map={map} i={i} />}
-              />
-            </Suspense>
+            <Graph3D
+              nodes={nodes}
+              links={links}
+              focus={sel}
+              onSelect={setSel}
+              arrows={false}
+              testId="rh-proof-3d"
+              side={card}
+              card={(i) => <DistrictHover map={map} i={i} />}
+            />
           ) : (
             <DistrictList map={map} sel={sel} onSelect={setSel} />
           )}

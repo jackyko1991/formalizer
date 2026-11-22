@@ -2,14 +2,11 @@
  * All of Mathlib as a galaxy: every module (file) grouped into districts (Mathlib.Algebra.Group, Mathlib.Topology.Algebra,
  * …), one star per district sized by its theorems, linked to the districts it imports most. 3D, or a list by area.
  */
-import { useLang } from "@learnkit/web";
-import { lazy, Suspense, useMemo, useState } from "react";
+import { Graph3D, useLang, type G3Link, type G3Node } from "@learnkit/web";
+import { useMemo, useState } from "react";
 import { AREAS, areaOf, docsUrl, loadGalaxy, type Galaxy as GalaxyData, type MathlibIndex } from "./data";
 import { AreaDot, Legend } from "./Explorer";
-import type { G3Link, G3Node } from "./Graph3D";
 import { useAsync, useViewMode } from "./hooks";
-
-const Graph3D = lazy(() => import("./Graph3D"));
 
 /** The `k` heaviest import links out of each district. */
 export function topLinks(g: GalaxyData, k = 2): [number, number, number][] {
@@ -74,9 +71,7 @@ export default function Galaxy({ index, onOpen }: { index: MathlibIndex; onOpen:
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="min-w-0">
           {mode === "3d" ? (
-            <Suspense fallback={<div className="h-[420px] rounded-lg bg-[#0b1020]" />}>
-              <Graph3D nodes={nodes} links={links} focus={sel} onSelect={setSel} height={420} arrows={false} testId="mathlib-galaxy-3d" side={details} card={(d) => <DistrictHover g={g} d={d} />} />
-            </Suspense>
+            <Graph3D nodes={nodes} links={links} focus={sel} onSelect={setSel} height={420} arrows={false} testId="mathlib-galaxy-3d" side={details} card={(d) => <DistrictHover g={g} d={d} />} />
           ) : (
             <AreaList g={g} onSelect={setSel} />
           )}
