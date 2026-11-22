@@ -7,7 +7,7 @@
  * The left column has a second tab, Research (like Tensorizer's Workspace): the research projects, opened in the main
  * area at #/problems/research/<project>.
  */
-import { go, plainText, RichText, useLang, type Localized } from "@learnkit/web";
+import { go, plainText, ProblemPicture, RichText, useLang, type Localized } from "@learnkit/web";
 import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -445,7 +445,12 @@ function ProblemView({ problem, onSelect }: { problem: Problem; onSelect: (id: s
           <p className="mt-2 text-sm leading-relaxed text-gray-600">
             <RichText text={pick(problem.summary)} />
           </p>
-          <ProblemPicture problem={problem} />
+          {/* the problem's maths picture (frontend/public/problems/<id>.svg, as Tensorizer's diagram.svg): what the
+              statement is about, drawn before any Lean; tests/pictures.test.ts requires one for every problem */}
+          <ProblemPicture
+            src={`${import.meta.env.BASE_URL}problems/${problem.id}.svg`}
+            alt={pick(["The picture of: ", "題目的圖："]) + plainText(pick(problem.title)).replace(/`/g, "")}
+          />
           <ProblemMeta problem={problem} />
           <CollectionNav problemId={problem.id} onSelect={onSelect} />
         </div>
@@ -1119,36 +1124,6 @@ function SorryList({ code, holes, active, onPick }: { code: string; holes: numbe
         />
       </p>
     </div>
-  );
-}
-
-/**
- * The problem's maths picture (frontend/public/problems/<id>.svg, as Tensorizer's diagram.svg): what the statement is
- * about, drawn before any Lean. Click to enlarge. Hidden if the file is missing (tests/pictures.test.ts requires one
- * for every problem).
- */
-function ProblemPicture({ problem }: { problem: Problem }) {
-  const { pick } = useLang();
-  const [big, setBig] = useState(false);
-  const [missing, setMissing] = useState(false);
-  useEffect(() => (setBig(false), setMissing(false)), [problem.id]);
-  if (missing) return null;
-  return (
-    <button
-      type="button"
-      onClick={() => setBig((b) => !b)}
-      aria-expanded={big}
-      title={pick(big ? ["Click to make it smaller", "點一下縮小"] : ["Click to enlarge", "點一下放大"])}
-      className={`mx-auto mt-3 block w-full cursor-zoom-in rounded-lg ${big ? "max-w-2xl cursor-zoom-out" : "max-w-xs"}`}
-      data-testid="problem-picture"
-    >
-      <img
-        src={`${import.meta.env.BASE_URL}problems/${problem.id}.svg`}
-        alt={pick(["The picture of: ", "題目的圖："]) + plainText(pick(problem.title)).replace(/`/g, "")}
-        onError={() => setMissing(true)}
-        className={`w-full object-contain ${big ? "h-auto" : "h-36"}`}
-      />
-    </button>
   );
 }
 
