@@ -17,8 +17,12 @@ const STYLE: Record<string, { box: string; text: string; dash?: boolean }> = {
   library: { box: "fill-gray-50 stroke-gray-400", text: "fill-gray-700" },
   tactics: { box: "fill-white stroke-gray-400", text: "fill-gray-600", dash: true },
   axiom: { box: "fill-violet-50 stroke-violet-500", text: "fill-violet-900" },
+  // the statement layer of the map (problemMap.ts statementAs2D)
+  own: { box: "fill-teal-50 stroke-teal-500", text: "fill-teal-900" },
+  libdef: { box: "fill-slate-50 stroke-slate-400", text: "fill-slate-700" },
 };
 const LEGEND = ["proved", "sorry", "def", "library", "tactics", "axiom"] as const;
+const STATEMENT_LEGEND = ["own", "libdef", "axiom"] as const;
 
 // the real width of a label in the graph's font (Chinese characters are wider than Latin ones)
 let canvas: CanvasRenderingContext2D | null | undefined;
@@ -33,7 +37,8 @@ function measure(text: string): number {
   }
 }
 
-export default function DepGraph({ graph }: { graph: Graph }) {
+/** `variant="statement"`: the map's first layer (what a statement rests on): no proof summary, its own legend. */
+export default function DepGraph({ graph, variant = "proof" }: { graph: Graph; variant?: "proof" | "statement" }) {
   const { t } = useLang();
   const lemmaWord = (n: number) => t(n === 1 ? "graph.lemma" : "graph.lemmas").replace("{n}", String(n));
   const { pos, width, height, nodeOf } = useMemo(() => layout(graph, lemmaWord, measure), [graph, t]);
@@ -44,16 +49,18 @@ export default function DepGraph({ graph }: { graph: Graph }) {
   const odd = axioms.filter((a) => !STANDARD.has(a));
   return (
     <div className="space-y-3" data-testid="dep-graph">
-      <p className="text-sm text-gray-700">
-        {t("graph.count").replace("{p}", String(proved)).replace("{n}", String(own.length))}
-        {sorries > 0 && <span className="font-medium text-amber-700"> · {t("graph.sorries").replace("{n}", String(sorries))}</span>}
-        {" · "}
-        {odd.length ? (
-          <span className="font-medium text-red-700">{t("graph.axioms.other").replace("{list}", odd.join(", "))}</span>
-        ) : (
-          t(axioms.length ? "graph.axioms.standard" : "graph.axioms.none")
-        )}
-      </p>
+      {variant === "proof" && (
+        <p className="text-sm text-gray-700">
+          {t("graph.count").replace("{p}", String(proved)).replace("{n}", String(own.length))}
+          {sorries > 0 && <span className="font-medium text-amber-700"> · {t("graph.sorries").replace("{n}", String(sorries))}</span>}
+          {" · "}
+          {odd.length ? (
+            <span className="font-medium text-red-700">{t("graph.axioms.other").replace("{list}", odd.join(", "))}</span>
+          ) : (
+            t(axioms.length ? "graph.axioms.standard" : "graph.axioms.none")
+          )}
+        </p>
+      )}
       <div className="overflow-auto rounded-lg border border-gray-200 bg-white">
         <svg width={width} height={height} role="img" aria-label={t("tab.graph")} className="font-mono text-[11px]">
           <defs>
@@ -105,7 +112,7 @@ export default function DepGraph({ graph }: { graph: Graph }) {
         </svg>
       </div>
       <p className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-gray-500">
-        {LEGEND.map((k) => (
+        {(variant === "statement" ? STATEMENT_LEGEND : LEGEND).map((k) => (
           <span key={k} className="flex items-center gap-1.5">
             <svg width="14" height="10" aria-hidden>
               <rect x="1" y="1" width="12" height="8" rx="2" className={STYLE[k].box} strokeDasharray={STYLE[k].dash ? "2 2" : undefined} />
@@ -113,7 +120,7 @@ export default function DepGraph({ graph }: { graph: Graph }) {
             {t(`graph.kind.${k}`)}
           </span>
         ))}
-        {graph.hidden > 0 && <span>{t("graph.hidden").replace("{n}", String(graph.hidden))}</span>}
+        {graph.hidden > 0 && variant === "proof" && <span>{t("graph.hidden").replace("{n}", String(graph.hidden))}</span>}
       </p>
     </div>
   );

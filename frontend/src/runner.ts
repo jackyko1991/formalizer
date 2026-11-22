@@ -1,3 +1,5 @@
+import type { StatementGraph } from "./problemMap";
+
 /** The local Lean runner (backend/serve.py on the user's computer). Nothing is sent anywhere else. */
 
 const PORT_KEY = "formalizer.runnerPort";
@@ -69,6 +71,8 @@ export interface CheckResult {
   axioms: Record<string, string[]>;
   /** what the theorems depend on (null when the runner couldn't draw it) */
   graph?: Graph | null;
+  /** with `maps`: what the theorems' statements rest on, down to the axioms (the map's first layer, problemMap.ts) */
+  statementGraph?: StatementGraph;
   /** with `decls`: every declaration of the code and its status (the research workspace's blueprint) */
   decls?: Decl[];
   ms: number;
@@ -98,7 +102,8 @@ export interface GraphNode {
   id: string;
   /** theorem / def: the reader's own; library: a lemma the code cites; tactics: lemmas tactics used, folded; axiom */
   kind: "theorem" | "def" | "library" | "tactics" | "axiom";
-  status: "proved" | "sorry" | "def" | "library" | "tactics" | "axiom";
+  /** own / libdef: the statement layer drawn in 2D (problemMap.ts statementAs2D) */
+  status: "proved" | "sorry" | "def" | "library" | "tactics" | "axiom" | "own" | "libdef";
   /** tactics node: which tactics, and how many lemmas are folded into it */
   label?: string;
   count?: number;
@@ -140,7 +145,7 @@ export async function check(
   theorems: string[],
   statements: string[],
   decls = false,
-  more: { checkers?: string[]; challenge?: string } = {},
+  more: { checkers?: string[]; challenge?: string; maps?: boolean } = {},
 ): Promise<CheckResult> {
   let res: Response;
   try {

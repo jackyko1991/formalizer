@@ -186,4 +186,219 @@ syntax (name := declStatus) "#decl_status" : command
   let sorted := out.qsort (fun a b => a.1 < b.1) |>.map (·.2)
   logInfo m!"formalizer-decls {(Json.arr sorted).compress}"
 
+/-! ## What a statement rests on
+
+`#statement_graph t₁ t₂ …` prints (as one info message starting with `formalizer-statement-graph `) what the
+*statements* of the theorems `tᵢ` rest on: the dependency closure of their types (not their proofs), down to the
+axioms. Every other declaration in the closure contributes its type and its value (a definition's meaning, a lemma's
+proof), and an inductive type the types of its constructors, as in the Mathlib map (scripts/mathlib_graph/Gen.lean).
+
+Folded like the Mathlib map: auxiliary declarations (`match_1`, `_proof_2`, `eq_1`, `brecOn`, …) and instances are
+not nodes (whatever they use is used directly by whoever used them), and constructors and recursors stand for their
+type. The closure (thousands of declarations under Mathlib's ℝ) is then pruned to at most `statementBudget` nodes,
+like generate.py: the roots, the names in the statements, the reader's own declarations, a shortest path to each
+axiom, a path to a few landmarks (ℕ, ℤ, ℝ, lists, sets, quotients…), then the nearest declarations, most used first.
+
+Each node: `id`, `kind` (theorem · def · type · class · structure · axiom · opaque · quot), `module` (`""` for the
+reader's own file), `depth` (steps from the nearest root), `own` (written in this file), `hidden` (its dependencies
+left out). The graph also says how large the whole closure was (`closure`) and every axiom in it (`axioms`).
+-/
+
+/-- Nodes drawn at most. -/
+def statementBudget : Nat := 120
+
+/-- Declarations walked at most (Mathlib's ℝ alone reaches a few thousand); past it the closure is `truncated`. -/
+def closureCap : Nat := 20000
+
+/-- Components of generated helper declarations (anywhere in the name: `Nat.brecOn.go` is one too). -/
+def helperParts : List String :=
+  ["below", "brecOn", "binductionOn", "casesOn", "recOn", "noConfusion", "noConfusionType", "ibelow", "ctorIdx",
+    "toCtorIdx", "sizeOf_spec", "eq_def", "induct", "mutual_induct", "induct_unfolding", "fun_cases", "eq_unfold",
+    "proof_irrel_heq", "injEq", "ctorElim", "ctorElimType"]
+
+def isDigits (s : String) : Bool := !s.isEmpty && s.all Char.isDigit
+
+/-- A generated helper: a numeric or `_`-prefixed component, `match_n`, `proof_n`, `eq_n`, or a helper part. -/
+def isHelper (n : Name) : Bool :=
+  n.components.any fun c =>
+    match c with
+    | .str _ s =>
+      s.startsWith "_" || (s.startsWith "match_" && isDigits (String.ofList (s.toList.drop 6)))
+        || (s.startsWith "proof_" && isDigits (String.ofList (s.toList.drop 6)))
+        || (s.startsWith "eq_" && isDigits (String.ofList (s.toList.drop 3))) || helperParts.contains s
+    | .num _ _ => true
+    | .anonymous => false
+
+/-- Constructors and recursors stand for their inductive type. -/
+def canon (env : Environment) (n : Name) : Name :=
+  match env.find? n with
+  | some (.ctorInfo c) => c.induct
+  | some (.recInfo _) => n.getPrefix
+  | _ => n
+
+def shown (env : Environment) (n : Name) : Bool :=
+  !isHelper n && !Meta.isInstanceCore env n
+
+def allUses (env : Environment) (ci : ConstantInfo) : Array Name := Id.run do
+  let mut out := ci.type.getUsedConstants
+  if let some v := ci.value? (allowOpaque := true) then out := out ++ v.getUsedConstants
+  if let .inductInfo i := ci then
+    for c in i.ctors do
+      if let some cc := env.find? c then out := out ++ cc.type.getUsedConstants
+  return out
+
+/-- What each folded declaration stands for (a reference, so the table is updated in place, never copied). -/
+abbrev Memo := IO.Ref (Std.HashMap Name (Array Name))
+
+/-- The shown declarations among `names`, looking through folded ones. -/
+partial def shownDeps (env : Environment) (memo : Memo) (self : Name) (names : Array Name) : IO (Array Name) := do
+  let mut out : Array Name := #[]
+  let mut seen : Std.HashSet Name := {}
+  for d0 in names do
+    let d := canon env d0
+    if d == self || seen.contains d then continue
+    seen := seen.insert d
+    if shown env d then
+      out := out.push d
+    else
+      for e in ← foldedDeps d do
+        if e != self && !seen.contains e then
+          seen := seen.insert e
+          out := out.push e
+  return out
+where
+  /-- What a folded declaration (helper, instance) stands for. -/
+  foldedDeps (n : Name) : IO (Array Name) := do
+    if let some r := (← memo.get)[n]? then return r
+    memo.modify (·.insert n #[]) -- cycle guard
+    let some ci := env.find? n | return #[]
+    let r ← shownDeps env memo n (allUses env ci)
+    memo.modify (·.insert n r)
+    return r
+
+/-- What a shown declaration uses (its type and value; a root theorem: its type only). -/
+def usesOf (env : Environment) (memo : Memo) (root : Bool) (n : Name) : IO (Array Name) := do
+  let some ci := env.find? n | return #[]
+  shownDeps env memo n (if root then ci.type.getUsedConstants else allUses env ci)
+
+def declKind (env : Environment) (n : Name) : String :=
+  match env.find? n with
+  | some (.axiomInfo _) => "axiom"
+  | some (.thmInfo _) => "theorem"
+  | some (.quotInfo _) => "quot"
+  | some (.opaqueInfo _) => "opaque"
+  | some (.inductInfo _) => if isClass env n then "class" else if isStructure env n then "structure" else "type"
+  | some (.defnInfo _) => if isClass env n then "class" else "def"
+  | _ => "other"
+
+/-- Kept, when the closure reaches them, with a path from a root (as in scripts/mathlib_graph/generate.py). -/
+def landmarks : List Name :=
+  [``Nat, ``Int, `Rat, `Real, `Complex, `CauSeq, `CauSeq.Completion.Cauchy, ``Quotient, ``Quot, ``Setoid, ``Eq,
+    ``funext, `Set, `Finset, `Multiset, ``List, ``Fin, `ZMod, `Nat.Prime, `Polynomial, `Matrix, `Filter,
+    `EuclideanSpace, `Real.sqrt, `Real.pi, ``Exists, ``Or, ``Not, ``Iff, ``And, ``Decidable, ``Bool]
+
+syntax (name := statementGraph) "#statement_graph" (ppSpace ident)+ : command
+
+@[command_elab statementGraph] def elabStatementGraph : CommandElab := fun stx => do
+  let env ← getEnv
+  let roots := stx[1].getArgs.map (·.getId) |>.filter env.contains
+  -- breadth first from the roots: every declaration the statements rest on, its depth and the step it came from
+  let memo : Memo ← IO.mkRef {}
+  let mut uses : Std.HashMap Name (Array Name) := {}
+  let mut depth : Std.HashMap Name Nat := {}
+  let mut parent : Std.HashMap Name Name := {}
+  let mut order : Array Name := #[]
+  for r in roots do
+    if !depth.contains r then
+      depth := depth.insert r 0
+      order := order.push r
+  let mut i := 0
+  let mut truncated := false
+  while h : i < order.size do
+    let n := order[i]
+    i := i + 1
+    let ds ← usesOf env memo (roots.contains n) n
+    uses := uses.insert n ds
+    let dn := depth.getD n 0
+    for d in ds do
+      if depth.contains d then continue
+      if order.size ≥ closureCap then
+        truncated := true
+        continue
+      depth := depth.insert d (dn + 1)
+      parent := parent.insert d n
+      order := order.push d
+  -- in-closure in-degree: how many declarations of the closure use each one
+  let mut used : Std.HashMap Name Nat := {}
+  for n in order do
+    for d in uses.getD n #[] do
+      used := used.insert d (used.getD d 0 + 1)
+  -- prune: roots, the statements' names, own declarations, a path to each axiom and landmark, then the nearest
+  let mut keep : Std.HashSet Name := {}
+  let mut kept : Array Name := #[]
+  let pathTo := fun (v : Name) => Id.run do
+    let mut p : Array Name := #[v]
+    let mut c := v
+    while true do
+      match parent.get? c with
+      | some q => p := p.push q; c := q
+      | none => break
+    return p
+  let axioms := order.filter fun n => declKind env n == "axiom"
+  let own := order.filter (isLocal env)
+  let named := order.filter fun n => depth.getD n 0 == 1
+  let mut wanted : Array Name := roots ++ axioms ++ own
+  for l in landmarks do
+    if depth.contains l then wanted := wanted.push l
+  for n in named do
+    if kept.size ≥ statementBudget * 2 / 5 then break
+    if !keep.contains n then
+      keep := keep.insert n
+      kept := kept.push n
+  for w in wanted do
+    if kept.size ≥ statementBudget * 3 / 5 && !(axioms.contains w || own.contains w || roots.contains w) then
+      continue
+    for v in (pathTo w).reverse do
+      if !keep.contains v then
+        keep := keep.insert v
+        kept := kept.push v
+  let caps := fun (d : Nat) => if d == 1 then 34 else if d == 2 then 30 else if d == 3 then 20 else 12
+  let mut taken : Std.HashMap Nat Nat := {}
+  for v in kept do
+    let d := depth.getD v 0
+    taken := taken.insert d (taken.getD d 0 + 1)
+  let candidates := order.qsort fun a b =>
+    let da := depth.getD a 0
+    let db := depth.getD b 0
+    da < db || da == db && (used.getD a 0 > used.getD b 0 || used.getD a 0 == used.getD b 0 && a.toString < b.toString)
+  for v in candidates do
+    if kept.size ≥ statementBudget then break
+    if keep.contains v then continue
+    let d := depth.getD v 0
+    if taken.getD d 0 ≥ caps d then continue
+    -- only below something already drawn, so the picture stays connected
+    let some p := parent.get? v | continue
+    if !keep.contains p then continue
+    keep := keep.insert v
+    kept := kept.push v
+    taken := taken.insert d (taken.getD d 0 + 1)
+  let mut nodes : Array Json := #[]
+  let mut edges : Array Json := #[]
+  for v in kept do
+    let ds := uses.getD v #[]
+    let mut hiddenDeps := 0
+    for d in ds do
+      if keep.contains d then edges := edges.push (edge v d) else hiddenDeps := hiddenDeps + 1
+    let module := match env.getModuleIdxFor? v with
+      | some j => toString (env.header.moduleNames[j.toNat]?.getD .anonymous)
+      | none => ""
+    nodes := nodes.push (Json.mkObj
+      [("id", toString v), ("kind", declKind env v), ("module", module), ("depth", toJson (depth.getD v 0)),
+        ("own", toJson (isLocal env v)), ("hidden", toJson hiddenDeps)])
+  let graph := Json.mkObj
+    [("roots", toJson (roots.map toString)), ("nodes", Json.arr nodes), ("edges", Json.arr edges),
+      ("closure", toJson order.size), ("truncated", toJson truncated),
+      ("axioms", toJson (axioms.map toString))]
+  logInfo m!"formalizer-statement-graph {graph.compress}"
+
 end Formalizer.DepGraph

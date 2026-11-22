@@ -19,6 +19,7 @@ import { check, joinFiles, RunnerError, type CheckResult, type Decl, type LeanFi
 import { runnerReady, useRunner } from "../RunnerPanel";
 import { lean } from "../leanLanguage";
 import { sorryMarks } from "../sorryMarks";
+import TwoLayerMap from "../TwoLayerMap";
 import { showcaseOf } from "../routes";
 import { blueprintGraph, counts, declAt, exportZip, lostSince, place, progressOf, summarize, workable, type Meta, type Placed } from "./model";
 import { ago, download, openProject, startTemplate, templateMeta, useProjects, type Listed } from "./projects";
@@ -537,6 +538,26 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
   }
   const jobActive = job && ["queued", "running"].includes(job.info.status);
 
+  // --- the two-layer map of the main theorem (TwoLayerMap.tsx), beside the goals: asked of the runner only while the
+  // Map tab is open (`maps`: under Mathlib the statement's closure takes a few seconds), once per version of the code
+  const [panel, setPanel] = useState<"goals" | "map">("goals");
+  const [mapResult, setMapResult] = useState<{ code: string; result: CheckResult } | null>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
+  useEffect(() => {
+    if (panel !== "map" || !ready || !main || mapResult?.code === joined.code) return;
+    const code = joined.code;
+    const t = setTimeout(async () => {
+      try {
+        const r = await check(code, [main], statements, false, { maps: true, checkers: [] });
+        setMapResult({ code, result: r });
+        setMapError(null);
+      } catch (e) {
+        setMapError(e instanceof RunnerError ? e.message : String(e));
+      }
+    }, 800);
+    return () => clearTimeout(t);
+  }, [panel, ready, main, joined, statements, mapResult?.code]);
+
   // the blueprint's proved / total, kept in the meta (autosaved) for the home's project cards
   useEffect(() => {
     if (!result?.decls || showcase) return;
@@ -1005,7 +1026,20 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
           data-testid="goal-panel"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold tracking-wide text-gray-500 uppercase">{pick(["Goals", "目標"])}</span>
+            <span className="flex gap-1 text-xs" role="tablist">
+              {(["goals", "map"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  role="tab"
+                  aria-selected={panel === tab}
+                  onClick={() => setPanel(tab)}
+                  data-testid={`research-tab-${tab}`}
+                  className={`rounded px-2 py-0.5 font-semibold tracking-wide uppercase ${panel === tab ? "bg-gray-100 text-(--lk-accent)" : "text-gray-500 hover:text-gray-800"}`}
+                >
+                  {tab === "goals" ? pick(["Goals", "目標"]) : pick(["Map", "地圖"])}
+                </button>
+              ))}
+            </span>
             <span className="text-xs text-gray-400">
               {!ready ? (
                 <button onClick={openRunner} className="text-(--lk-accent) hover:underline">
@@ -1020,79 +1054,101 @@ function Workspace({ id, showcase }: { id: string; showcase?: Template }) {
               )}
             </span>
           </div>
-          {decl && (
-            <p className={`rounded-md px-3 py-2 text-xs ring-1 ${STATUS[decl.status].cls}`}>
-              <RichText text={`${STATUS[decl.status].glyph} ${pick(STATUS[decl.status].label)}`} />
-            </p>
-          )}
-          {runError && <p className="text-xs text-red-700">{runError}</p>}
-          {slow && !jobActive && jobCode !== joined.code && (
-            <div className="rounded-md bg-sky-50 px-3 py-2 text-xs text-sky-900" data-testid="slow">
-              {pick([
-                "This project takes Lean longer than a quick check allows. Run it in the background: it keeps going if you close the page, and the result appears here when you come back.",
-                "Lean 檢查這個專案所需的時間超過快速檢查的上限。改在背景執行：關掉頁面也會繼續，回來時結果就會出現在這裡。",
-              ])}{" "}
-              <button onClick={() => void runInBackground()} className="font-medium text-(--lk-accent) hover:underline">
-                ⏱ {pick(["Run in background", "背景執行"])}
-              </button>
+          {panel === "map" ? (
+            <div data-testid="research-map">
+              <TwoLayerMap
+                key={main}
+                statement={mapResult?.result.statementGraph ?? null}
+                statementNote={
+                  !ready
+                    ? ["Start the runner to draw the map: Lean works out what the statement rests on.", "啟動執行器就能畫出地圖：由 Lean 算出陳述建立在什麼上。"]
+                    : !main
+                      ? ["This project has no main theorem yet.", "這個專案還沒有主要定理。"]
+                      : mapError
+                }
+                proofs={(mapResult?.result.graph ?? result?.graph) ? [{ key: "yours", label: ["This project's proof", "本專案的證明"], graph: (mapResult?.result.graph ?? result?.graph)! }] : []}
+                proofNote={["Once Lean has checked the project, its proof's map appears here.", "Lean 檢查完專案後，這裡會出現證明的地圖。"]}
+                height={340}
+                testId="research-two-layer-map"
+              />
             </div>
-          )}
-          {goals.length === 0 && decl?.status !== "sorry" && (
-            <p className="text-xs text-gray-500">{pick(["No open goal here.", "這裡沒有未完成的目標。"])}</p>
-          )}
-          {goals.map((g, i) => (
-            <div key={i} className="rounded-md border border-gray-200 bg-gray-50 p-2 font-mono text-xs leading-relaxed">
-              <p className="mb-1 font-sans text-[11px] text-gray-500">
-                {g.at.file}:{g.at.line}
-                {g.case && ` · case ${g.case}`}
+          ) : (
+            <>
+          {decl && (
+              <p className={`rounded-md px-3 py-2 text-xs ring-1 ${STATUS[decl.status].cls}`}>
+                <RichText text={`${STATUS[decl.status].glyph} ${pick(STATUS[decl.status].label)}`} />
               </p>
-              {g.hypotheses.map((h, k) => (
-                <p key={k} className="text-gray-700">
-                  {h}
+            )}
+            {runError && <p className="text-xs text-red-700">{runError}</p>}
+            {slow && !jobActive && jobCode !== joined.code && (
+              <div className="rounded-md bg-sky-50 px-3 py-2 text-xs text-sky-900" data-testid="slow">
+                {pick([
+                  "This project takes Lean longer than a quick check allows. Run it in the background: it keeps going if you close the page, and the result appears here when you come back.",
+                  "Lean 檢查這個專案所需的時間超過快速檢查的上限。改在背景執行：關掉頁面也會繼續，回來時結果就會出現在這裡。",
+                ])}{" "}
+                <button onClick={() => void runInBackground()} className="font-medium text-(--lk-accent) hover:underline">
+                  ⏱ {pick(["Run in background", "背景執行"])}
+                </button>
+              </div>
+            )}
+            {goals.length === 0 && decl?.status !== "sorry" && (
+              <p className="text-xs text-gray-500">{pick(["No open goal here.", "這裡沒有未完成的目標。"])}</p>
+            )}
+            {goals.map((g, i) => (
+              <div key={i} className="rounded-md border border-gray-200 bg-gray-50 p-2 font-mono text-xs leading-relaxed">
+                <p className="mb-1 font-sans text-[11px] text-gray-500">
+                  {g.at.file}:{g.at.line}
+                  {g.case && ` · case ${g.case}`}
                 </p>
-              ))}
-              <p className="mt-1 border-t border-gray-200 pt-1 text-gray-900">⊢ {g.target}</p>
-            </div>
-          ))}
-          {errors.length > 0 && (
-            <div className="space-y-2">
-              <span className="text-xs font-semibold tracking-wide text-gray-500 uppercase">{pick(["Messages", "訊息"])}</span>
-              {errors.map((e, i) => (
-                <div key={i} className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-900">
-                  {e.at && (
-                    <p className="mb-0.5 text-[11px] text-red-700">
-                      {e.at.file}:{e.at.line}
-                    </p>
-                  )}
-                  <pre className="font-mono whitespace-pre-wrap">{e.message}</pre>
-                </div>
-              ))}
-            </div>
-          )}
-          {decl && (
-            <div className="space-y-1 border-t border-gray-100 pt-3 text-xs text-gray-600">
-              <p>
-                <span className="text-gray-500">{pick(["Uses:", "用到："])} </span>
-                {decl.uses.length
-                  ? decl.uses.map((u) => (
-                      <button key={u} onClick={() => selectDecl(u)} className="mr-2 font-mono text-(--lk-accent) hover:underline">
-                        {byName.get(u) ? STATUS[byName.get(u)!.status].glyph : ""} {u}
-                      </button>
-                    ))
-                  : pick(["nothing from this project", "沒有用到本專案的其他東西"])}
-              </p>
-              <p>
-                <span className="text-gray-500">{pick(["Axioms:", "公理："])} </span>
-                {decl.axioms.every((x) => ["propext", "Quot.sound", "Classical.choice"].includes(x))
-                  ? pick(["standard only", "只有標準公理"]) + (decl.axioms.length ? ` (${decl.axioms.join(", ")})` : "")
-                  : decl.axioms.map((x) => (
-                      <span key={x} className="mr-2">
-                        <code>{x}</code>
-                        {x === "sorryAx" && pick([" (a sorry somewhere it relies on)", "（它依賴的某處還有 sorry）"])}
-                      </span>
-                    ))}
-              </p>
-            </div>
+                {g.hypotheses.map((h, k) => (
+                  <p key={k} className="text-gray-700">
+                    {h}
+                  </p>
+                ))}
+                <p className="mt-1 border-t border-gray-200 pt-1 text-gray-900">⊢ {g.target}</p>
+              </div>
+            ))}
+            {errors.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-xs font-semibold tracking-wide text-gray-500 uppercase">{pick(["Messages", "訊息"])}</span>
+                {errors.map((e, i) => (
+                  <div key={i} className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-900">
+                    {e.at && (
+                      <p className="mb-0.5 text-[11px] text-red-700">
+                        {e.at.file}:{e.at.line}
+                      </p>
+                    )}
+                    <pre className="font-mono whitespace-pre-wrap">{e.message}</pre>
+                  </div>
+                ))}
+              </div>
+            )}
+            {decl && (
+              <div className="space-y-1 border-t border-gray-100 pt-3 text-xs text-gray-600">
+                <p>
+                  <span className="text-gray-500">{pick(["Uses:", "用到："])} </span>
+                  {decl.uses.length
+                    ? decl.uses.map((u) => (
+                        <button key={u} onClick={() => selectDecl(u)} className="mr-2 font-mono text-(--lk-accent) hover:underline">
+                          {byName.get(u) ? STATUS[byName.get(u)!.status].glyph : ""} {u}
+                        </button>
+                      ))
+                    : pick(["nothing from this project", "沒有用到本專案的其他東西"])}
+                </p>
+                <p>
+                  <span className="text-gray-500">{pick(["Axioms:", "公理："])} </span>
+                  {decl.axioms.every((x) => ["propext", "Quot.sound", "Classical.choice"].includes(x))
+                    ? pick(["standard only", "只有標準公理"]) + (decl.axioms.length ? ` (${decl.axioms.join(", ")})` : "")
+                    : decl.axioms.map((x) => (
+                        <span key={x} className="mr-2">
+                          <code>{x}</code>
+                          {x === "sorryAx" && pick([" (a sorry somewhere it relies on)", "（它依賴的某處還有 sorry）"])}
+                        </span>
+                      ))}
+                </p>
+              </div>
+            )}
+            </>
           )}
           {/* the independent checkers on the whole project: Lite for everyone, Full listed (Pro, on a Linux runner) */}
           {meta && (

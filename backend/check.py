@@ -92,6 +92,15 @@ def depgraph_request(theorems: list[str]) -> str:
 
 
 _DEPGRAPH = "formalizer-depgraph "
+
+
+def statement_graph_request(theorems: list[str], on: bool) -> str:
+    """`#statement_graph` (DepGraph.lean): what the theorems' statements rest on, down to the axioms (the map's first
+    layer). Only when asked (`maps`): under Mathlib it walks a few thousand declarations."""
+    return f"\n#statement_graph {' '.join(theorems)}" if on and theorems else ""
+
+
+_STATEMENT_GRAPH = "formalizer-statement-graph "
 _TOKEN = re.compile(r"[A-Za-z_][\w.'₀-₉!?]*")
 # tactics that bring in library lemmas the reader never names (shown as one folded node)
 AUTOMATION = [
@@ -144,9 +153,16 @@ def summarize(reply: dict, code_lines: int, theorems: list[str], code: str = "")
     """The page's view of a check. `code_lines`: messages after this line come from the appended
     `#print axioms` commands, not from the user's code."""
     errors, warnings, infos, axioms, graph, decls = [], [], [], {}, None, None
+    statement_graph = None
     for m in reply.get("messages", []):
         line = m.get("pos", {}).get("line", 0)
         text = str(m.get("data", ""))
+        if line > code_lines and text.startswith(_STATEMENT_GRAPH):
+            try:
+                statement_graph = json.loads(text[len(_STATEMENT_GRAPH) :])
+            except ValueError:
+                statement_graph = None
+            continue
         if line > code_lines and text.startswith(_DECLS):
             try:
                 decls = json.loads(text[len(_DECLS) :])
@@ -216,4 +232,5 @@ def summarize(reply: dict, code_lines: int, theorems: list[str], code: str = "")
         "axioms": axioms,
         "graph": graph,
         **({"decls": decl_statuses(decls, errors)} if decls is not None else {}),
+        **({"statementGraph": statement_graph} if statement_graph is not None else {}),
     }

@@ -93,6 +93,7 @@ out for you, or run `git submodule update --init`. learnkit also holds the sites
 pixi run test     # backend, problems and checkers; the Lean tests run when elan's lake is on PATH
 FORMALIZER_MATHLIB=~/mathproj pixi run test   # also compile the Full (Mathlib) problems, in a Lake project with Mathlib
 python scripts/mathlib_graph/generate.py      # regenerate the Mathlib map's data (Lean + Mathlib in WSL, ~7 min)
+python scripts/problem_maps/generate.py       # regenerate every problem's two-layer map (Lite Lean here, Mathlib in WSL)
 ```
 
 ## CI setup (once, by the owner)

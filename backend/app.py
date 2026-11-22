@@ -1,8 +1,9 @@
 """Formalizer's local runner: checks Lean files for the site, on the user's own computer.
 
 GET  /api/health   runner kind (lite | full), Lean version, pool state (warming | ready | failed)
-POST /api/check    {code, theorems, statements, checkers?, challenge?} → {verdict, errors, warnings, infos, goals, axioms,
-                   ms, checks}: checks = one {id, verdict, message, ms} per checker asked (see checkers.py)
+POST /api/check    {code, theorems, statements, checkers?, challenge?, maps?} → {verdict, errors, warnings, infos, goals, axioms,
+                   ms, checks, statementGraph?}: checks = one {id, verdict, message, ms} per checker asked (see
+                   checkers.py); statementGraph (with maps) = what the statements rest on (the map's first layer)
 GET|PUT|POST /api/projects…  research projects in ~/Formalizer (see projects.py)
 POST /api/jobs     the same check as a detached job (long proofs): GET /api/jobs[/{id}[/events?from=N]], cancel
 POST /mcp          the same checks for an AI agent on this computer (MCP; see mcp.py)
@@ -27,7 +28,15 @@ from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
 from . import agent, checkers
-from .check import axioms_request, decls_request, depgraph_request, imports, summarize, without_imports
+from .check import (
+    axioms_request,
+    decls_request,
+    depgraph_request,
+    imports,
+    statement_graph_request,
+    summarize,
+    without_imports,
+)
 from .jobs import JobLimit, JobManager, visitor_hash
 from .lean_pool import LeanCrash, LeanPool, LeanTimeout, WorkerConfig
 from .mcp import Mcp, local_origin
@@ -44,6 +53,8 @@ CHECK_TIMEOUT_S = float(os.environ.get("FORMALIZER_CHECK_TIMEOUT_S", "10"))
 # a job may run for days (a long proof); 0 or less = no limit
 # the in-page agent's checks share the site's pool, with a longer limit than a quick check
 AGENT_CHECK_TIMEOUT_S = float(os.environ.get("FORMALIZER_AGENT_CHECK_TIMEOUT_S", "60"))
+# the statement map walks what the statement rests on (a few seconds under Mathlib's ℝ): extra time when asked
+MAPS_EXTRA_S = float(os.environ.get("FORMALIZER_MAPS_EXTRA_S", "60"))
 JOB_TIMEOUT_S = float(os.environ.get("FORMALIZER_JOB_TIMEOUT_S", str(7 * 86400))) or 10**9
 # absolute: `lake env` on Windows does not find a relative path (and needs the .exe)
 REPL = os.environ.get(
@@ -127,6 +138,8 @@ class CheckRequest(BaseModel):
     checkers: list[str] | None = Field(default=None, max_length=10)
     # the problem's starting file, with `sorry` (statement-match and comparator compare against it)
     challenge: str | None = Field(default=None, max_length=200_000)
+    # also the two-layer map's first layer: what the theorems' statements rest on (`statementGraph`; slower)
+    maps: bool = False
 
 
 _SPACE = re.compile(r"\s+")
@@ -228,8 +241,12 @@ async def run_check(req: CheckRequest, lean: LeanPool, timeout_s: float) -> dict
     started = time.monotonic()
     main = asyncio.ensure_future(
         lean.check(
-            body + axioms_request(req.theorems) + depgraph_request(req.theorems) + decls_request(req.decls),
-            timeout_s,
+            body
+            + axioms_request(req.theorems)
+            + depgraph_request(req.theorems)
+            + statement_graph_request(req.theorems, req.maps)
+            + decls_request(req.decls),
+            timeout_s + (MAPS_EXTRA_S if req.maps else 0),
             then=command,
         )
     )
