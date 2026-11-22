@@ -635,8 +635,8 @@ export default function RhMaps({ page, n, title }: { page: string; n: number; ti
         />
         <P
           t={[
-            "Searching for such shortcuts with the human brain alone is often too slow, and sometimes has never succeeded. People are good at inventing tools, and have never been good at refusing them, ever since the first stone tool. Big physics needs shared facilities like CERN; big mathematics is starting to need its own, with **mathematical engineering and large-scale computing** as basic tools:",
-            "單靠人腦去找這樣的捷徑，往往太慢，有時甚至從未成功。人類擅長發明工具，卻從來不擅長拒絕工具：從第一把石器開始就是如此。大物理需要 CERN 這樣的共享設施；大數學也開始需要自己的設施，以**數學工程與大規模運算**為基本工具：",
+            "Searching for such shortcuts with the human brain alone is often too slow, and sometimes has never succeeded. People are good at inventing tools, and once a tool works, they have never put it down to insist on bare hands, ever since the first stone tool. Big physics needs shared facilities like CERN; big mathematics is starting to need its own, with **mathematical engineering and large-scale computing** as basic tools:",
+            "單靠人腦去找這樣的捷徑，往往太慢，有時甚至從未成功。人類擅長發明工具；而一旦有了好用的工具，就從來沒有為了堅持徒手而把它放下：從第一把石器開始就是如此。大物理需要 CERN 這樣的共享設施；大數學也開始需要自己的設施，以**數學工程與大規模運算**為基本工具：",
           ]}
         />
         <List
