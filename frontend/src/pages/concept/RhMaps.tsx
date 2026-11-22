@@ -27,11 +27,6 @@ import { Callout, Lean, P, Section, SiteLink, type L } from "../kit";
 const ROOT = "RiemannHypothesis";
 const REPO = "https://github.com/leanprover-community/riemann-hypothesis";
 
-function Sub({ t }: { t: L }) {
-  const { pick } = useLang();
-  return <p className="pt-2 text-base font-semibold text-gray-900">{pick(t)}</p>;
-}
-
 function Caption({ t }: { t: L }) {
   const { pick } = useLang();
   return (
@@ -418,6 +413,39 @@ function Scale() {
   );
 }
 
+/** The two maps in one card: a tab for each (only the open one loads its data and draws). */
+function MapTabs({ statement, proof }: { statement: ReactNode; proof: ReactNode }) {
+  const { pick } = useLang();
+  const [tab, setTab] = useState<"statement" | "proof">("statement");
+  const tabs = [
+    ["statement", ["What the statement rests on", "陳述建立在什麼之上"]],
+    ["proof", ["The shape of the claimed proof", "宣稱證明的形狀"]],
+  ] as const;
+  return (
+    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white" data-testid="rh-map-tabs">
+      <div role="tablist" className="flex gap-1 border-b border-gray-200 bg-gray-50 px-2 pt-2">
+        {tabs.map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={tab === id}
+            onClick={() => setTab(id)}
+            className={`-mb-px rounded-t-md border px-3 py-1.5 text-sm ${
+              tab === id ? "border-gray-200 border-b-white bg-white font-medium text-(--lk-accent)" : "border-transparent text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            {pick(label)}
+          </button>
+        ))}
+      </div>
+      <div role="tabpanel" className="space-y-4 p-4">
+        {tab === "statement" ? statement : proof}
+      </div>
+    </div>
+  );
+}
+
 export default function RhMaps({ page, n, title }: { page: string; n: number; title: L }): ReactNode {
   return (
     <Section page={page} id="maps" n={n} title={title}>
@@ -427,45 +455,52 @@ export default function RhMaps({ page, n, title }: { page: string; n: number; ti
           "在任何判決之前，先看兩張地圖。第一張顯示：光是要知道這個宣稱 *說了什麼*，你就得信任哪些東西。第二張顯示這份宣稱的證明怎麼組織起來，但不說它對不對。",
         ]}
       />
-      <Sub t={["What the statement rests on", "這個陳述建立在什麼之上"]} />
-      <P
-        t={[
-          "The claim is one line of Lean, `RiemannHypothesis`. But that line uses `riemannZeta`, which is built from the Hurwitz zeta function, a Mellin transform, an integral, the complex numbers, the real numbers… This is what a reader must trust to know what the claim says, before looking at any proof. All of it was in Mathlib, written and checked by people, long before November 2026.",
-          "這個宣稱是一行 Lean：`RiemannHypothesis`。但這一行用到 `riemannZeta`，而它是由 Hurwitz zeta 函數、Mellin 變換、積分、複數、實數……一層層建起來的。這就是讀者在看任何證明之前，為了知道這個宣稱在說什麼而必須信任的東西。它們全都在 Mathlib 裡，早在 2026 年 11 月之前就由人寫好並檢查過了。",
-        ]}
+      <MapTabs
+        statement={
+          <>
+              <P
+                t={[
+                  "The claim is one line of Lean, `RiemannHypothesis`. But that line uses `riemannZeta`, which is built from the Hurwitz zeta function, a Mellin transform, an integral, the complex numbers, the real numbers… This is what a reader must trust to know what the claim says, before looking at any proof. All of it was in Mathlib, written and checked by people, long before November 2026.",
+                  "這個宣稱是一行 Lean：`RiemannHypothesis`。但這一行用到 `riemannZeta`，而它是由 Hurwitz zeta 函數、Mellin 變換、積分、複數、實數……一層層建起來的。這就是讀者在看任何證明之前，為了知道這個宣稱在說什麼而必須信任的東西。它們全都在 Mathlib 裡，早在 2026 年 11 月之前就由人寫好並檢查過了。",
+                ]}
+              />
+              <StatementMap />
+              <Lean
+                code={MATHLIB_RH}
+                title="Mathlib/NumberTheory/LSeries/RiemannZeta.lean"
+                runner="mathlib"
+                note={[
+                  "Mathlib v4.34.1, as `#print RiemannHypothesis` shows it. The trivial zeros $-2, -4, \\dots$ and the pole $s = 1$ are excluded by hand.",
+                  "Mathlib v4.34.1，即 `#print RiemannHypothesis` 顯示的內容。平凡零點 $-2, -4, \\dots$ 與極點 $s = 1$ 是手動排除的。",
+                ]}
+              />
+              <p className="text-sm">
+                <SiteLink to={["skills", "mathlib", "explore"]} label={["The same graph in the Mathlib map (search: RiemannHypothesis)", "Mathlib 地圖裡的同一張圖（搜尋：RiemannHypothesis）"]} />
+              </p>
+          </>
+        }
+        proof={
+          <>
+              <P
+                t={[
+                  "The claimed proof is 17,374,215 lines in 175,187 files. Nobody reads that line by line, but its *shape* can be read: which folders there are, how big they are, and which import which. Each star is a folder of files (a district), sized by its lines and coloured by its top-level folder. The gold star is the statement file; the white one is the main theorem, which imports it.",
+                  "宣稱的證明有 17,374,215 行、175,187 個檔案。沒有人能一行一行讀完，但它的 *形狀* 是讀得出來的：有哪些資料夾、各有多大、誰匯入誰。每顆星是一個資料夾（一個區域），大小代表行數，顏色代表它所屬的最上層資料夾。金色的星是陳述檔案；白色的是匯入它的主定理。",
+                ]}
+              />
+              <ProofShape />
+              <Callout kind="warn" title={["A map of structure, not of correctness (as of 22 November 2026)", "這是結構圖，不是正確性的證明（截至 2026 年 11 月 22 日）"]}>
+                <P
+                  t={[
+                    "This map shows how the 17 million lines are organised, not that they are correct. It was made by reading the source as text (the published first commit, `40e56bab`): nothing was built or run, because running untrusted Lean code is itself a risk. Whether the proof is right is the checkers' job.",
+                    "這張圖顯示 1700 萬行是怎麼組織的，而不是它們是對的。它是把原始碼當成純文字讀出來的（公開的第一個 commit `40e56bab`）：沒有編譯、也沒有執行任何東西，因為執行不受信任的 Lean 程式碼本身就有風險。證明是否正確，是檢查器的工作。",
+                  ]}
+                />
+                <SiteLink to={["concept", "checkers"]} label={["The checkers and the four questions", "檢查器與四個問題"]} />
+              </Callout>
+              <Scale />
+          </>
+        }
       />
-      <StatementMap />
-      <Lean
-        code={MATHLIB_RH}
-        title="Mathlib/NumberTheory/LSeries/RiemannZeta.lean"
-        runner="mathlib"
-        note={[
-          "Mathlib v4.34.1, as `#print RiemannHypothesis` shows it. The trivial zeros $-2, -4, \\dots$ and the pole $s = 1$ are excluded by hand.",
-          "Mathlib v4.34.1，即 `#print RiemannHypothesis` 顯示的內容。平凡零點 $-2, -4, \\dots$ 與極點 $s = 1$ 是手動排除的。",
-        ]}
-      />
-      <p className="text-sm">
-        <SiteLink to={["skills", "mathlib", "explore"]} label={["The same graph in the Mathlib map (search: RiemannHypothesis)", "Mathlib 地圖裡的同一張圖（搜尋：RiemannHypothesis）"]} />
-      </p>
-
-      <Sub t={["The shape of the claimed proof", "宣稱證明的形狀"]} />
-      <P
-        t={[
-          "The claimed proof is 17,374,215 lines in 175,187 files. Nobody reads that line by line, but its *shape* can be read: which folders there are, how big they are, and which import which. Each star is a folder of files (a district), sized by its lines and coloured by its top-level folder. The gold star is the statement file; the white one is the main theorem, which imports it.",
-          "宣稱的證明有 17,374,215 行、175,187 個檔案。沒有人能一行一行讀完，但它的 *形狀* 是讀得出來的：有哪些資料夾、各有多大、誰匯入誰。每顆星是一個資料夾（一個區域），大小代表行數，顏色代表它所屬的最上層資料夾。金色的星是陳述檔案；白色的是匯入它的主定理。",
-        ]}
-      />
-      <ProofShape />
-      <Callout kind="warn" title={["A map of structure, not of correctness (as of 22 November 2026)", "這是結構圖，不是正確性的證明（截至 2026 年 11 月 22 日）"]}>
-        <P
-          t={[
-            "This map shows how the 17 million lines are organised, not that they are correct. It was made by reading the source as text (the published first commit, `40e56bab`): nothing was built or run, because running untrusted Lean code is itself a risk. Whether the proof is right is the checkers' job.",
-            "這張圖顯示 1700 萬行是怎麼組織的，而不是它們是對的。它是把原始碼當成純文字讀出來的（公開的第一個 commit `40e56bab`）：沒有編譯、也沒有執行任何東西，因為執行不受信任的 Lean 程式碼本身就有風險。證明是否正確，是檢查器的工作。",
-          ]}
-        />
-        <SiteLink to={["concept", "checkers"]} label={["The checkers and the four questions", "檢查器與四個問題"]} />
-      </Callout>
-      <Scale />
     </Section>
   );
 }

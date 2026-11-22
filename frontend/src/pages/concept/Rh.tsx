@@ -227,18 +227,23 @@ function Timeline() {
           </li>
         ))}
       </ul>
-      <ol className="relative ml-1.5 space-y-5 border-l-2 border-teal-100 pl-5" data-testid="rh-timeline">
-        {EVENTS.map((e) => (
-          <li key={e.year + e.kind} className="relative">
-            <span aria-hidden className={`absolute top-1.5 -left-[27px] h-3 w-3 rounded-full border-2 border-white ${KIND[e.kind].dot}`} />
-            <p className="text-xs font-semibold text-(--lk-accent)">{e.year}</p>
-            <div className="flex flex-col gap-2 sm:flex-row-reverse sm:items-start sm:gap-4">
-              <div className="flex shrink-0 gap-2">
-                {e.faces.map((f) => (
-                  <FaceCard key={f.name} f={f} />
-                ))}
-              </div>
-              <div className="min-w-0 flex-1">
+      {/* three columns on wide screens: the people | the timeline (line and dot) | year and text; on phones the
+          people sit above the text and there is no side line */}
+      <ol className="relative" data-testid="rh-timeline">
+        {EVENTS.map((e, i) => (
+          <li key={e.year + e.kind} className="grid grid-cols-1 gap-2 sm:grid-cols-[13rem_1.75rem_minmax(0,1fr)] sm:gap-0">
+            <div className="flex shrink-0 gap-2 sm:justify-end sm:pr-3 sm:pb-6">
+              {e.faces.map((f) => (
+                <FaceCard key={f.name} f={f} />
+              ))}
+            </div>
+            <div aria-hidden className="relative hidden sm:block">
+              <span className={`absolute left-1/2 w-0.5 -translate-x-1/2 bg-teal-100 ${i === 0 ? "top-2" : "top-0"} ${i === EVENTS.length - 1 ? "h-2" : "bottom-0"}`} />
+              <span className={`absolute top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-white ${KIND[e.kind].dot}`} />
+            </div>
+            <div className="min-w-0 pb-6">
+              <p className="text-xs font-semibold text-(--lk-accent)">{e.year}</p>
+              <div className="min-w-0">
                 <h3 className="font-semibold text-gray-900">
                   <RichText text={pick(e.who)} />
                 </h3>
