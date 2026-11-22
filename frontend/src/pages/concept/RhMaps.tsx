@@ -526,6 +526,14 @@ function ComputeCost() {
           "一台 16 GB 記憶體的筆電，這些步驟一個都跑不動：最省的檢查器，記憶體峰值也大約是它的三倍，建置則要大約六倍。比較一下：在重驗筆記裡一個 Mathlib 規模的冒煙測試中，Lean 核心花了 70 秒、0.75 GB，nanoda 花了 14 秒、0.41 GB；重驗自己的容器則被允許使用 440 GB 記憶體。",
         ]}
       />
+      <Callout kind="note" title={["What this tells us: big mathematics now needs big instruments", "這告訴我們什麼：大數學開始需要大儀器"]}>
+        <P
+          t={[
+            "**This site's view (a position, not a consensus):** mathematics was long the last science that needed almost no instruments, only a person, paper and time. This case shows that, for the largest problems, that is changing. The cost is not in the checker, which handles a Mathlib-sized test in under 1 GB, but in the scale of the mathematics itself: a proof written together with an AI, so large that merely checking it takes a server with several times a laptop's memory. Big physics needs shared facilities like CERN; big mathematics is starting to need its own: **mathematical engineering and large-scale computing** as basic tools. Pencil and paper remain the tools of understanding, but for the largest problems they are no longer enough to produce and check the proof.",
+            "**本站的看法（這是立場，不是共識）：** 數學長久以來是最後一門幾乎不需要儀器的科學，只要一個人、紙筆和時間。這個案例顯示，至少在最大的那些問題上，情況正在改變。成本不在檢查器本身（Mathlib 規模的測試不到 1 GB 就能跑完），而在數學本身的規模：一份與 AI 一起寫成的證明，大到光是檢查它，就需要一台記憶體是筆電好幾倍的伺服器。大物理需要 CERN 這樣的共享設施；大數學也開始需要自己的設施：**數學工程與大規模運算**，成為基本工具。紙筆仍是理解的工具，但對最大的問題，它已不足以獨力完成證明與檢查。",
+          ]}
+        />
+      </Callout>
       <p className="text-[11px] text-gray-500">
         {pick([
           "Numbers from Andrew Sutherland's independent run (updated 22 November 2026, 16:20 UTC) and the re-check repository's notes; as of 22 November 2026.",
