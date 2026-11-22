@@ -570,13 +570,17 @@ function Honeycomb({ onOpen, open, hexRefs }: { onOpen: (i: number) => void; ope
         <>
           <div
             className="absolute flex flex-col items-center justify-center bg-gray-900 text-center"
-            style={{ left: lay.pos[0][0], top: lay.pos[0][1], width: lay.w, height: lay.h, clipPath: HEX, paddingInline: lay.w * 0.12 }}
+            style={{ left: lay.pos[0][0], top: lay.pos[0][1], width: lay.w, height: lay.h, clipPath: HEX, paddingInline: lay.w * 0.1 }}
           >
-            <p className="text-[10px] tracking-wide text-teal-300 uppercase">{pick(["The question", "問題"])}</p>
-            <p className={`mt-1 font-semibold leading-snug text-white ${small ? "text-[13px]" : "text-[15px]"}`}>
+            <p className="text-xs font-medium tracking-wide text-teal-300 uppercase">{pick(["The question", "問題"])}</p>
+            {/* the question grows with its hexagon: about 8.5% of the width, 14–24px */}
+            <p
+              className="mt-1.5 font-semibold leading-snug text-white"
+              style={{ fontSize: Math.round(Math.min(24, Math.max(small ? 13 : 14, lay.w * 0.085))) }}
+            >
               {pick(["A 17-million-line proof nobody can read: is it a proof?", "一份 1700 萬行、沒人讀得懂的證明：算是證明嗎？"])}
             </p>
-            <p className="mt-2 text-[10.5px] leading-snug text-gray-400">{pick(["Six views from mathematicians", "數學家的六種觀點"])}</p>
+            <p className="mt-2 text-xs leading-snug text-gray-300">{pick(["Six views from mathematicians", "數學家的六種觀點"])}</p>
           </div>
           {VIEWS.map((v, i) => {
             const [x, y] = lay.pos[i + 1];
