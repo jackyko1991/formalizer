@@ -171,66 +171,110 @@ const EVENTS: { year: string; kind: Kind; who: L; said: L; chip: L; faces: Face[
   },
 ];
 
-/** Levent Alpöge's statement (alpo.ge/remark.pdf, 20 Nov 2026), quoted exactly in English; our own translation. */
-const REMARK = "https://alpo.ge/remark.pdf";
-const OWN_WORDS: { en: string; zh: string; page: number }[] = [
+/**
+ * The two claims of 20 November 2026 in their authors' own words, side by side: Levent Alpöge's statement
+ * (alpo.ge/remark.pdf) and Alessandro Maria Masullo's acknowledgements in his draft "The Music of the Primes" (linked
+ * from Vakil's post). Quoted exactly in English; the Chinese is this site's translation.
+ */
+type OwnQuote = { en: string; zh: string; where: L };
+type OwnVoice = { name: string; stream: L; url: string; doc: L; quotes: OwnQuote[] };
+const OWN_WORDS: OwnVoice[] = [
   {
-    en: "I had us on the line of combining two quite different ideas present in a toy setting, one of which was already new and shocking … I guided us to the right situation analogous to that toy setting, and then Claude began to leave me in awe.",
-    zh: "我讓我們走上把一個玩具情境裡兩個很不一樣的想法結合起來的路，其中一個本身就已經新穎得令人震驚……我把我們帶到與那個玩具情境相應的正確情境，接著 Claude 開始讓我驚嘆。",
-    page: 1,
+    name: "Levent Alpöge",
+    stream: ["The Lean stream only: finished by machine, to be written for people", "只有 Lean 這條流：機器完成了，還要寫給人看"],
+    url: "https://alpo.ge/remark.pdf",
+    doc: ["statement, alpo.ge/remark.pdf", "聲明，alpo.ge/remark.pdf"],
+    quotes: [
+      {
+        en: "I had us on the line of combining two quite different ideas present in a toy setting, one of which was already new and shocking … I guided us to the right situation analogous to that toy setting, and then Claude began to leave me in awe.",
+        zh: "我讓我們走上把一個玩具情境裡兩個很不一樣的想法結合起來的路，其中一個本身就已經新穎得令人震驚……我把我們帶到與那個玩具情境相應的正確情境，接著 Claude 開始讓我驚嘆。",
+        where: ["page 1", "第 1 頁"],
+      },
+      {
+        en: "While its formalization is finished and it is routine to produce a huge, unreadable document containing sufficient detail, in my view of my path I have just taken a step. I intend to do my best to understand and impart understanding of this argument and its certain simplifications, to speak about it, to write it properly.",
+        zh: "雖然形式化已經完成，要產出一份細節足夠、篇幅龐大、讀不下去的文件也只是例行公事，但在我看來，在自己的路上我才剛踏出一步。我打算盡力理解這個論證和它必然會有的簡化，也讓別人理解它；去講它，好好地把它寫出來。",
+        where: ["page 1", "第 1 頁"],
+      },
+      {
+        en: "It being obviously inappropriate to attempt to post some massive unreadable travesty of “slop”, I decided to only present Lean.",
+        zh: "貼出一大份讀不下去、粗製濫造的東西（slop）顯然不妥，所以我決定只公開 Lean。",
+        where: ["page 2", "第 2 頁"],
+      },
+    ],
   },
   {
-    en: "While its formalization is finished and it is routine to produce a huge, unreadable document containing sufficient detail, in my view of my path I have just taken a step. I intend to do my best to understand and impart understanding of this argument and its certain simplifications, to speak about it, to write it properly.",
-    zh: "雖然形式化已經完成，要產出一份細節足夠、篇幅龐大、讀不下去的文件也只是例行公事，但在我看來，在自己的路上我才剛踏出一步。我打算盡力理解這個論證和它必然會有的簡化，也讓別人理解它；去講它，好好地把它寫出來。",
-    page: 1,
-  },
-  {
-    en: "It being obviously inappropriate to attempt to post some massive unreadable travesty of “slop”, I decided to only present Lean.",
-    zh: "貼出一大份讀不下去、粗製濫造的東西（slop）顯然不妥，所以我決定只公開 Lean。",
-    page: 2,
+    name: "Alessandro Maria Masullo",
+    stream: ["The natural-language stream only: written by hand, not yet checked by machine", "只有自然語言這條流：人親手寫成，還沒經過機器檢查"],
+    url: "https://math216.wordpress.com/wp-content/uploads/2026/11/the-music-of-the-primes.pdf",
+    doc: ["draft “The Music of the Primes”, Acknowledgements", "草稿《The Music of the Primes》致謝"],
+    quotes: [
+      {
+        en: "This work started off when the author was nearing the end of his first year as a Graduate Student at Stanford under Brian Conrad. It took nearly 12 years to assemble.",
+        zh: "這項工作開始於作者在史丹佛跟隨 Brian Conrad、研究生第一年即將結束的時候。它花了將近 12 年才組裝完成。",
+        where: ["p. 6 of the PDF", "PDF 第 6 頁"],
+      },
+      {
+        en: "Brian Conrad and I are aware of several glitches here and there that I was in the process of addressing on the way to completing the typewriting. The ideas are however all here, and many of the chapters are already fairly stable.",
+        zh: "Brian Conrad 和我知道這裡那裡有幾處小毛病，我正在完成打字稿的路上處理它們。不過想法全都在這裡了，許多章節也已經相當穩定。",
+        where: ["p. 6 of the PDF", "PDF 第 6 頁"],
+      },
+      {
+        en: "If any message at all this work is meant to send to the mathematician who feels discouraged by the pace and tone of the current climate, it is this: we are still here. We are very much alive. We are not going anywhere.",
+        zh: "如果這份工作要對那些被當前氛圍的步調與語氣弄得灰心的數學家傳達什麼訊息，那就是：我們還在這裡。我們還活得好好的。我們哪裡也不去。",
+        where: ["p. 6 of the PDF", "PDF 第 6 頁"],
+      },
+    ],
   },
 ];
 
-/** The claimant's own words on who did what, and on the stream still missing (the natural-language proof). */
-function InHisOwnWords() {
+/** Two columns, one per claim: each author's own words, and the one stream each claim has. */
+function InTheirOwnWords() {
   const { pick, lang } = useLang();
   return (
     <figure className="rounded-lg border border-gray-200 bg-white p-4" data-testid="rh-own-words">
-      <figcaption className="mb-1 font-semibold text-gray-900">{pick(["In his own words", "他自己的話"])}</figcaption>
+      <figcaption className="mb-1 font-semibold text-gray-900">{pick(["In their own words", "他們自己的話"])}</figcaption>
       <p className="mb-3 text-sm text-gray-600">
         <RichText
           text={pick([
-            "Levent Alpöge's statement describes both halves of this section: who did what (he chose the toy setting and the analogy; Claude's technical speed took over), and which stream is still missing (the Lean is finished; the argument written for people is not).",
-            "Levent Alpöge 的聲明正好說出本節的兩半：誰做了什麼（他選了玩具情境和類比，Claude 的技術速度接手），以及哪一條流還沒有（Lean 已完成，寫給人看的論證還沒有）。",
+            "The two claims of the same day, each in its author's words, are mirror images: one has a finished Lean proof and owes the argument written for people; the other is a 940-page argument written by hand over twelve years, with known glitches, and no Lean.",
+            "同一天的兩份宣稱，用作者自己的話來看，正好互為鏡像：一份有完成的 Lean 證明，還欠著寫給人看的論證；另一份是花了十二年親手寫成的 940 頁論證，作者自己知道有些小毛病，而且沒有 Lean。",
           ])}
         />
       </p>
-      <div className="space-y-3">
-        {OWN_WORDS.map((q) => (
-          <blockquote key={q.page + q.en.slice(0, 12)} className="border-l-4 border-teal-200 pl-3 text-[15px] leading-relaxed text-gray-800">
-            {lang === "en" ? (
-              <p lang="en">“{q.en}”</p>
-            ) : (
-              <>
-                <p>「{q.zh}」</p>
-                <p lang="en" className="mt-1 text-xs text-gray-500">
-                  “{q.en}”
+      <div className="grid gap-4 md:grid-cols-2">
+        {OWN_WORDS.map((v) => (
+          <div key={v.name} className="space-y-3">
+            <div>
+              <p className="font-semibold text-gray-900">{v.name}</p>
+              <p className="text-xs text-(--lk-accent)">{pick(v.stream)}</p>
+            </div>
+            {v.quotes.map((q) => (
+              <blockquote key={q.en.slice(0, 24)} className="border-l-4 border-teal-200 pl-3 text-[15px] leading-relaxed text-gray-800">
+                {lang === "en" ? (
+                  <p lang="en">“{q.en}”</p>
+                ) : (
+                  <>
+                    <p>「{q.zh}」</p>
+                    <p lang="en" className="mt-1 text-xs text-gray-500">
+                      “{q.en}”
+                    </p>
+                  </>
+                )}
+                <p className="mt-1 text-xs text-gray-500">
+                  — {v.name}, {pick(v.doc)} ({pick(q.where)}){" "}
+                  <a href={v.url} target="_blank" rel="noreferrer" className="text-(--lk-accent) hover:underline">
+                    ↗
+                  </a>
                 </p>
-              </>
-            )}
-            <p className="mt-1 text-xs text-gray-500">
-              — Levent Alpöge, {pick(["statement", "聲明"])} ({pick([`page ${q.page}`, `第 ${q.page} 頁`])}),{" "}
-              <a href={REMARK} target="_blank" rel="noreferrer" className="text-(--lk-accent) hover:underline">
-                alpo.ge/remark.pdf ↗
-              </a>
-            </p>
-          </blockquote>
+              </blockquote>
+            ))}
+          </div>
         ))}
       </div>
       <p className="mt-3 text-xs text-gray-500">
         {pick([
-          "Quoted from the statement as published on 20 November 2026 (the file whose checksum the community re-check repository records); the Chinese is this site's translation. As of 22 November 2026 the claim is under review.",
-          "引自 2026 年 11 月 20 日公開的聲明（即社群複查倉庫記錄了雜湊值的那個檔案）；中文為本站翻譯。截至 2026 年 11 月 22 日，這個宣稱仍在審查中。",
+          "Quoted exactly from the documents as published on 20 November 2026 (Alpöge's statement is the file whose checksum the community re-check repository records; Masullo's draft is the one linked from Ravi Vakil's announcement); the Chinese is this site's translation. As of 22 November 2026 neither claim is accepted.",
+          "一字不改地引自 2026 年 11 月 20 日公開的文件（Alpöge 的聲明即社群複查倉庫記錄了雜湊值的那個檔案；Masullo 的草稿即 Ravi Vakil 公告中連結的那份）；中文為本站翻譯。截至 2026 年 11 月 22 日，兩份宣稱都尚未被接受。",
         ])}
       </p>
     </figure>
@@ -554,7 +598,7 @@ export default function RhConcept({ section }: { section: string | null }) {
         >
           <OneStreamEach />
         </Figure>
-        <InHisOwnWords />
+        <InTheirOwnWords />
         <SiteLink to={["concept", "method", "two-languages"]} label={["One proof, two languages", "一個證明，兩種語言"]} />
         <Sources
           items={[
