@@ -11,7 +11,7 @@ import { adjacency, areaOf, loadGraph, loadIndex, reachable, shortestPath, type 
 import { AreaDot, Legend, NodeCard, STAR_HINT, TheoremGraph3D, TreeView } from "../../mathlib/Explorer";
 import { useAsync, useViewMode } from "../../mathlib/hooks";
 import { colourOf, drawnLinks, folders, loadProofMap, MAIN, MAIN_COLOUR, neighbours, STATEMENT, STATEMENT_COLOUR, type ProofMap } from "../../rh/proofMap";
-import { Callout, Lean, P, Section, SiteLink, Table, type L } from "../kit";
+import { Callout, Lean, List, P, Section, SiteLink, Table, type L } from "../kit";
 import { CardTabs } from "./CardTabs";
 
 const ROOT = "RiemannHypothesis";
@@ -635,8 +635,34 @@ export default function RhMaps({ page, n, title }: { page: string; n: number; ti
         />
         <P
           t={[
-            "Searching for such shortcuts with the human brain alone is often too slow, and sometimes has never succeeded. People are good at inventing tools, and have never been good at refusing them, ever since the first stone tool. Big physics needs shared facilities like CERN; big mathematics is starting to need its own: **mathematical engineering and large-scale computing**, as basic tools. Concretely: **distributed Lean**, so that building and checking a proof can be spread over many machines rather than one large server; **a central library of formal proofs**, like Python's pip, where everything already formalized can be found, versioned and reused (Lean has the beginnings: Mathlib, its shared build cache, and the package index Reservoir); and a path for **new mathematics**, so that a new concept, once invented, enters that library and shortens everyone's next path. Pencil and paper remain the tools of understanding, but for the largest problems they may no longer be enough on their own to produce and check a proof.",
-            "單靠人腦去找這樣的捷徑，往往太慢，有時甚至從未成功。人類擅長發明工具，卻從來不擅長拒絕工具：從第一把石器開始就是如此。大物理需要 CERN 這樣的共享設施；大數學也開始需要自己的設施：**數學工程與大規模運算**，成為基本工具。具體來說：**分散式 Lean**，讓一份證明的建置與檢查可以分散到許多台機器上，而不必靠一台大型伺服器；**一個形式化證明的中央函式庫**，像 Python 的 pip 那樣，所有已形式化的成果都找得到、有版本、可以重複使用（Lean 已有雛形：Mathlib、它共享的建置快取，以及套件索引 Reservoir）；以及一條讓**新數學**進來的路，讓一個新概念一旦被發明，就收進這個函式庫，縮短所有人的下一條路。紙筆仍是理解的工具，但對最大的問題，它可能已不足以獨力完成證明與檢查。",
+            "Searching for such shortcuts with the human brain alone is often too slow, and sometimes has never succeeded. People are good at inventing tools, and have never been good at refusing them, ever since the first stone tool. Big physics needs shared facilities like CERN; big mathematics is starting to need its own, with **mathematical engineering and large-scale computing** as basic tools:",
+            "單靠人腦去找這樣的捷徑，往往太慢，有時甚至從未成功。人類擅長發明工具，卻從來不擅長拒絕工具：從第一把石器開始就是如此。大物理需要 CERN 這樣的共享設施；大數學也開始需要自己的設施，以**數學工程與大規模運算**為基本工具：",
+          ]}
+        />
+        <List
+          items={[
+            [
+              "**Distributed Lean**: building and checking a proof spread over many machines, rather than one large server.",
+              "**分散式 Lean**：讓一份證明的建置與檢查可以分散到許多台機器上，而不必靠一台大型伺服器。",
+            ],
+            [
+              "**A central library of formal proofs**, like Python's pip: everything already formalized can be found, versioned and reused (Lean has the beginnings: Mathlib, its shared build cache, and the package index Reservoir).",
+              "**一個形式化證明的中央函式庫**，像 Python 的 pip 那樣：所有已形式化的成果都找得到、有版本、可以重複使用（Lean 已有雛形：Mathlib、它共享的建置快取，以及套件索引 Reservoir）。",
+            ],
+            [
+              "**Instruments for seeing**, like CERN's detectors and reconstruction software: tools that turn 17 million lines into shapes and structure a person can read, such as maps, dependency graphs, and natural-language proofs linked to the code. The two maps above are this site's small front panel for such an instrument.",
+              "**看得見的儀器**，像 CERN 的探測器與重建軟體：把 1700 萬行機器程式碼降成人看得懂的形狀與結構的工具，例如地圖、依賴圖，以及和程式碼一步步對照的自然語言證明。上面兩張地圖，就是本站為這種儀器做的一小塊前端面板。",
+            ],
+            [
+              "**A path for new mathematics**: a new concept, once invented, enters that library and shortens everyone's next path.",
+              "**一條讓新數學進來的路**：一個新概念一旦被發明，就收進這個函式庫，縮短所有人的下一條路。",
+            ],
+          ]}
+        />
+        <P
+          t={[
+            "**Pencil and paper remain the tools of understanding, but for the largest problems they may no longer be enough on their own to produce and check a proof.**",
+            "**紙筆仍是理解的工具，但對最大的問題，它可能已不足以獨力完成證明與檢查。**",
           ]}
         />
       </Callout>
