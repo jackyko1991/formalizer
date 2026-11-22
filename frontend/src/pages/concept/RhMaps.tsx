@@ -623,8 +623,20 @@ export default function RhMaps({ page, n, title }: { page: string; n: number; ti
       <Callout kind="note" title={["What this tells us: big mathematics now needs big instruments", "這告訴我們什麼：大數學開始需要大儀器"]}>
         <P
           t={[
-            "**This site's view (a position, not a consensus):** mathematics was long the last science that needed almost no instruments, only a person, paper and time. This case shows that, for the largest problems, that is changing. The cost is not in the checker, which handles a Mathlib-sized test in under 1 GB, but in the scale of the mathematics itself: a proof written together with an AI, so large that merely checking it takes a server with several times a laptop's memory. Big physics needs shared facilities like CERN; big mathematics is starting to need its own: **mathematical engineering and large-scale computing** as basic tools. Pencil and paper remain the tools of understanding, but for the largest problems they are no longer enough to produce and check the proof.",
-            "**本站的看法（這是立場，不是共識）：** 數學長久以來是最後一門幾乎不需要儀器的科學，只要一個人、紙筆和時間。這個案例顯示，至少在最大的那些問題上，情況正在改變。成本不在檢查器本身（Mathlib 規模的測試不到 1 GB 就能跑完），而在數學本身的規模：一份與 AI 一起寫成的證明，大到光是檢查它，就需要一台記憶體是筆電好幾倍的伺服器。大物理需要 CERN 這樣的共享設施；大數學也開始需要自己的設施：**數學工程與大規模運算**，成為基本工具。紙筆仍是理解的工具，但對最大的問題，它已不足以獨力完成證明與檢查。",
+            "**This site's view (a position, not a consensus):** mathematics was long the last science that needed almost no instruments, only a person, paper and time. This case shows that, for the largest problems, that is changing. What is heavy is not the checker (a Mathlib-sized test runs in under 1 GB) but the path of the proof itself: 17 million lines, too long for one person to carry, and too big for an ordinary machine.",
+            "**本站的看法（這是立場，不是共識）：** 數學長久以來是最後一門幾乎不需要儀器的科學，只要一個人、紙筆和時間。這個案例顯示，至少在最大的那些問題上，情況正在改變。重的不是檢查器（Mathlib 規模的測試不到 1 GB 就能跑完），而是這條證明路徑本身：1700 萬行，長到一個人扛不動，一台普通的機器也扛不動。",
+          ]}
+        />
+        <P
+          t={[
+            "It points at two basic facts about mathematics. First, many hard problems may be solvable with the tools mathematics already has, but the path can be extremely long. A Lean proof walks such a path step by step: it starts from definitions and theorems already in Mathlib and applies the rules, rather like Wittgenstein's picture of mathematics as a rule-following *language game*. Second, what shortens a path, and makes it something people can understand, is usually new mathematics: a new concept or tool. Whether this proof contains one is not yet visible from its shape; Alpöge himself speaks of one idea that was \"new and shocking\" and plans to write the argument and its simplifications for people (as of 22 November 2026).",
+            "它指出數學的兩個根本事實。第一，很多難題也許用現有的數學工具就能解，但路可能長得驚人。Lean 證明就是一步一步走完這樣的路：從 Mathlib 裡現成的定義與定理出發，照著規則推下去，有點像維根斯坦把數學看成依規則進行的「語言遊戲」。第二，能把路縮短、讓人看得懂的，通常是新的數學：一個新的概念或工具。這份證明裡有沒有這樣的新工具，從它的形狀還看不出來；Alpöge 自己提到其中一個想法「新穎得令人震驚」，並打算把論證與它的簡化寫給人看（截至 2026 年 11 月 22 日）。",
+          ]}
+        />
+        <P
+          t={[
+            "Searching for such shortcuts with the human brain alone is often too slow, and sometimes has never succeeded. People are good at inventing tools, and have never been good at refusing them, ever since the first stone tool. Big physics needs shared facilities like CERN; big mathematics is starting to need its own: **mathematical engineering and large-scale computing**, as basic tools. Pencil and paper remain the tools of understanding, but for the largest problems they are no longer enough on their own to produce and check a proof.",
+            "單靠人腦去找這樣的捷徑，往往太慢，有時甚至從未成功。人類擅長發明工具，卻從來不擅長拒絕工具：從第一把石器開始就是如此。大物理需要 CERN 這樣的共享設施；大數學也開始需要自己的設施：**數學工程與大規模運算**，成為基本工具。紙筆仍是理解的工具，但對最大的問題，它已不足以獨力完成證明與檢查。",
           ]}
         />
       </Callout>
