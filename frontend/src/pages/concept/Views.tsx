@@ -696,12 +696,6 @@ export default function ViewsConcept({ section }: { section: string | null }) {
           ]}
         />
         <Honeycomb onOpen={setOpen} open={open} hexRefs={hexRefs} />
-        <p className="text-xs text-gray-500">
-          {pick([
-            "Quotes are verbatim from the video's automatic captions (… marks a cut; caption slips such as “lean” for Lean are left as they are). The captions name nobody, so neither does this page; a speaker is described only when they describe themselves.",
-            "引文逐字取自影片的自動字幕（…… 表示刪節；字幕的小錯，例如把 Lean 寫成「lean」，保留原樣），中文為本站翻譯。字幕沒有列出受訪者姓名，所以本頁也不列名；只有受訪者自我介紹時才描述其身分。",
-          ])}
-        </p>
         {open !== null && <ViewCard key="card" index={open} hex={hex} onStep={(d) => setOpen((i) => (i === null ? i : (i + d + 6) % 6))} onClosed={onClosed} />}
       </Section>
 
