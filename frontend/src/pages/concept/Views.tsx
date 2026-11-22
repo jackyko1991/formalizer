@@ -743,8 +743,8 @@ export default function ViewsConcept({ section }: { section: string | null }) {
         />
         <Figure
           caption={[
-            "Harris's four objections, one drawing each. The details and the sources are below.",
-            "Harris 的四個反對意見，一點一張圖。細節與出處見下方。",
+            "Harris's four objections. The details and the sources are below.",
+            "Harris 的四個反對意見。細節與出處見下方。",
           ]}
         >
           <HarrisPoints />
