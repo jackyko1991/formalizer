@@ -672,7 +672,7 @@ export function ComparatorFlow() {
 
 // ------------------------------------------------------------------------------------------- the Riemann re-check board
 
-type Status = "ok" | "run" | "fail" | "set";
+type Status = "ok" | "run" | "set";
 const RH_GATES: { items: { s: Status; t: L }[] }[] = [
   {
     items: [
@@ -684,32 +684,32 @@ const RH_GATES: { items: { s: Status; t: L }[] }[] = [
   {
     items: [
       { s: "set", t: ["175,187 files, 17,374,215 lines", "175,187 個檔案、17,374,215 行"] },
-      { s: "run", t: ["sandbox build in progress (hours)", "沙盒建置進行中（數小時）"] },
+      { s: "ok", t: ["sandbox build: all 175,187 modules, zero errors (≈ 8 h, 192 cores)", "沙盒建置：全部 175,187 個模組，零錯誤（約 8 小時，192 核心）"] },
+      { s: "ok", t: ["dozens of people reproduced the same proof export", "數十人重現出同一份證明匯出檔"] },
     ],
   },
   {
     items: [
       { s: "ok", t: ["text scan: no `sorry`, `axiom`, `native_decide`…", "文字掃描：沒有 `sorry`、`axiom`、`native_decide`…"] },
       { s: "set", t: ["but metaprograms: the kernel is the only check", "但有元程式：核心是唯一的檢查"] },
-      { s: "run", t: ["`lake comparator`: waiting for the build", "`lake comparator`：等待建置完成"] },
+      { s: "ok", t: ["exactly Mathlib's `RiemannHypothesis`: `comparator` + `con-leche --compare`", "正是 Mathlib 的 `RiemannHypothesis`：`comparator` + `con-leche --compare`"] },
     ],
   },
   {
     items: [
-      { s: "set", t: ["configured: Lean paranoid + nanoda", "已設定：Lean paranoid + nanoda"] },
-      { s: "fail", t: ["con-leche, con-ron: fail on a mutual reflexive inductive", "con-leche、con-ron：卡在一個互遞迴自反歸納型別"] },
-      { s: "fail", t: ["lean4lean: rejects the v4.33.1 export", "lean4lean：不接受 v4.33.1 的匯出"] },
+      { s: "ok", t: ["joint statement: Lean's official kernel, `con-leche`, `con-ron` and third-party checkers", "聯合聲明：Lean 官方核心、`con-leche`、`con-ron` 與第三方檢查器"] },
+      { s: "ok", t: ["one independent run: nanoda, con-leche, con-ron, lean4lean, leanchecker", "一次獨立執行：nanoda、con-leche、con-ron、lean4lean、leanchecker"] },
+      { s: "run", t: ["that run's Lean kernels (single-threaded): still going, 22 Nov 16:20 UTC", "該次執行的 Lean 核心（單執行緒）：11/22 16:20 UTC 仍在跑"] },
     ],
   },
 ];
 const STATUS: Record<Status, { cls: string; mark: string }> = {
   ok: { cls: "bg-emerald-500 text-white", mark: "✓" },
   run: { cls: "bg-amber-400 text-amber-950", mark: "⧗" },
-  fail: { cls: "bg-gray-300 text-gray-700", mark: "✖" },
   set: { cls: "bg-sky-100 text-sky-800", mark: "•" },
 };
 
-/** The Riemann re-check, gate by gate, as of 22 November 2026. */
+/** The Riemann re-check, gate by gate, as of 22 November 2026 (certified by the Lean and Mathlib communities on 21 November). */
 export function RhBoard() {
   const { pick } = useLang();
   const reduced = useReducedMotion();
@@ -744,9 +744,8 @@ export function RhBoard() {
       </div>
       <p className="mt-2 flex flex-wrap gap-3 text-[11px] text-gray-500">
         <span>✓ {pick(["done", "完成"])}</span>
-        <span>⧗ {pick(["running", "進行中"])}</span>
-        <span>• {pick(["noted / configured", "記錄 / 已設定"])}</span>
-        <span>✖ {pick(["this checker gives no verdict", "這個檢查器沒有給出判定"])}</span>
+        <span>⧗ {pick(["still running", "仍在執行"])}</span>
+        <span>• {pick(["noted", "記錄"])}</span>
       </p>
     </div>
   );

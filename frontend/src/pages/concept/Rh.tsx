@@ -273,8 +273,8 @@ function InTheirOwnWords() {
       </div>
       <p className="mt-3 text-xs text-gray-500">
         {pick([
-          "Quoted exactly from the documents as published on 20 November 2026 (Alpöge's statement is the file whose checksum the community re-check repository records; Masullo's draft is the one linked from Ravi Vakil's announcement); the Chinese is this site's translation. As of 22 November 2026 neither claim is accepted.",
-          "一字不改地引自 2026 年 11 月 20 日公開的文件（Alpöge 的聲明即社群複查倉庫記錄了雜湊值的那個檔案；Masullo 的草稿即 Ravi Vakil 公告中連結的那份）；中文為本站翻譯。截至 2026 年 11 月 22 日，兩份宣稱都尚未被接受。",
+          "Quoted exactly from the documents as published on 20 November 2026 (Alpöge's statement is the file whose checksum the community re-check repository records; Masullo's draft is the one linked from Ravi Vakil's announcement); the Chinese is this site's translation. As of 22 November 2026 Alpöge's Lean proof is certified by the Lean and Mathlib communities (21 November 2026), but neither claim's mathematics is accepted by the wider mathematical community.",
+          "一字不改地引自 2026 年 11 月 20 日公開的文件（Alpöge 的聲明即社群複查倉庫記錄了雜湊值的那個檔案；Masullo 的草稿即 Ravi Vakil 公告中連結的那份）；中文為本站翻譯。截至 2026 年 11 月 22 日，Alpöge 的 Lean 證明已由 Lean 與 Mathlib 社群認證（2026 年 11 月 21 日），但兩份宣稱的數學都還沒有被更廣泛的數學界接受。",
         ])}
       </p>
     </figure>
@@ -384,9 +384,9 @@ export default function RhConcept({ section }: { section: string | null }) {
       focus={section}
       title={["AI + human: the Riemann case", "AI + 人：黎曼猜想的案例"]}
       intro={[
-        "On 20 November 2026 a claimed proof of the Riemann hypothesis arrived as 17 million lines of Lean, written with an AI. On the same day an all-human proposal for the generalized version was announced, and readers using AI reported problems in it within hours. Together they show how a proof made by people and machines is built, what each side is good for, and what no checker can settle. This page draws the architecture, from a beginner's picture to the research questions. Both claims are under review " +
-          "(as of 22 November 2026): this page explains the process, not a verdict.",
-        "2026 年 11 月 20 日，一個宣稱的黎曼猜想證明以 1700 萬行 Lean 的形式出現，是與 AI 合作寫成的。同一天，另一份完全由人寫的推廣版證明提案公布，而借助 AI 的讀者在幾小時內就回報了其中的問題。兩件事放在一起，正好說明人與機器合作的證明怎麼搭起來、各自擅長什麼，以及有什麼是任何檢查器都無法判定的。本頁把整個架構畫出來，從初學者看得懂的圖一路到研究層級的問題。兩個宣稱都仍在審查中（截至 2026 年 11 月 22 日）：本頁說明的是過程，不是判決。",
+        "On 20 November 2026 a claimed proof of the Riemann hypothesis arrived as 17 million lines of Lean, written with an AI. On the same day an all-human proposal for the generalized version was announced, and readers using AI reported problems in it within hours. Together they show how a proof made by people and machines is built, what each side is good for, and what no checker can settle. This page draws the architecture, from a beginner's picture to the research questions. As of 22 November 2026 the Lean proof is " +
+          "certified by the Lean and Mathlib communities (21 November 2026), but its mathematics is still being digested; the all-human proposal is not accepted. This page explains the process, not a verdict on the mathematics.",
+        "2026 年 11 月 20 日，一個宣稱的黎曼猜想證明以 1700 萬行 Lean 的形式出現，是與 AI 合作寫成的。同一天，另一份完全由人寫的推廣版證明提案公布，而借助 AI 的讀者在幾小時內就回報了其中的問題。兩件事放在一起，正好說明人與機器合作的證明怎麼搭起來、各自擅長什麼，以及有什麼是任何檢查器都無法判定的。本頁把整個架構畫出來，從初學者看得懂的圖一路到研究層級的問題。截至 2026 年 11 月 22 日，那份 Lean 證明已由 Lean 與 Mathlib 社群認證（2026 年 11 月 21 日），但其中的數學仍在消化中；完全由人寫的提案則尚未被接受。本頁說明的是過程，不是對這些數學的判決。",
       ]}
     >
       {/* ------------------------------------------------------------------------------------------------ 1 */}
@@ -451,8 +451,8 @@ export default function RhConcept({ section }: { section: string | null }) {
         </Figure>
         <P
           t={[
-            "The case: Levent Alpöge, a mathematician at Anthropic, posted a short note on 20 November 2026 saying that he and Claude had proved RH and GRH for Dirichlet *L*-functions, with the proof in Lean. A community repository now re-checks it from scratch. Stage by stage, here is who does what:",
-            "案例：Anthropic 的數學家 Levent Alpöge 在 2026 年 11 月 20 日發布一份簡短說明，表示他與 Claude 證明了 RH 以及 Dirichlet *L* 函數的 GRH，證明以 Lean 寫成。社群的一個儲存庫正在從頭重驗。逐階段來看誰做什麼：",
+            "The case: Levent Alpöge, a mathematician at Anthropic, posted a short note on 20 November 2026 saying that he and Claude had proved RH and GRH for Dirichlet *L*-functions, with the proof in Lean. A community repository re-checked it from scratch, and on 21 November 2026 the Lean and Mathlib communities certified the statement and the proof. Stage by stage, here is who does what:",
+            "案例：Anthropic 的數學家 Levent Alpöge 在 2026 年 11 月 20 日發布一份簡短說明，表示他與 Claude 證明了 RH 以及 Dirichlet *L* 函數的 GRH，證明以 Lean 寫成。社群的一個儲存庫從頭重驗了它，2026 年 11 月 21 日 Lean 與 Mathlib 社群認證了陳述與證明。逐階段來看誰做什麼：",
           ]}
         />
         <Table
@@ -512,16 +512,20 @@ export default function RhConcept({ section }: { section: string | null }) {
           <List
             items={[
               [
-                "The re-check repository (leanprover-community/riemann-hypothesis) keeps the published source exactly as its first commit: 175,187 files, 17,374,215 lines. Its comparator run is in progress; the result is not yet posted.",
-                "重驗儲存庫（leanprover-community/riemann-hypothesis）的第一個 commit 原封不動保留公開的原始碼：175,187 個檔案、17,374,215 行。它的 comparator 檢查正在執行中，結果尚未公布。",
+                "The re-check repository (leanprover-community/riemann-hypothesis) keeps the published source exactly as its first commit: 175,187 files, 17,374,215 lines. On 21 November 2026 the Lean and Mathlib communities posted a joint statement: \"We hereby certify that both the statement and the proof of the Riemann Hypothesis are correct.\" Two independent tools (`comparator` and `con-leche --compare`) confirmed that the theorem proved is exactly Mathlib's `RiemannHypothesis`; several proof checkers, including Lean's official kernel, `con-leche` and `con-ron`, accepted the exported proof.",
+                "重驗儲存庫（leanprover-community/riemann-hypothesis）的第一個 commit 原封不動保留公開的原始碼：175,187 個檔案、17,374,215 行。2026 年 11 月 21 日，Lean 與 Mathlib 社群發表聯合聲明：「我們在此認證，黎曼猜想的陳述與證明都是正確的。」兩個獨立工具（`comparator` 與 `con-leche --compare`）確認被證明的定理正是 Mathlib 的 `RiemannHypothesis`；包括 Lean 官方核心、`con-leche` 與 `con-ron` 在內的好幾個證明檢查器，都接受了匯出的證明。",
               ],
               [
                 'A static scan finds no `axiom`, `sorry`, `native_decide` or `unsafe` in the text, but it does use metaprogramming that builds declarations directly, where "the kernel is the only check". That is exactly why the independent kernels matter.',
                 "靜態掃描在文字裡找不到 `axiom`、`sorry`、`native_decide` 或 `unsafe`，但它用了直接建立宣告的元程式，在那裡「核心是唯一的檢查」。這正是獨立核心之所以重要的原因。",
               ],
               [
-                "Andrew Sutherland (MIT) reported compiling the code independently (Scientific American). The Clay Institute still lists RH as open.",
-                "Andrew Sutherland（MIT）表示他獨立編譯了這份程式碼（Scientific American 報導）。克雷研究所仍把 RH 列為未解決。",
+                "Andrew Sutherland (MIT) built it independently in a sandbox (all 175,187 modules, zero errors) and posted every checker's time and memory; Lean's own single-threaded kernels were still running there as of 22 November 2026, 16:20 UTC (section 5 shows the numbers).",
+                "Andrew Sutherland（MIT）在沙盒中獨立建置（全部 175,187 個模組，零錯誤），並公布每個檢查器花的時間與記憶體；截至 2026 年 11 月 22 日 16:20 UTC，Lean 自己的單執行緒核心在他那裡仍在執行（第 5 節列出這些數字）。",
+              ],
+              [
+                "The Lean check is settled; the mathematics is not yet digested. Nobody can yet explain the proof's ideas, and acceptance by the wider mathematical community (journals, the Clay Institute, which still lists RH as open) is a separate step. The joint statement ends: \"We look forward to all the activity in the mathematical community that will help explain the new ideas in this proof.\"",
+                "Lean 的檢查已經定案；數學還沒被消化。還沒有人能解說這份證明的想法，而更廣泛數學界的接受（期刊，以及仍把 RH 列為未解決的克雷研究所）是另一個步驟。聯合聲明的結語是：「我們期待數學界接下來的種種活動，幫忙解說這份證明裡的新想法。」",
               ],
             ]}
           />
@@ -536,6 +540,14 @@ export default function RhConcept({ section }: { section: string | null }) {
             {
               label: "leanprover-community/riemann-hypothesis (the re-check)",
               url: "https://github.com/leanprover-community/riemann-hypothesis",
+            },
+            {
+              label: "Lean and Mathlib communities, joint statement: the Riemann hypothesis (21 Nov 2026)",
+              url: "https://leanprover-community.github.io/blog/posts/riemann-hypothesis/",
+            },
+            {
+              label: "A. Sutherland, an independent build and check of the proof (MIT, updated 22 Nov 2026)",
+              url: "https://math.mit.edu/~drew/grh/",
             },
             {
               label: 'K. Buzzard, "...and the proof is checked in Lean" (Xena, 12 Nov 2026)',
@@ -585,20 +597,26 @@ export default function RhConcept({ section }: { section: string | null }) {
         <Callout kind="note" title={["One proof, two languages: one stream each", "一個證明，兩種語言：各只有一條"]}>
           <P
             t={[
-              "This site treats a proof as two mirrored streams, a natural-language proof for people and a Lean proof for the machine, linked step by step (a stated position, not a consensus). Seen that way, **as of 22 November 2026** each claim has one stream and is missing the other: Alpöge's is the Lean stream only, 17,374,215 lines with no natural-language proof yet; Masullo's is the natural-language stream only, with no Lean.",
-              "本站把一個證明看成兩條互為鏡像的流：寫給人看的自然語言證明，和寫給機器看的 Lean 證明，兩者一步一步相連（這是本站的立場，不是共識）。這樣看，**截至 2026 年 11 月 22 日**，兩個宣稱各只有一條、缺了另一條：Alpöge 的只有 Lean 這一條，17,374,215 行，還沒有自然語言證明；Masullo 的只有自然語言這一條，沒有 Lean。",
+              "This site treats a proof as two mirrored streams, a natural-language proof for people and a Lean proof for the machine, linked step by step (a stated position, not a consensus). Seen that way, **as of 22 November 2026** each claim has one stream and is missing the other: Alpöge's is the Lean stream only, 17,374,215 lines, now certified by the Lean and Mathlib communities (21 November 2026), with the natural-language proof still owed; Masullo's is the natural-language stream only, with no Lean.",
+              "本站把一個證明看成兩條互為鏡像的流：寫給人看的自然語言證明，和寫給機器看的 Lean 證明，兩者一步一步相連（這是本站的立場，不是共識）。這樣看，**截至 2026 年 11 月 22 日**，兩個宣稱各只有一條、缺了另一條：Alpöge 的只有 Lean 這一條，17,374,215 行，已由 Lean 與 Mathlib 社群認證（2026 年 11 月 21 日），自然語言證明則還欠著；Masullo 的只有自然語言這一條，沒有 Lean。",
             ]}
           />
         </Callout>
         <Figure
           caption={[
-            "Each claim as a ladder with one rail missing, so every rung is still dashed: no step is yet linked to its partner in the other language. Status as of 22 November 2026.",
-            "把每個宣稱畫成少了一根直桿的梯子，所以每根橫桿都還是虛線：還沒有任何一步連到另一種語言裡的對應步驟。狀態截至 2026 年 11 月 22 日。",
+            "Each claim as a ladder with one rail missing, so every rung is still dashed: no step is yet linked to its partner in the other language. A certified rail is still only one rail. Status as of 22 November 2026.",
+            "把每個宣稱畫成少了一根直桿的梯子，所以每根橫桿都還是虛線：還沒有任何一步連到另一種語言裡的對應步驟。通過認證的直桿，仍然只是一根。狀態截至 2026 年 11 月 22 日。",
           ]}
         >
           <OneStreamEach />
         </Figure>
         <InTheirOwnWords />
+        <P
+          t={[
+            "As of 22 November 2026 the two claims stand asymmetrically: Alpöge's is certified in Lean but still owes an argument written for people, while Masullo's is written for people but must first clear correctness (known glitches, problems reported within hours). If Masullo's gaps are repaired, history may record two independent routes to the same summit, as it did for Newton and Leibniz; until then, only one has passed a check.",
+            "截至 2026 年 11 月 22 日，兩份宣稱的處境並不對稱：Alpöge 的已在 Lean 中通過認證，但還欠一份寫給人看的論證；Masullo 的是寫給人看的論證，但得先跨過正確性這一關（作者自承有小毛病，公布後數小時內就有讀者回報問題）。如果 Masullo 的缺口能補起來，歷史可能會像記下牛頓與萊布尼茲那樣，記下兩條通往同一座山頂的獨立路線；在那之前，只有一條通過了檢查。",
+          ]}
+        />
         <SiteLink to={["concept", "method", "two-languages"]} label={["One proof, two languages", "一個證明，兩種語言"]} />
         <Sources
           items={[

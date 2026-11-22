@@ -518,8 +518,8 @@ const STAND_NOTE: Record<Stand, { t: L; cls: string }> = {
   },
   lean: {
     t: [
-      "**Lean only: the natural-language pillar is missing.** Checked but not understood, and only a person can tell whether the statement says what was meant (in Lean, `(1 : ℕ) / 2 = 0`). Example, as of 22 November 2026: Alpöge's claimed Lean proof of the Riemann hypothesis, 17,374,215 lines, with no natural-language proof yet.",
-      "**只有 Lean：少了自然語言那根柱子。** 檢查過，卻沒有被理解；而陳述說的是不是原本的意思，只有人能判斷（在 Lean 裡 `(1 : ℕ) / 2 = 0`）。例子（截至 2026 年 11 月 22 日）：Alpöge 宣稱的黎曼猜想 Lean 證明，17,374,215 行，還沒有自然語言證明。",
+      "**Lean only: the natural-language pillar is missing.** Checked but not understood, and only a person can tell whether the statement says what was meant (in Lean, `(1 : ℕ) / 2 = 0`). Example, as of 22 November 2026: Alpöge's Lean proof of the Riemann hypothesis, 17,374,215 lines, certified by the Lean and Mathlib communities on 21 November 2026, with no natural-language proof yet.",
+      "**只有 Lean：少了自然語言那根柱子。** 檢查過，卻沒有被理解；而陳述說的是不是原本的意思，只有人能判斷（在 Lean 裡 `(1 : ℕ) / 2 = 0`）。例子（截至 2026 年 11 月 22 日）：Alpöge 的黎曼猜想 Lean 證明，17,374,215 行，2026 年 11 月 21 日已由 Lean 與 Mathlib 社群認證，但還沒有自然語言證明。",
     ],
     cls: "border-sky-300 bg-sky-50 text-sky-900",
   },

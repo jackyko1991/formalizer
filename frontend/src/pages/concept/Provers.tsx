@@ -270,11 +270,11 @@ export default function ProversConcept({ section }: { section: string | null }) 
             "共同的模式是：語言模型寫 Lean、Lean 檢查、錯誤訊息回饋給下一次嘗試。不同的是搜尋方式（大量獨立嘗試、戰術樹，或子目標草稿），以及花多少算力。",
           ]}
         />
-        <Callout title={["Beyond olympiads: a claim under review (November 2026)", "超越奧林匹亞：審查中的宣稱（2026 年 11 月）"]}>
+        <Callout title={["Beyond olympiads: the Riemann hypothesis in Lean (November 2026)", "超越奧林匹亞：Lean 裡的黎曼猜想（2026 年 11 月）"]}>
           <P
             t={[
-              "Levent Alpöge, a mathematician at Anthropic, posted a claimed proof of the Riemann hypothesis found with Claude, published as Lean. Whether it stands now rests on the same two questions as every problem here: is the Lean statement the right one, and does the check pass with only the standard axioms? Experts are still reviewing it.",
-              "Anthropic 的數學家 Levent Alpöge 發布了一個與 Claude 合作找到、以 Lean 公開的黎曼猜想證明宣稱。它是否成立，取決於和本站每一題相同的兩個問題：Lean 的陳述對不對？檢查是否只用標準公理就能通過？專家仍在審查中。",
+              "Levent Alpöge, a mathematician at Anthropic, posted a proof of the Riemann hypothesis found with Claude, published as Lean. The check came down to the same two questions as every problem here: is the Lean statement the right one, and does the check pass with only the standard axioms? On 21 November 2026 the Lean and Mathlib communities certified both. The mathematics is still being digested: as of 22 November 2026 nobody can yet explain the proof's ideas.",
+              "Anthropic 的數學家 Levent Alpöge 發布了一個與 Claude 合作找到、以 Lean 公開的黎曼猜想證明。檢查歸結到和本站每一題相同的兩個問題：Lean 的陳述對不對？檢查是否只用標準公理就能通過？2026 年 11 月 21 日，Lean 與 Mathlib 社群認證了這兩點。數學仍在消化中：截至 2026 年 11 月 22 日，還沒有人能解說這份證明的想法。",
             ]}
           />
           <SiteLink

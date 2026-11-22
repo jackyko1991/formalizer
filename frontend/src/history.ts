@@ -567,25 +567,30 @@ export const HISTORY: TimelineCard[] = [
     image: {
       src: "history/riemann-2026.svg",
       alt: [
-        "The critical strip with the first zeros of the zeta function on the line Re(s) = 1/2, and a Lean statement of the hypothesis: the code compiles, the mathematics is under review",
-        "臨界帶與 zeta 函數落在 Re(s) = 1/2 這條線上的前幾個零點，以及這個猜想的 Lean 陳述：程式碼能編譯，數學仍在審查中",
+        "The critical strip with the first zeros of the zeta function on the line Re(s) = 1/2, and a Lean statement of the hypothesis: the Lean proof is certified by the Lean and Mathlib communities (21 Nov 2026); the mathematics is still being digested",
+        "臨界帶與 zeta 函數落在 Re(s) = 1/2 這條線上的前幾個零點，以及這個猜想的 Lean 陳述：Lean 證明已由 Lean 與 Mathlib 社群認證（2026/11/21）；數學仍在消化中",
       ],
       credit: "Drawing: Formalizer",
     },
-    title: ["A claimed proof of the Riemann hypothesis, with Claude", "一個宣稱的黎曼猜想證明，與 Claude 合作"],
+    title: ["A Lean proof of the Riemann hypothesis, with Claude", "一個黎曼猜想的 Lean 證明，與 Claude 合作"],
     body: [
       [
         "On 20 November 2026 Levent Alpöge, a mathematician at Anthropic, said that he and Claude had proved the **Riemann hypothesis** (every non-trivial zero of the zeta function has real part $1/2$) and its generalized version. The proof exists only in Lean: 175,187 files, about 17.4 million lines.",
         "2026 年 11 月 20 日，Anthropic 的數學家 Levent Alpöge 表示，他與 Claude 證明了 **黎曼猜想**（zeta 函數的每個非平凡零點，實部都是 $1/2$）及其推廣版本。這份證明只有 Lean 版本：175,187 個檔案，約 1,740 萬行。",
       ],
       [
-        "As of 22 November 2026 it is a **claim under review**: the Lean community's re-check (read the statement, build in a sandbox, then Comparator with two independent kernels) was still running, and no one can yet read the proof. A check can say the steps are valid; whether the statement is the right one, and what the proof means, is still for people.",
-        "截至 2026 年 11 月 22 日，這仍是 **審查中的宣稱**：Lean 社群的複查（讀陳述、在沙盒中建置，再用 Comparator 搭配兩個獨立核心檢查）仍在進行，而且還沒有人讀得懂這份證明。檢查能說明每一步都成立；陳述對不對、證明的意義是什麼，仍要由人來判斷。",
+        "On 21 November 2026 the Lean and Mathlib communities issued a joint statement: \"We hereby certify that both the statement and the proof of the Riemann Hypothesis are correct.\" Two independent tools confirmed that the theorem proved is exactly Mathlib's `RiemannHypothesis`, and several proof checkers, including Lean's own kernel, accepted the proof. So the **Lean proof is certified**; as of 22 November 2026 the **mathematics is still being digested**: no one can yet read the proof, and acceptance by the wider mathematical community is a separate, later step.",
+        "2026 年 11 月 21 日，Lean 與 Mathlib 社群發表聯合聲明：「我們在此認證，黎曼猜想的陳述與證明都是正確的。」兩個獨立工具確認，被證明的定理正是 Mathlib 的 `RiemannHypothesis`；包括 Lean 自己的核心在內，好幾個證明檢查器都接受了這份證明。所以 **Lean 證明已通過認證**；截至 2026 年 11 月 22 日，**數學仍在消化中**：還沒有人讀得懂這份證明，而更廣泛的數學界是否接受，是另一個、之後的步驟。",
       ],
     ],
     sources: [
       { label: "L. Alpöge, the note (alpo.ge)", url: "https://alpo.ge/remark.pdf" },
       { label: "leanprover-community/riemann-hypothesis: the re-check", url: "https://github.com/leanprover-community/riemann-hypothesis" },
+      {
+        label: "Lean and Mathlib communities: joint statement on the Riemann hypothesis (21 Nov 2026)",
+        url: "https://leanprover-community.github.io/blog/posts/riemann-hypothesis/",
+      },
+      { label: "A. Sutherland: an independent build and check, with timings (MIT, 22 Nov 2026)", url: "https://math.mit.edu/~drew/grh/" },
       {
         label: "K. Buzzard: …and the proof is checked in Lean (Xena, 12 Nov 2026)",
         url: "https://xenaproject.wordpress.com/2026/11/12/and-the-proof-is-checked-in-lean/",

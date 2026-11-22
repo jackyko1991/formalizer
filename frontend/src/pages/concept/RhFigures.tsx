@@ -648,7 +648,7 @@ export function MirrorPipelines() {
           },
         ],
         ["Alpöge with Claude: a Lean proof", "Alpöge 與 Claude：Lean 證明"],
-        ["under review", "審查中"],
+        ["Lean: certified 21 Nov", "Lean：11/21 已認證"],
       )}
       <line x1={14} y1={130} x2={666} y2={130} strokeDasharray="2 4" className="stroke-gray-400" />
       <text x={340} y={126} textAnchor="middle" fontSize={10} className="fill-gray-500">
@@ -735,7 +735,7 @@ export function TwoPositions() {
 
 /**
  * One proof, two languages, applied to the two claims of 20 Nov 2026: each is a ladder with one rail missing.
- * Alpöge's RH claim has the Lean rail only; Masullo's GRH proposal has the natural-language rail only (as of 22 Nov 2026).
+ * Alpöge's RH claim has the Lean rail only (certified by the Lean and Mathlib communities, 21 Nov 2026); Masullo's GRH proposal has the natural-language rail only (as of 22 Nov 2026).
  */
 export function OneStreamEach() {
   const { pick } = useLang();
@@ -785,8 +785,9 @@ export function OneStreamEach() {
         nl: [["not written yet", "尚未寫出"]],
         lean: [
           ["17,374,215 lines", "17,374,215 行"],
-          ["re-check:", "重驗："],
-          ["in progress", "進行中"],
+          ["certified by the", "已由 Lean 與"],
+          ["Lean + Mathlib", "Mathlib 社群認證"],
+          ["communities, 21 Nov", "（2026/11/21）"],
         ],
         leanSolid: true,
         foot: ["the Lean stream only", "只有 Lean 這一條"],

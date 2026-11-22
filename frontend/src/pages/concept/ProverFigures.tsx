@@ -113,7 +113,7 @@ const SPECTRUM: { name: L; who: string | L; does: L; cls: string }[] = [
   },
   {
     name: ["Research claims", "研究級宣稱"],
-    who: ["2026: a Riemann claim, under review", "2026：黎曼猜想的宣稱，審查中"],
+    who: ["2026: Riemann, certified in Lean", "2026：黎曼猜想，Lean 已認證"],
     does: ["open problems, with experts", "與專家合作攻開放問題"],
     cls: "fill-rose-50 stroke-rose-400",
   },

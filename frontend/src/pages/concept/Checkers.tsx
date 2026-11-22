@@ -30,7 +30,7 @@ const SECTIONS: SectionInfo[] = [
   { id: "trust", title: ["What a check still trusts", "檢查之後仍然要信任的東西"] },
   { id: "tools", title: ["The checkers side by side", "檢查工具並排比較"] },
   { id: "workflow", title: ["Comparator: a test written before the proof", "Comparator：在證明之前就寫好的測試"] },
-  { id: "rh", title: ["A worked case: re-checking the Riemann claim", "實例：重新檢查黎曼猜想的宣稱"] },
+  { id: "rh", title: ["A worked case: re-checking the Riemann proof", "實例：重新檢查黎曼猜想的證明"] },
   { id: "formalizer", title: ["What Formalizer runs for you", "Formalizer 替你跑哪些檢查"] },
 ];
 
@@ -63,8 +63,8 @@ export default function CheckersConcept({ section }: { section: string | null })
       id={PAGE}
       title={["Checking the checker", "檢查檢查者"]}
       intro={[
-        "“The proof is checked in Lean” sounds final. It isn't, quite. Kevin Buzzard asks four questions before he believes it, and each one is a gate a proof has to pass. This page walks through the gates with pictures, shows the tools that guard each one, and ends with a real case: the 17-million-line Lean proof claimed for the Riemann hypothesis.",
-        "「證明已由 Lean 檢查」聽起來像定案了。其實還差一點。Kevin Buzzard 在相信之前會問四個問題，每一個都是證明必須通過的關卡。這一頁用圖走過這四道關卡，介紹守住每一關的工具，最後看一個真實的例子：號稱證明黎曼猜想、長達 1700 萬行的 Lean 證明。",
+        "“The proof is checked in Lean” sounds final. It isn't, quite. Kevin Buzzard asks four questions before he believes it, and each one is a gate a proof has to pass. This page walks through the gates with pictures, shows the tools that guard each one, and ends with a real case: the 17-million-line Lean proof of the Riemann hypothesis, certified by the Lean and Mathlib communities on 21 November 2026.",
+        "「證明已由 Lean 檢查」聽起來像定案了。其實還差一點。Kevin Buzzard 在相信之前會問四個問題，每一個都是證明必須通過的關卡。這一頁用圖走過這四道關卡，介紹守住每一關的工具，最後看一個真實的例子：長達 1700 萬行、在 2026 年 11 月 21 日由 Lean 與 Mathlib 社群認證的黎曼猜想 Lean 證明。",
       ]}
       sections={SECTIONS}
       focus={section}
@@ -322,14 +322,14 @@ export default function CheckersConcept({ section }: { section: string | null })
       <Section page={PAGE} id="rh" n={++n} title={SECTIONS[8].title}>
         <P
           t={[
-            "On 20 November 2026 Levent Alpöge, working with Claude, announced a Lean proof of the Riemann hypothesis and of GRH for Dirichlet L-functions. A public repository re-checks it, gate by gate, starting from the source exactly as published: 175,187 files, 17,374,215 lines, about 1 GB.",
-            "2026 年 11 月 20 日，Levent Alpöge 與 Claude 合作，宣布了黎曼猜想與狄利克雷 L 函數廣義黎曼猜想的 Lean 證明。一個公開的儲存庫從原封不動的發布原始碼開始，一關一關地重新檢查：175,187 個檔案、17,374,215 行、大約 1 GB。",
+            "On 20 November 2026 Levent Alpöge, working with Claude, announced a Lean proof of the Riemann hypothesis and of GRH for Dirichlet L-functions. A public repository re-checked it, gate by gate, starting from the source exactly as published: 175,187 files, 17,374,215 lines, about 1 GB.",
+            "2026 年 11 月 20 日，Levent Alpöge 與 Claude 合作，宣布了黎曼猜想與狄利克雷 L 函數廣義黎曼猜想的 Lean 證明。一個公開的儲存庫從原封不動的發布原始碼開始，一關一關地重新檢查了它：175,187 個檔案、17,374,215 行、大約 1 GB。",
           ]}
         />
         <Figure
           caption={[
-            "The re-check as of 22 November 2026, by gate. “✖” means that checker could not run on this proof, not that it found an error.",
-            "截至 2026 年 11 月 22 日的重新檢查，按關卡排列。「✖」表示那個檢查器無法在這個證明上執行，而不是它找到錯誤。",
+            "The re-check as of 22 November 2026, by gate. On 21 November the Lean and Mathlib communities certified both the statement and the proof; “⧗” marks one independent run whose slow, single-threaded Lean kernels were still going.",
+            "截至 2026 年 11 月 22 日的重新檢查，按關卡排列。11 月 21 日，Lean 與 Mathlib 社群認證了陳述與證明；「⧗」標的是一次獨立執行裡，較慢、單執行緒的 Lean 核心仍在跑。",
           ]}
         >
           <RhBoard />
@@ -343,8 +343,8 @@ export default function CheckersConcept({ section }: { section: string | null })
         <Callout kind="warn" title={["As of 22 November 2026", "截至 2026 年 11 月 22 日"]}>
           <P
             t={[
-              "“A passing run still trusts the checkers, Mathlib's definitions, Mathlib's official build cache, the exporter, and the sandboxes.” The build was still running; comparator's verdict had not been posted.",
-              "「即使檢查通過，仍然要信任這些檢查工具、Mathlib 的定義、Mathlib 的官方建置快取、匯出器，以及沙盒。」當時建置仍在進行中，comparator 的判定尚未公布。",
+              "“A passing run still trusts the checkers, Mathlib's definitions, Mathlib's official build cache, the exporter, and the sandboxes.” The run did pass: on 21 November 2026 the Lean and Mathlib communities certified that “both the statement and the proof of the Riemann Hypothesis are correct”, after `comparator` and `con-leche --compare` matched the statement and several kernels (Lean's official one, `con-leche`, `con-ron`, and third-party checkers) accepted an inert export of the proof. That trust list still applies.",
+              "「即使檢查通過，仍然要信任這些檢查工具、Mathlib 的定義、Mathlib 的官方建置快取、匯出器，以及沙盒。」檢查確實通過了：`comparator` 與 `con-leche --compare` 比對陳述相符，好幾個核心（Lean 官方核心、`con-leche`、`con-ron` 與第三方檢查器）也接受了一份不會執行的證明匯出檔之後，Lean 與 Mathlib 社群在 2026 年 11 月 21 日認證「黎曼猜想的陳述與證明都是正確的」。上面那份信任清單依然適用。",
             ]}
           />
         </Callout>
@@ -358,7 +358,16 @@ export default function CheckersConcept({ section }: { section: string | null })
           <SiteLink to={["concept", "rh"]} label={["The Riemann case, in full", "黎曼猜想的完整故事"]} />
           <SiteLink to={["concept", "views"]} label={["What mathematicians think", "數學家怎麼看"]} />
         </p>
-        <Sources items={[{ label: "leanprover-community/riemann-hypothesis (re-check)", url: RH_REPO }]} />
+        <Sources
+          items={[
+            { label: "leanprover-community/riemann-hypothesis (re-check)", url: RH_REPO },
+            {
+              label: "Lean and Mathlib communities, joint statement: the Riemann hypothesis (21 Nov 2026)",
+              url: "https://leanprover-community.github.io/blog/posts/riemann-hypothesis/",
+            },
+            { label: "A. Sutherland, an independent build and check, with timings (MIT, updated 22 Nov 2026)", url: "https://math.mit.edu/~drew/grh/" },
+          ]}
+        />
       </Section>
 
       <Section page={PAGE} id="formalizer" n={++n} title={SECTIONS[9].title}>

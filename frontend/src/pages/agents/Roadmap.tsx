@@ -183,8 +183,8 @@ export default function RoadmapAgent({ section }: { section: string | null }) {
             [
               ["The Riemann hypothesis: read the statement", "黎曼猜想：讀懂陳述"],
               [
-                "Mathlib's `RiemannHypothesis` unfolded line by line, and how a posted proof would be checked against it (a claim from November 2026 is under review)",
-                "逐行展開 Mathlib 的 `RiemannHypothesis`，以及一個公開的證明要怎麼對照它來檢查（2026 年 11 月的一個宣稱仍在審查中）",
+                "Mathlib's `RiemannHypothesis` unfolded line by line, and how a posted proof is checked against it (a Lean proof posted in November 2026 was certified by the Lean and Mathlib communities on 21 November; its mathematics is still being digested)",
+                "逐行展開 Mathlib 的 `RiemannHypothesis`，以及一個公開的證明要怎麼對照它來檢查（2026 年 11 月公開的一份 Lean 證明，已在 11 月 21 日由 Lean 與 Mathlib 社群認證；其中的數學仍在消化中）",
               ],
               <No />,
             ],

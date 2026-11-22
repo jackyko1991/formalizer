@@ -954,8 +954,8 @@ export default function ViewsConcept({ section }: { section: string | null }) {
       focus={section}
       title={["What if AI proved it? Six views from mathematicians", "如果是 AI 證明的呢？數學家的六種觀點"]}
       intro={[
-        "Is a proof nobody can read still a proof? On 20 November 2026 that stopped being a thought experiment: a claimed Lean proof of the Riemann hypothesis, 17,374,215 lines made with Claude, still under review as of 22 November 2026. This page gathers what mathematicians say: the interviews, six views, the sceptic's case, and where Formalizer stands.",
-        "一份沒人讀得懂的證明，還算證明嗎？2026 年 11 月 20 日，這不再只是思想實驗：一份宣稱的黎曼猜想 Lean 證明，共 17,374,215 行，與 Claude 合作完成，截至 2026 年 11 月 22 日仍在審查中。本頁整理數學家怎麼看：訪談、六種觀點、懷疑者的論點，以及 Formalizer 的立場。",
+        "Is a proof nobody can read still a proof? On 20 November 2026 that stopped being a thought experiment: a Lean proof of the Riemann hypothesis, 17,374,215 lines made with Claude, certified by the Lean and Mathlib communities on 21 November 2026 while, as of 22 November 2026, its mathematics is still being digested. This page gathers what mathematicians say: the interviews, six views, the sceptic's case, and where Formalizer stands.",
+        "一份沒人讀得懂的證明，還算證明嗎？2026 年 11 月 20 日，這不再只是思想實驗：一份黎曼猜想的 Lean 證明，共 17,374,215 行，與 Claude 合作完成，2026 年 11 月 21 日已由 Lean 與 Mathlib 社群認證，但截至 2026 年 11 月 22 日，其中的數學仍在消化中。本頁整理數學家怎麼看：訪談、六種觀點、懷疑者的論點，以及 Formalizer 的立場。",
       ]}
     >
       <style>{PAGE_CSS}</style>
@@ -1077,6 +1077,12 @@ export default function ViewsConcept({ section }: { section: string | null }) {
             ],
           ]}
         />
+        <P
+          t={[
+            "Here is where we stand. On the verification layer Buzzard and Voevodsky are right: a proof of hundreds of pages, let alone millions of lines, can no longer rest on referees checking it line by line. That isn't a failing of referees. Such problems have outgrown the context any single mind can hold at once. A human who sets the direction and chooses the problems and analogies, an AI that works out the details, and a machine that checks every step: that is a path worth taking. For its largest problems, mathematics is passing out of its romantic period into an industrial one, built like large-scale engineering, with division of labour, builds and verification. But what gets industrialised is the checking, not the understanding. Distilling the result back into ideas people can grasp is still the mathematician's job, and it's why the natural-language half of a proof exists.",
+            "我們的立場是這樣的。在驗證這一層，Buzzard 和 Voevodsky 說得對：幾百頁、甚至上千萬行的證明，不能再靠審稿人逐行檢查，這不是審稿人不夠認真，而是問題已經大到超出任何一個人腦能同時記住的脈絡。這時，由人提出方向、選擇問題與類比，由 AI 展開細節，再由機器逐步檢查，是一條可走、也值得走的路。對最大的那些問題，數學正走過它的浪漫時代，進入工業化的階段：像大型工程一樣分工、建置、驗證。但工業化的是「檢查」，不是「理解」：把結果重新提煉成人能讀懂的想法，仍然是數學家的工作，也是自然語言這一半證明存在的理由。",
+          ]}
+        />
         <p className="flex flex-wrap gap-x-5 gap-y-1">
           <SiteLink to={["concept", "method", "two-languages"]} label={["One proof, two languages", "一個證明，兩種語言"]} />
           <SiteLink to={["concept", "checkers"]} label={["Independent kernels: the checkers", "獨立的核心：檢查器"]} />
@@ -1127,12 +1133,18 @@ export default function ViewsConcept({ section }: { section: string | null }) {
               "我們稱之為 **一個證明，兩種語言**：自然語言證明和 Lean 證明互為鏡像，一步一步相連；證明是這一對連起來的整體，而不是其中任何一條。AI 的工作是在兩者之間翻譯，哪個方向都可以。",
             ]}
           />
+          <P
+            t={[
+              "On this layer Buzzard and Voevodsky are right: once a proof runs to hundreds of pages, we should no longer rely on referees to check it line by line. Some problems have simply outgrown the context a single human mind can hold. Human-guided AI, with every step checked by machine, is the direction this site stands for. For its largest problems, mathematics is moving from a romantic age of craft into an industrial one.",
+              "在這一層，Buzzard 和 Voevodsky 說得對：證明一長到幾百頁，就不該再指望審稿人逐行把關。我們得承認，有些數學問題已大到超出單一人腦能容納的脈絡；由人引導、由 AI 推進、由機器逐步檢查，是我們選擇站的方向。對最大的那些問題，數學正從手工的浪漫時代走向工業化的時代。",
+            ]}
+          />
           <SiteLink to={["concept", "method", "two-languages"]} label={["One proof, two languages, as a picture", "一個證明，兩種語言：看圖"]} />
         </Callout>
         <P
           t={[
-            "**As of 22 November 2026**, the news shows each half without the other. The Riemann-hypothesis claim announced on 20 November (Levent Alpöge, with Claude) is a Lean-only proof; its independent re-check is still building, and Terence Tao lists it as the least \"digested\" of three recent results. The same day Ravi Vakil announced Alessandro Maria Masullo's proposed proof of GRH, \"all human, with no AI\"; within hours, people reported problems in it, found with the help of AI models. Neither is accepted today.",
-            "**截至 2026 年 11 月 22 日**，新聞剛好讓兩半各自出現。11 月 20 日宣布的黎曼猜想宣稱（Levent Alpöge 與 Claude 合作）是只有 Lean 的證明；獨立重驗仍在建置中，Terence Tao 把它列為最近三個結果中「消化」程度最低的一個。同一天，Ravi Vakil 公布了 Alessandro Maria Masullo 提出的 GRH 證明，「完全由人完成，沒有 AI」；幾小時內就有人回報其中的問題，而這些問題是在 AI 模型協助下找到的。兩者目前都尚未被接受。",
+            "**As of 22 November 2026**, the news shows each half without the other. The Riemann-hypothesis claim announced on 20 November (Levent Alpöge, with Claude) is a Lean-only proof; on 21 November the Lean and Mathlib communities certified its statement and proof, while Terence Tao lists it as the least \"digested\" of three recent results: the Lean stream is certified, the natural-language stream is still owed. The same day Ravi Vakil announced Alessandro Maria Masullo's proposed proof of GRH, \"all human, with no AI\"; within hours, people reported problems in it, found with the help of AI models. Neither is accepted by the wider mathematical community today.",
+            "**截至 2026 年 11 月 22 日**，新聞剛好讓兩半各自出現。11 月 20 日宣布的黎曼猜想宣稱（Levent Alpöge 與 Claude 合作）是只有 Lean 的證明；11 月 21 日 Lean 與 Mathlib 社群認證了它的陳述與證明，而 Terence Tao 把它列為最近三個結果中「消化」程度最低的一個：Lean 這一條已通過認證，自然語言這一條還欠著。同一天，Ravi Vakil 公布了 Alessandro Maria Masullo 提出的 GRH 證明，「完全由人完成，沒有 AI」；幾小時內就有人回報其中的問題，而這些問題是在 AI 模型協助下找到的。兩者目前都尚未被更廣泛的數學界接受。",
           ]}
         />
         <List
@@ -1152,6 +1164,7 @@ export default function ViewsConcept({ section }: { section: string | null }) {
             { label: "3Blue1Brown, “Since last year, we asked: ‘What if AI solved the Riemann Hypothesis?’” (22 Nov 2026)", url: `https://www.youtube.com/watch?v=${VIDEO}` },
             { label: "Kevin Buzzard, “…and the proof is checked in Lean” (Xena, 12 Nov 2026)", url: "https://xenaproject.wordpress.com/2026/11/12/and-the-proof-is-checked-in-lean/" },
             { label: "leanprover-community/riemann-hypothesis (the re-check)", url: "https://github.com/leanprover-community/riemann-hypothesis" },
+            { label: "Lean and Mathlib communities, joint statement: the Riemann hypothesis (21 Nov 2026)", url: "https://leanprover-community.github.io/blog/posts/riemann-hypothesis/" },
             {
               label: "Terence Tao, Euler, Navier–Stokes and the generalized Riemann hypothesis (20 Nov 2026)",
               url: "https://terrytao.wordpress.com/2026/11/20/unforced-euler-singularity-unforced-navier-stokes-singularity-and-the-generalized-riemann-hypothesis/",

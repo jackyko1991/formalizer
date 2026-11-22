@@ -1,7 +1,7 @@
 /**
  * Concept ▸ the Riemann case, section "Two maps" (lazy-loaded by Rh.tsx): what Mathlib's `RiemannHypothesis` rests on
  * (its dependency graph, from the Mathlib map: frontend/public/mathlib, scripts/mathlib_graph) and the shape of the
- * claimed proof (its 175,187 files as districts linked by imports: frontend/public/rh/proof-map.json,
+ * proof (its 175,187 files as districts linked by imports: frontend/public/rh/proof-map.json,
  * scripts/rh_map/generate.py, which reads the Lean source as text and never builds or runs it). Both 3D views load
  * three.js on demand; each has a list / tree fallback.
  */
@@ -22,7 +22,7 @@ import {
   STATEMENT_COLOUR,
   type ProofMap,
 } from "../../rh/proofMap";
-import { Callout, Lean, P, Section, SiteLink, type L } from "../kit";
+import { Callout, Lean, P, Section, SiteLink, Table, type L } from "../kit";
 
 const ROOT = "RiemannHypothesis";
 const REPO = "https://github.com/leanprover-community/riemann-hypothesis";
@@ -413,13 +413,113 @@ function Scale() {
   );
 }
 
+// ------------------------------------------------------------------------------------------- what a full run takes
+
+const SUTHERLAND = "https://math.mit.edu/~drew/grh/";
+const NOTES = `${REPO}/blob/main/verification/NOTES.md`;
+
+/** Peak memory in GB of RAM (GiB figures converted), next to a 16 GB laptop: Sutherland's run, 22 Nov 2026 16:20 UTC. */
+const MEMORY: { who: L; gb: number; value: L; laptop?: boolean }[] = [
+  { who: ["an ordinary laptop: all its RAM", "一般筆電：全部的記憶體"], gb: 16, value: ["16 GB", "16 GB"], laptop: true },
+  { who: ["the build (`lake build`)", "建置（`lake build`）"], gb: 100, value: ["~100 GB", "約 100 GB"] },
+  { who: ["nanoda", "nanoda"], gb: 91, value: ["≈ 85 GiB", "約 85 GiB"] },
+  { who: ["con-leche", "con-leche"], gb: 49, value: ["45.6 GiB", "45.6 GiB"] },
+  { who: ["con-ron", "con-ron"], gb: 48, value: ["≈ 44.6 GiB", "約 44.6 GiB"] },
+];
+
+/** What one full Lean check of the proof costs: build, export, each checker's time and peak memory, against a laptop. */
+function ComputeCost() {
+  const { pick } = useLang();
+  return (
+    <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4" data-testid="rh-compute">
+      <p className="font-semibold text-gray-900">{pick(["What the full Lean run takes", "完整跑一次 Lean 要多少資源"])}</p>
+      <P
+        t={[
+          "Checking a proof is cheap compared with finding it, but this one is big: one full run needs a large server for most of a day, and each independent checker needs several times the memory of a whole laptop.",
+          "檢查一個證明，比找到它便宜得多；但這一份很大：完整跑一次要一台大型伺服器跑上大半天，而每個獨立檢查器需要的記憶體，都是一整台筆電的好幾倍。",
+        ]}
+      />
+      <figure className="space-y-1.5" aria-label={pick(["Peak memory of each step, next to a 16 GB laptop", "每一步的記憶體峰值，與 16 GB 筆電並排"])}>
+        {MEMORY.map((m) => (
+          <div
+            key={m.value[0]}
+            className="grid grid-cols-[1fr_4.5rem] items-center gap-x-2 gap-y-0.5 text-xs sm:grid-cols-[12rem_1fr_5rem]"
+            title={`${pick(m.who).replace(/`/g, "")}: ${pick(m.value)}`}
+          >
+            <span className="col-span-2 text-gray-700 sm:col-span-1">
+              <RichText text={pick(m.who)} />
+            </span>
+            <span className="block">
+              <span className={`block h-3 rounded-r ${m.laptop ? "bg-gray-400" : "bg-teal-600"}`} style={{ width: `${m.gb}%` }} />
+            </span>
+            <span className="whitespace-nowrap text-gray-900">{pick(m.value)}</span>
+          </div>
+        ))}
+        <figcaption className="pt-1 text-[11px] text-gray-500">
+          {pick(["Peak memory (RAM), bars to one scale; grey is the laptop.", "記憶體（RAM）峰值，長條用同一個比例；灰色是筆電。"])}
+        </figcaption>
+      </figure>
+      <Table
+        head={[
+          ["Step", "步驟"],
+          ["Time", "時間"],
+          ["Memory / size", "記憶體 / 大小"],
+        ]}
+        rows={[
+          [
+            ["Build in a sandbox (`lake build Main`, 192 cores)", "在沙盒中建置（`lake build Main`，192 核心）"],
+            ["≈ 8 h (21 Nov 10:09 → 18:07 UTC, with restarts)", "約 8 小時（11/21 10:09 → 18:07 UTC，中間有重啟）"],
+            ["~100 GB RAM, 70 GB disk; 175,187 modules, zero errors", "約 100 GB 記憶體、70 GB 硬碟；175,187 個模組，零錯誤"],
+          ],
+          [
+            ["Export the proof", "匯出證明"],
+            ["—", "—"],
+            [
+              "61.6 GB (7.7 GB compressed); 1,468,418 declarations (the statement's side alone: 51,692)",
+              "61.6 GB（壓縮後 7.7 GB）；1,468,418 個宣告（只算陳述那一側：51,692）",
+            ],
+          ],
+          [["nanoda", "nanoda"], ["27 min 42 s on 80 threads", "27 分 42 秒，80 個執行緒"], ["≈ 85 GiB", "約 85 GiB"]],
+          [["con-leche (`--verified`)", "con-leche（`--verified`）"], ["3 min 15 s", "3 分 15 秒"], ["45.6 GiB", "45.6 GiB"]],
+          [["con-ron (`--compare`)", "con-ron（`--compare`）"], ["7 min 6 s", "7 分 6 秒"], ["≈ 44.6 GiB", "約 44.6 GiB"]],
+          [["lean4lean, leanchecker", "lean4lean、leanchecker"], ["finished (times not posted)", "已完成（未公布時間）"], ["—", "—"]],
+          [
+            ["Lean's own kernels (default, paranoid; comparator's kernel stage)", "Lean 自己的核心（預設、paranoid；comparator 的核心階段）"],
+            ["single-threaded: still running after ≈ 45 h, as of 22 Nov 16:20 UTC", "單執行緒：截至 11/22 16:20 UTC，跑了約 45 小時仍在跑"],
+            ["—", "—"],
+          ],
+        ]}
+      />
+      <P
+        t={[
+          "A laptop with 16 GB of RAM could not run any of these steps: even the lightest checker peaks at about three times its memory, and the build needs about six times. For scale, on a Mathlib-sized smoke test in the re-check's notes, Lean's kernel took 70 s and 0.75 GB, and nanoda 14 s and 0.41 GB; the re-check's own container was allowed 440 GB of memory.",
+          "一台 16 GB 記憶體的筆電，這些步驟一個都跑不動：最省的檢查器，記憶體峰值也大約是它的三倍，建置則要大約六倍。比較一下：在重驗筆記裡一個 Mathlib 規模的冒煙測試中，Lean 核心花了 70 秒、0.75 GB，nanoda 花了 14 秒、0.41 GB；重驗自己的容器則被允許使用 440 GB 記憶體。",
+        ]}
+      />
+      <p className="text-[11px] text-gray-500">
+        {pick([
+          "Numbers from Andrew Sutherland's independent run (updated 22 November 2026, 16:20 UTC) and the re-check repository's notes; as of 22 November 2026.",
+          "數字來自 Andrew Sutherland 的獨立執行（2026 年 11 月 22 日 16:20 UTC 更新）與重驗儲存庫的筆記；截至 2026 年 11 月 22 日。",
+        ])}{" "}
+        <a href={SUTHERLAND} target="_blank" rel="noreferrer" className="underline">
+          math.mit.edu/~drew/grh
+        </a>
+        {" · "}
+        <a href={NOTES} target="_blank" rel="noreferrer" className="underline">
+          verification/NOTES.md
+        </a>
+      </p>
+    </div>
+  );
+}
+
 /** The two maps in one card: a tab for each (only the open one loads its data and draws). */
 function MapTabs({ statement, proof }: { statement: ReactNode; proof: ReactNode }) {
   const { pick } = useLang();
   const [tab, setTab] = useState<"statement" | "proof">("statement");
   const tabs = [
     ["statement", ["What the statement rests on", "陳述建立在什麼之上"]],
-    ["proof", ["The shape of the claimed proof", "宣稱證明的形狀"]],
+    ["proof", ["The shape of the proof (certified in Lean)", "證明的形狀（Lean 已認證）"]],
   ] as const;
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white" data-testid="rh-map-tabs">
@@ -451,8 +551,8 @@ export default function RhMaps({ page, n, title }: { page: string; n: number; ti
     <Section page={page} id="maps" n={n} title={title}>
       <P
         t={[
-          "Two maps, before any verdict. The first shows what you must trust just to know what the claim *says*. The second shows how the claimed proof is organised, without saying whether it is right.",
-          "在任何判決之前，先看兩張地圖。第一張顯示：光是要知道這個宣稱 *說了什麼*，你就得信任哪些東西。第二張顯示這份宣稱的證明怎麼組織起來，但不說它對不對。",
+          "Two maps. The first shows what you must trust just to know what the claim *says*. The second shows how the proof is organised, and what it takes to check it; whether it checks is the checkers' job, and on 21 November 2026 the Lean and Mathlib communities certified it.",
+          "兩張地圖。第一張顯示：光是要知道這個宣稱 *說了什麼*，你就得信任哪些東西。第二張顯示這份證明怎麼組織起來，以及檢查它要花多少資源；它能不能通過檢查，是檢查器的工作，而 Lean 與 Mathlib 社群已在 2026 年 11 月 21 日認證了它。",
         ]}
       />
       <MapTabs
@@ -483,21 +583,22 @@ export default function RhMaps({ page, n, title }: { page: string; n: number; ti
           <>
               <P
                 t={[
-                  "The claimed proof is 17,374,215 lines in 175,187 files. Nobody reads that line by line, but its *shape* can be read: which folders there are, how big they are, and which import which. Each star is a folder of files (a district), sized by its lines and coloured by its top-level folder. The gold star is the statement file; the white one is the main theorem, which imports it.",
-                  "宣稱的證明有 17,374,215 行、175,187 個檔案。沒有人能一行一行讀完，但它的 *形狀* 是讀得出來的：有哪些資料夾、各有多大、誰匯入誰。每顆星是一個資料夾（一個區域），大小代表行數，顏色代表它所屬的最上層資料夾。金色的星是陳述檔案；白色的是匯入它的主定理。",
+                  "The proof is 17,374,215 lines in 175,187 files. Nobody reads that line by line, but its *shape* can be read: which folders there are, how big they are, and which import which. Each star is a folder of files (a district), sized by its lines and coloured by its top-level folder. The gold star is the statement file; the white one is the main theorem, which imports it.",
+                  "這份證明有 17,374,215 行、175,187 個檔案。沒有人能一行一行讀完，但它的 *形狀* 是讀得出來的：有哪些資料夾、各有多大、誰匯入誰。每顆星是一個資料夾（一個區域），大小代表行數，顏色代表它所屬的最上層資料夾。金色的星是陳述檔案；白色的是匯入它的主定理。",
                 ]}
               />
               <ProofShape />
               <Callout kind="warn" title={["A map of structure, not of correctness (as of 22 November 2026)", "這是結構圖，不是正確性的證明（截至 2026 年 11 月 22 日）"]}>
                 <P
                   t={[
-                    "This map shows how the 17 million lines are organised, not that they are correct. It was made by reading the source as text (the published first commit, `40e56bab`): nothing was built or run, because running untrusted Lean code is itself a risk. Whether the proof is right is the checkers' job.",
-                    "這張圖顯示 1700 萬行是怎麼組織的，而不是它們是對的。它是把原始碼當成純文字讀出來的（公開的第一個 commit `40e56bab`）：沒有編譯、也沒有執行任何東西，因為執行不受信任的 Lean 程式碼本身就有風險。證明是否正確，是檢查器的工作。",
+                    "This map shows how the 17 million lines are organised, not that they are correct. It was made by reading the source as text (the published first commit, `40e56bab`): nothing was built or run, because running untrusted Lean code is itself a risk. Whether the proof is right is the checkers' job: on 21 November 2026 the Lean and Mathlib communities certified both the statement and the proof, after checking an inert export of it. Understanding it is still people's job.",
+                    "這張圖顯示 1700 萬行是怎麼組織的，而不是它們是對的。它是把原始碼當成純文字讀出來的（公開的第一個 commit `40e56bab`）：沒有編譯、也沒有執行任何東西，因為執行不受信任的 Lean 程式碼本身就有風險。證明是否正確，是檢查器的工作：Lean 與 Mathlib 社群檢查了一份不會執行的證明匯出檔，並在 2026 年 11 月 21 日認證了陳述與證明。至於理解它，仍是人的工作。",
                   ]}
                 />
                 <SiteLink to={["concept", "checkers"]} label={["The checkers and the four questions", "檢查器與四個問題"]} />
               </Callout>
               <Scale />
+              <ComputeCost />
           </>
         }
       />
