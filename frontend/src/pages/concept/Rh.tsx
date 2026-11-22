@@ -61,8 +61,8 @@ const EVENTS: { year: string; kind: Kind; who: L; said: L; chip: L }[] = [
     kind: "leans",
     who: ["**Vladimir Voevodsky** (Fields Medal 2002)", "**Vladimir Voevodsky**（2002 年菲爾茲獎）"],
     said: [
-      'Another mathematician claimed the main result of his paper with Kapranov on ∞-groupoids (1989) could not be true, "a flaw that Voevodsky confirmed fifteen years later"; he also found a mistake in a key lemma of his own paper. He asked: "Who would ensure that I did not forget something and did not make a mistake, if even the mistakes in much more simple arguments take years to uncover?" He turned to computer-checked foundations.',
-      "另一位數學家指出，他與 Kapranov 關於 ∞-群胚的論文（1989）的主要結果不可能成立，「Voevodsky 在十五年後確認了這個錯誤」；他也在自己論文的一個關鍵引理中發現錯誤。他問：「如果連簡單得多的論證中的錯誤都要好幾年才被發現，誰能確保我沒有遺漏、沒有犯錯？」他因此轉向電腦檢查的基礎。",
+      'In 1998 Carlos Simpson posted a preprint showing that the property claimed for the construction in the paper by Kapranov and Voevodsky on ∞-groupoids (1989) cannot hold; his argument applies "in particular … to the realization functor of Kapranov-Voevodsky". It was "a flaw that Voevodsky confirmed fifteen years later"; Voevodsky also found a mistake in a key lemma of his own paper. Voevodsky asked: "Who would ensure that I did not forget something and did not make a mistake, if even the mistakes in much more simple arguments take years to uncover?" He turned to computer-checked foundations.',
+      "1998 年，Carlos Simpson 發表一份預印本，證明 Voevodsky 與 Kapranov 關於 ∞-群胚的論文（1989）為其構造所宣稱的性質不可能成立；他的論證「特別適用於 Kapranov-Voevodsky 的實現函子」。這是「Voevodsky 在十五年後確認的錯誤」；Voevodsky 也在自己論文的一個關鍵引理中發現錯誤。Voevodsky 問：「如果連簡單得多的論證中的錯誤都要好幾年才被發現，誰能確保我沒有遺漏、沒有犯錯？」他因此轉向電腦檢查的基礎。",
     ],
     chip: ["towards formal checking", "傾向形式檢查"],
   },
@@ -81,8 +81,8 @@ const EVENTS: { year: string; kind: Kind; who: L; said: L; chip: L }[] = [
     kind: "leans",
     who: ["**Kevin Buzzard** (Imperial College)", "**Kevin Buzzard**（帝國理工學院）"],
     said: [
-      "In 2019: \"I think there is a non-zero chance that some of our great castles are built on sand ... But I think it's small.\" He leads the Lean formalization of Fermat's Last Theorem, and wrote the four questions of the Checkers page.",
-      "2019 年：「我認為我們有些宏偉的城堡蓋在沙上的機率不是零……但我認為很小。」他領導費馬最後定理的 Lean 形式化，也寫下檢查器頁面上的四個問題。",
+      "In 2019: \"I think there is a non-zero chance that some of our great castles are built on sand ... But I think it's small.\" Kevin Buzzard leads the Lean formalization of Fermat's Last Theorem, and wrote the four questions of the Checkers page.",
+      "2019 年：「我認為我們有些宏偉的城堡蓋在沙上的機率不是零……但我認為很小。」Kevin Buzzard 領導費馬最後定理的 Lean 形式化，也寫下檢查器頁面上的四個問題。",
     ],
     chip: ["towards formal checking", "傾向形式檢查"],
   },
@@ -430,6 +430,10 @@ export default function RhConcept({ section }: { section: string | null }) {
             {
               label: "St Andrews MacTutor: Voevodsky obituary (Princeton)",
               url: "https://mathshistory.st-andrews.ac.uk/Obituaries/Voevodsky_Princeton/",
+            },
+            {
+              label: "C. Simpson, Homotopy types of strict 3-groupoids (arXiv math/9810059, 9 Oct 1998)",
+              url: "https://arxiv.org/abs/math/9810059",
             },
             {
               label: "K. Hartnett, Will Computers Redefine the Roots of Math? (Quanta, 19 May 2015)",
