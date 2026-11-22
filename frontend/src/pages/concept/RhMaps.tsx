@@ -10,19 +10,9 @@ import { useMemo, useState, type ReactNode } from "react";
 import { adjacency, areaOf, loadGraph, loadIndex, reachable, shortestPath, type MathlibIndex, type TheoremGraph } from "../../mathlib/data";
 import { AreaDot, Legend, NodeCard, STAR_HINT, TheoremGraph3D, TreeView } from "../../mathlib/Explorer";
 import { useAsync, useViewMode } from "../../mathlib/hooks";
-import {
-  colourOf,
-  drawnLinks,
-  folders,
-  loadProofMap,
-  MAIN,
-  MAIN_COLOUR,
-  neighbours,
-  STATEMENT,
-  STATEMENT_COLOUR,
-  type ProofMap,
-} from "../../rh/proofMap";
+import { colourOf, drawnLinks, folders, loadProofMap, MAIN, MAIN_COLOUR, neighbours, STATEMENT, STATEMENT_COLOUR, type ProofMap } from "../../rh/proofMap";
 import { Callout, Lean, P, Section, SiteLink, Table, type L } from "../kit";
+import { CardTabs } from "./CardTabs";
 
 const ROOT = "RiemannHypothesis";
 const REPO = "https://github.com/leanprover-community/riemann-hypothesis";
@@ -62,7 +52,10 @@ function StatementMap() {
   const { pick } = useLang();
   const { data: index, error } = useAsync(loadIndex, "index");
   const entry = index?.theorems.find((t) => t.name === ROOT);
-  const { data: graph, error: gError } = useAsync(() => (entry ? loadGraph(entry) : Promise.reject(new Error("RiemannHypothesis is not on the Mathlib map"))), entry?.file ?? "none");
+  const { data: graph, error: gError } = useAsync(
+    () => (entry ? loadGraph(entry) : Promise.reject(new Error("RiemannHypothesis is not on the Mathlib map"))),
+    entry?.file ?? "none",
+  );
   if (error || gError || (index && !entry)) return <p className="text-xs text-red-700">{error ?? gError ?? "RiemannHypothesis is not on the Mathlib map"}</p>;
   if (!index || !entry || !graph) return <p className="text-xs text-gray-500">{pick(["Loading the map…", "載入地圖中…"])}</p>;
   return <StatementGraph index={index} graph={graph} />;
@@ -231,7 +224,13 @@ function ProofGraph({ map }: { map: ProofMap }) {
               .filter((t) => t.top !== "Statements" && t.top !== "Main")
               .map((t) => (
                 <li key={t.top} className="flex items-center gap-1">
-                  <AreaDot color={colourOf({ ...map.districts[0], top: t.top, flags: 0 })} />
+                  <AreaDot
+                    color={colourOf({
+                      ...map.districts[0],
+                      top: t.top,
+                      flags: 0,
+                    })}
+                  />
                   {t.top} <span className="text-gray-400">{Math.round((100 * t.lines) / map.meta.lines)}%</span>
                 </li>
               ))}
@@ -335,7 +334,9 @@ function DistrictHover({ map, i }: { map: ProofMap; i: number }) {
         <AreaDot color={colourOf(d)} />
         {d.name}
       </p>
-      <p className="text-gray-600">{pick([`${fmt(d.lines)} lines · ${fmt(d.files)} files · ${d.top}`, `${fmt(d.lines)} 行 · ${fmt(d.files)} 個檔案 · ${d.top}`])}</p>
+      <p className="text-gray-600">
+        {pick([`${fmt(d.lines)} lines · ${fmt(d.files)} files · ${d.top}`, `${fmt(d.lines)} 行 · ${fmt(d.files)} 個檔案 · ${d.top}`])}
+      </p>
       {nb.out.length > 0 && (
         <p className="text-gray-600">
           {pick(["imports most: ", "最常匯入："])}
@@ -364,7 +365,12 @@ function DistrictList({ map, sel, onSelect }: { map: ProofMap; sel: number; onSe
             <summary className="flex cursor-pointer items-center gap-2 py-0.5">
               <AreaDot color={colourOf(ds[0][0])} />
               <span className="w-36 shrink-0 font-semibold">{t.top}</span>
-              <span className="h-2 rounded-full bg-gray-300" style={{ width: `${Math.max(1, (100 * t.lines) / max) * 0.4}%` }} />
+              <span
+                className="h-2 rounded-full bg-gray-300"
+                style={{
+                  width: `${Math.max(1, (100 * t.lines) / max) * 0.4}%`,
+                }}
+              />
               <span className="ml-auto shrink-0 text-gray-500">
                 {pick([`${fmt(t.lines)} lines · ${fmt(t.files)} files`, `${fmt(t.lines)} 行 · ${fmt(t.files)} 個檔案`])}
               </span>
@@ -420,8 +426,17 @@ const NOTES = `${REPO}/blob/main/verification/NOTES.md`;
 
 /** Peak memory in GB of RAM (GiB figures converted), next to a 16 GB laptop: Sutherland's run, 22 Nov 2026 16:20 UTC. */
 const MEMORY: { who: L; gb: number; value: L; laptop?: boolean }[] = [
-  { who: ["an ordinary laptop: all its RAM", "一般筆電：全部的記憶體"], gb: 16, value: ["16 GB", "16 GB"], laptop: true },
-  { who: ["the build (`lake build`)", "建置（`lake build`）"], gb: 100, value: ["~100 GB", "約 100 GB"] },
+  {
+    who: ["an ordinary laptop: all its RAM", "一般筆電：全部的記憶體"],
+    gb: 16,
+    value: ["16 GB", "16 GB"],
+    laptop: true,
+  },
+  {
+    who: ["the build (`lake build`)", "建置（`lake build`）"],
+    gb: 100,
+    value: ["~100 GB", "約 100 GB"],
+  },
   { who: ["nanoda", "nanoda"], gb: 91, value: ["≈ 85 GiB", "約 85 GiB"] },
   { who: ["con-leche", "con-leche"], gb: 49, value: ["45.6 GiB", "45.6 GiB"] },
   { who: ["con-ron", "con-ron"], gb: 48, value: ["≈ 44.6 GiB", "約 44.6 GiB"] },
@@ -431,8 +446,7 @@ const MEMORY: { who: L; gb: number; value: L; laptop?: boolean }[] = [
 function ComputeCost() {
   const { pick } = useLang();
   return (
-    <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4" data-testid="rh-compute">
-      <p className="font-semibold text-gray-900">{pick(["What the full Lean run takes", "完整跑一次 Lean 要多少資源"])}</p>
+    <div className="space-y-3" data-testid="rh-compute">
       <P
         t={[
           "Checking a proof is cheap compared with finding it, but this one is big: one full run needs a large server for most of a day, and each independent checker needs several times the memory of a whole laptop.",
@@ -479,10 +493,26 @@ function ComputeCost() {
               "61.6 GB（壓縮後 7.7 GB）；1,468,418 個宣告（只算陳述那一側：51,692）",
             ],
           ],
-          [["nanoda", "nanoda"], ["27 min 42 s on 80 threads", "27 分 42 秒，80 個執行緒"], ["≈ 85 GiB", "約 85 GiB"]],
-          [["con-leche (`--verified`)", "con-leche（`--verified`）"], ["3 min 15 s", "3 分 15 秒"], ["45.6 GiB", "45.6 GiB"]],
-          [["con-ron (`--compare`)", "con-ron（`--compare`）"], ["7 min 6 s", "7 分 6 秒"], ["≈ 44.6 GiB", "約 44.6 GiB"]],
-          [["lean4lean, leanchecker", "lean4lean、leanchecker"], ["finished (times not posted)", "已完成（未公布時間）"], ["—", "—"]],
+          [
+            ["nanoda", "nanoda"],
+            ["27 min 42 s on 80 threads", "27 分 42 秒，80 個執行緒"],
+            ["≈ 85 GiB", "約 85 GiB"],
+          ],
+          [
+            ["con-leche (`--verified`)", "con-leche（`--verified`）"],
+            ["3 min 15 s", "3 分 15 秒"],
+            ["45.6 GiB", "45.6 GiB"],
+          ],
+          [
+            ["con-ron (`--compare`)", "con-ron（`--compare`）"],
+            ["7 min 6 s", "7 分 6 秒"],
+            ["≈ 44.6 GiB", "約 44.6 GiB"],
+          ],
+          [
+            ["lean4lean, leanchecker", "lean4lean、leanchecker"],
+            ["finished (times not posted)", "已完成（未公布時間）"],
+            ["—", "—"],
+          ],
           [
             ["Lean's own kernels (default, paranoid; comparator's kernel stage)", "Lean 自己的核心（預設、paranoid；comparator 的核心階段）"],
             ["single-threaded: still running after ≈ 45 h, as of 22 Nov 16:20 UTC", "單執行緒：截至 11/22 16:20 UTC，跑了約 45 小時仍在跑"],
@@ -513,39 +543,6 @@ function ComputeCost() {
   );
 }
 
-/** The two maps in one card: a tab for each (only the open one loads its data and draws). */
-function MapTabs({ statement, proof }: { statement: ReactNode; proof: ReactNode }) {
-  const { pick } = useLang();
-  const [tab, setTab] = useState<"statement" | "proof">("statement");
-  const tabs = [
-    ["statement", ["What the statement rests on", "陳述建立在什麼之上"]],
-    ["proof", ["The shape of the proof (certified in Lean)", "證明的形狀（Lean 已認證）"]],
-  ] as const;
-  return (
-    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white" data-testid="rh-map-tabs">
-      <div role="tablist" className="flex gap-1 border-b border-gray-200 bg-gray-50 px-2 pt-2">
-        {tabs.map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={tab === id}
-            onClick={() => setTab(id)}
-            className={`-mb-px rounded-t-md border px-3 py-1.5 text-sm ${
-              tab === id ? "border-gray-200 border-b-white bg-white font-medium text-(--lk-accent)" : "border-transparent text-gray-600 hover:text-gray-900"
-            }`}
-          >
-            {pick(label)}
-          </button>
-        ))}
-      </div>
-      <div role="tabpanel" className="space-y-4 p-4">
-        {tab === "statement" ? statement : proof}
-      </div>
-    </div>
-  );
-}
-
 export default function RhMaps({ page, n, title }: { page: string; n: number; title: L }): ReactNode {
   return (
     <Section page={page} id="maps" n={n} title={title}>
@@ -555,54 +552,74 @@ export default function RhMaps({ page, n, title }: { page: string; n: number; ti
           "兩張地圖。第一張顯示：光是要知道這個宣稱 *說了什麼*，你就得信任哪些東西。第二張顯示這份證明怎麼組織起來，以及檢查它要花多少資源；它能不能通過檢查，是檢查器的工作，而 Lean 與 Mathlib 社群已在 2026 年 11 月 21 日認證了它。",
         ]}
       />
-      <MapTabs
-        statement={
-          <>
-              <P
-                t={[
-                  "The claim is one line of Lean, `RiemannHypothesis`. But that line uses `riemannZeta`, which is built from the Hurwitz zeta function, a Mellin transform, an integral, the complex numbers, the real numbers… This is what a reader must trust to know what the claim says, before looking at any proof. All of it was in Mathlib, written and checked by people, long before November 2026.",
-                  "這個宣稱是一行 Lean：`RiemannHypothesis`。但這一行用到 `riemannZeta`，而它是由 Hurwitz zeta 函數、Mellin 變換、積分、複數、實數……一層層建起來的。這就是讀者在看任何證明之前，為了知道這個宣稱在說什麼而必須信任的東西。它們全都在 Mathlib 裡，早在 2026 年 11 月之前就由人寫好並檢查過了。",
-                ]}
-              />
-              <StatementMap />
-              <Lean
-                code={MATHLIB_RH}
-                title="Mathlib/NumberTheory/LSeries/RiemannZeta.lean"
-                runner="mathlib"
-                note={[
-                  "Mathlib v4.34.1, as `#print RiemannHypothesis` shows it. The trivial zeros $-2, -4, \\dots$ and the pole $s = 1$ are excluded by hand.",
-                  "Mathlib v4.34.1，即 `#print RiemannHypothesis` 顯示的內容。平凡零點 $-2, -4, \\dots$ 與極點 $s = 1$ 是手動排除的。",
-                ]}
-              />
-              <p className="text-sm">
-                <SiteLink to={["skills", "mathlib", "explore"]} label={["The same graph in the Mathlib map (search: RiemannHypothesis)", "Mathlib 地圖裡的同一張圖（搜尋：RiemannHypothesis）"]} />
-              </p>
-          </>
-        }
-        proof={
-          <>
-              <P
-                t={[
-                  "The proof is 17,374,215 lines in 175,187 files. Nobody reads that line by line, but its *shape* can be read: which folders there are, how big they are, and which import which. Each star is a folder of files (a district), sized by its lines and coloured by its top-level folder. The gold star is the statement file; the white one is the main theorem, which imports it.",
-                  "這份證明有 17,374,215 行、175,187 個檔案。沒有人能一行一行讀完，但它的 *形狀* 是讀得出來的：有哪些資料夾、各有多大、誰匯入誰。每顆星是一個資料夾（一個區域），大小代表行數，顏色代表它所屬的最上層資料夾。金色的星是陳述檔案；白色的是匯入它的主定理。",
-                ]}
-              />
-              <ProofShape />
-              <Callout kind="warn" title={["A map of structure, not of correctness (as of 22 November 2026)", "這是結構圖，不是正確性的證明（截至 2026 年 11 月 22 日）"]}>
+      <CardTabs
+        testid="rh-map-tabs"
+        tabs={[
+          {
+            id: "statement",
+            label: ["What the statement rests on", "陳述建立在什麼之上"],
+            body: (
+              <>
                 <P
                   t={[
-                    "This map shows how the 17 million lines are organised, not that they are correct. It was made by reading the source as text (the published first commit, `40e56bab`): nothing was built or run, because running untrusted Lean code is itself a risk. Whether the proof is right is the checkers' job: on 21 November 2026 the Lean and Mathlib communities certified both the statement and the proof, after checking an inert export of it. Understanding it is still people's job.",
-                    "這張圖顯示 1700 萬行是怎麼組織的，而不是它們是對的。它是把原始碼當成純文字讀出來的（公開的第一個 commit `40e56bab`）：沒有編譯、也沒有執行任何東西，因為執行不受信任的 Lean 程式碼本身就有風險。證明是否正確，是檢查器的工作：Lean 與 Mathlib 社群檢查了一份不會執行的證明匯出檔，並在 2026 年 11 月 21 日認證了陳述與證明。至於理解它，仍是人的工作。",
+                    "The claim is one line of Lean, `RiemannHypothesis`. But that line uses `riemannZeta`, which is built from the Hurwitz zeta function, a Mellin transform, an integral, the complex numbers, the real numbers… This is what a reader must trust to know what the claim says, before looking at any proof. All of it was in Mathlib, written and checked by people, long before November 2026.",
+                    "這個宣稱是一行 Lean：`RiemannHypothesis`。但這一行用到 `riemannZeta`，而它是由 Hurwitz zeta 函數、Mellin 變換、積分、複數、實數……一層層建起來的。這就是讀者在看任何證明之前，為了知道這個宣稱在說什麼而必須信任的東西。它們全都在 Mathlib 裡，早在 2026 年 11 月之前就由人寫好並檢查過了。",
                   ]}
                 />
-                <SiteLink to={["concept", "checkers"]} label={["The checkers and the four questions", "檢查器與四個問題"]} />
-              </Callout>
-              <Scale />
-          </>
-        }
+                <StatementMap />
+                <Lean
+                  code={MATHLIB_RH}
+                  title="Mathlib/NumberTheory/LSeries/RiemannZeta.lean"
+                  runner="mathlib"
+                  note={[
+                    "Mathlib v4.34.1, as `#print RiemannHypothesis` shows it. The trivial zeros $-2, -4, \\dots$ and the pole $s = 1$ are excluded by hand.",
+                    "Mathlib v4.34.1，即 `#print RiemannHypothesis` 顯示的內容。平凡零點 $-2, -4, \\dots$ 與極點 $s = 1$ 是手動排除的。",
+                  ]}
+                />
+                <p className="text-sm">
+                  <SiteLink
+                    to={["skills", "mathlib", "explore"]}
+                    label={["The same graph in the Mathlib map (search: RiemannHypothesis)", "Mathlib 地圖裡的同一張圖（搜尋：RiemannHypothesis）"]}
+                  />
+                </p>
+              </>
+            ),
+          },
+          {
+            id: "proof",
+            label: ["The shape of the proof (certified in Lean)", "證明的形狀（Lean 已認證）"],
+            body: (
+              <>
+                <P
+                  t={[
+                    "The proof is 17,374,215 lines in 175,187 files. Nobody reads that line by line, but its *shape* can be read: which folders there are, how big they are, and which import which. Each star is a folder of files (a district), sized by its lines and coloured by its top-level folder. The gold star is the statement file; the white one is the main theorem, which imports it.",
+                    "這份證明有 17,374,215 行、175,187 個檔案。沒有人能一行一行讀完，但它的 *形狀* 是讀得出來的：有哪些資料夾、各有多大、誰匯入誰。每顆星是一個資料夾（一個區域），大小代表行數，顏色代表它所屬的最上層資料夾。金色的星是陳述檔案；白色的是匯入它的主定理。",
+                  ]}
+                />
+                <ProofShape />
+                <Callout
+                  kind="warn"
+                  title={["A map of structure, not of correctness (as of 22 November 2026)", "這是結構圖，不是正確性的證明（截至 2026 年 11 月 22 日）"]}
+                >
+                  <P
+                    t={[
+                      "This map shows how the 17 million lines are organised, not that they are correct. It was made by reading the source as text (the published first commit, `40e56bab`): nothing was built or run, because running untrusted Lean code is itself a risk. Whether the proof is right is the checkers' job: on 21 November 2026 the Lean and Mathlib communities certified both the statement and the proof, after checking an inert export of it. Understanding it is still people's job.",
+                      "這張圖顯示 1700 萬行是怎麼組織的，而不是它們是對的。它是把原始碼當成純文字讀出來的（公開的第一個 commit `40e56bab`）：沒有編譯、也沒有執行任何東西，因為執行不受信任的 Lean 程式碼本身就有風險。證明是否正確，是檢查器的工作：Lean 與 Mathlib 社群檢查了一份不會執行的證明匯出檔，並在 2026 年 11 月 21 日認證了陳述與證明。至於理解它，仍是人的工作。",
+                    ]}
+                  />
+                  <SiteLink to={["concept", "checkers"]} label={["The checkers and the four questions", "檢查器與四個問題"]} />
+                </Callout>
+                <Scale />
+              </>
+            ),
+          },
+          {
+            id: "compute",
+            label: ["What the full Lean run takes", "完整跑一次 Lean 要多少資源"],
+            body: <ComputeCost />,
+          },
+        ]}
       />
-      {/* what the full Lean run takes: shown under the card, whichever map is open */}
-      <ComputeCost />
     </Section>
   );
 }

@@ -6,22 +6,13 @@
  * Fast-moving facts are dated "as of 22 November 2026"; sources were fetched that day. Pictures: RhFigures.tsx.
  */
 import { RelatedProblems, RichText, useLang } from "@learnkit/web";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense } from "react";
+import { CardTabs } from "./CardTabs";
 import { Callout, Figure, List, P, Page, Section, SiteLink, Sources, Table, type L, type SectionInfo } from "../kit";
-import {
-  CriticalStrip,
-  DigestionLadder,
-  MirrorPipelines,
-  OneStreamEach,
-  ProofArchitecture,
-  TwoPositions,
-} from "./RhFigures";
+import { CriticalStrip, DigestionLadder, MirrorPipelines, OneStreamEach, ProofArchitecture, TwoPositions } from "./RhFigures";
 
 const PAGE = "rh";
-const AS_OF: [string, string] = [
-  "Facts about the claims on this page are as of 22 November 2026.",
-  "本頁關於這些宣稱的事實，截至 2026 年 11 月 22 日。",
-];
+const AS_OF: [string, string] = ["Facts about the claims on this page are as of 22 November 2026.", "本頁關於這些宣稱的事實，截至 2026 年 11 月 22 日。"];
 
 const RhMaps = lazy(() => import("./RhMaps"));
 
@@ -39,7 +30,10 @@ const SECTIONS: SectionInfo[] = [
     title: ["The mirror case, the same day", "同一天的鏡像案例"],
   },
   { id: "stand", title: ["Where we stand", "我們的立場"] },
-  { id: "maps", title: ["Two maps: the statement and the proof", "兩張地圖：陳述與證明"] },
+  {
+    id: "maps",
+    title: ["Two maps: the statement and the proof", "兩張地圖：陳述與證明"],
+  },
   {
     id: "more",
     title: ["Further: six views, and the history", "延伸：六種觀點與歷史"],
@@ -54,10 +48,26 @@ function Sub({ t }: { t: readonly [string, string] }) {
 /** The stand section's timeline: who said or found what, in order of the events. */
 type Kind = "found" | "leans" | "sceptic" | "slow";
 const KIND: Record<Kind, { dot: string; chip: string; legend: L }> = {
-  found: { dot: "bg-teal-600", chip: "bg-teal-50 text-teal-800 ring-teal-200", legend: ["formalisation found an error", "形式化找到錯誤"] },
-  leans: { dot: "bg-sky-500", chip: "bg-sky-50 text-sky-800 ring-sky-200", legend: ["leans towards formal checking", "傾向形式檢查"] },
-  sceptic: { dot: "bg-amber-500", chip: "bg-amber-50 text-amber-900 ring-amber-200", legend: ["sceptical", "持懷疑態度"] },
-  slow: { dot: "bg-violet-500", chip: "bg-violet-50 text-violet-800 ring-violet-200", legend: ["human checking is slow; machines' help is coming", "人工檢查很慢；機器的幫助正在到來"] },
+  found: {
+    dot: "bg-teal-600",
+    chip: "bg-teal-50 text-teal-800 ring-teal-200",
+    legend: ["formalisation found an error", "形式化找到錯誤"],
+  },
+  leans: {
+    dot: "bg-sky-500",
+    chip: "bg-sky-50 text-sky-800 ring-sky-200",
+    legend: ["leans towards formal checking", "傾向形式檢查"],
+  },
+  sceptic: {
+    dot: "bg-amber-500",
+    chip: "bg-amber-50 text-amber-900 ring-amber-200",
+    legend: ["sceptical", "持懷疑態度"],
+  },
+  slow: {
+    dot: "bg-violet-500",
+    chip: "bg-violet-50 text-violet-800 ring-violet-200",
+    legend: ["human checking is slow; machines' help is coming", "人工檢查很慢；機器的幫助正在到來"],
+  },
 };
 /** A freely licensed photo from Wikimedia Commons (public/people/CREDITS.md; Buzzard's is the Views page's). */
 interface Photo {
@@ -74,11 +84,19 @@ interface Face {
   photo?: Photo;
 }
 const COMMONS = "https://commons.wikimedia.org/wiki/File:";
-const MFO_LICENCE = { licence: "CC BY-SA 2.0 de", licenceUrl: "https://creativecommons.org/licenses/by-sa/2.0/de/deed.en" };
+const MFO_LICENCE = {
+  licence: "CC BY-SA 2.0 de",
+  licenceUrl: "https://creativecommons.org/licenses/by-sa/2.0/de/deed.en",
+};
 const FACES = {
   voevodsky: {
     name: "Vladimir Voevodsky",
-    photo: { src: "people/voevodsky.webp", author: "Renate Schmid (MFO)", ...MFO_LICENCE, file: `${COMMONS}VladimirVoevodsky.jpg` },
+    photo: {
+      src: "people/voevodsky.webp",
+      author: "Renate Schmid (MFO)",
+      ...MFO_LICENCE,
+      file: `${COMMONS}VladimirVoevodsky.jpg`,
+    },
   },
   simpson: { name: "Carlos Simpson" },
   gouezel: { name: "Sébastien Gouëzel" },
@@ -98,11 +116,23 @@ const FACES = {
   masullo: { name: "Alessandro Maria Masullo" },
   vakil: {
     name: "Ravi Vakil",
-    photo: { src: "people/vakil.webp", author: "Renate Schmid (MFO)", ...MFO_LICENCE, file: `${COMMONS}Ravi_Vakil.jpg` },
+    photo: {
+      src: "people/vakil.webp",
+      author: "Renate Schmid (MFO)",
+      ...MFO_LICENCE,
+      file: `${COMMONS}Ravi_Vakil.jpg`,
+    },
   },
 } satisfies Record<string, Face>;
 
-const EVENTS: { year: string; kind: Kind; who: L; said: L; chip: L; faces: Face[] }[] = [
+const EVENTS: {
+  year: string;
+  kind: Kind;
+  who: L;
+  said: L;
+  chip: L;
+  faces: Face[];
+}[] = [
   {
     year: "1989",
     kind: "leans",
@@ -177,7 +207,13 @@ const EVENTS: { year: string; kind: Kind; who: L; said: L; chip: L; faces: Face[
  * from Vakil's post). Quoted exactly in English; the Chinese is this site's translation.
  */
 type OwnQuote = { en: string; zh: string; where: L };
-type OwnVoice = { name: string; stream: L; url: string; doc: L; quotes: OwnQuote[] };
+type OwnVoice = {
+  name: string;
+  stream: L;
+  url: string;
+  doc: L;
+  quotes: OwnQuote[];
+};
 const OWN_WORDS: OwnVoice[] = [
   {
     name: "Levent Alpöge",
@@ -227,14 +263,11 @@ const OWN_WORDS: OwnVoice[] = [
   },
 ];
 
-/** One tab per claim: each author's own words, and the one stream each claim has. */
+/** Two columns, one per claim: each author's own words, and the one stream each claim has. */
 function InTheirOwnWords() {
   const { pick, lang } = useLang();
-  // one tab per author (the mirror is in the tab labels: which stream each claim has)
-  const [who, setWho] = useState(0);
   return (
-    <figure className="rounded-lg border border-gray-200 bg-white p-4" data-testid="rh-own-words">
-      <figcaption className="mb-1 font-semibold text-gray-900">{pick(["In their own words", "他們自己的話"])}</figcaption>
+    <div data-testid="rh-own-words">
       <p className="mb-3 text-sm text-gray-600">
         <RichText
           text={pick([
@@ -243,26 +276,13 @@ function InTheirOwnWords() {
           ])}
         />
       </p>
-      <div role="tablist" className="mb-3 flex flex-wrap gap-1 border-b border-gray-200">
-        {OWN_WORDS.map((v, i) => (
-          <button
-            key={v.name}
-            type="button"
-            role="tab"
-            aria-selected={who === i}
-            onClick={() => setWho(i)}
-            className={`-mb-px rounded-t-md border px-3 py-1.5 text-left ${
-              who === i ? "border-gray-200 border-b-white bg-white" : "border-transparent hover:bg-gray-50"
-            }`}
-          >
-            <span className={`block text-sm font-semibold ${who === i ? "text-(--lk-accent)" : "text-gray-700"}`}>{v.name}</span>
-            <span className="block text-[11px] text-gray-500">{pick(v.stream)}</span>
-          </button>
-        ))}
-      </div>
-      <div role="tabpanel">
-        {OWN_WORDS.filter((_, i) => i === who).map((v) => (
+      <div className="grid gap-4 md:grid-cols-2">
+        {OWN_WORDS.map((v) => (
           <div key={v.name} className="space-y-3">
+            <div>
+              <p className="font-semibold text-gray-900">{v.name}</p>
+              <p className="text-xs text-(--lk-accent)">{pick(v.stream)}</p>
+            </div>
             {v.quotes.map((q) => (
               <blockquote key={q.en.slice(0, 24)} className="border-l-4 border-teal-200 pl-3 text-[15px] leading-relaxed text-gray-800">
                 {lang === "en" ? (
@@ -292,7 +312,7 @@ function InTheirOwnWords() {
           "一字不改地引自 2026 年 11 月 20 日公開的文件（Alpöge 的聲明即社群複查倉庫記錄了雜湊值的那個檔案；Masullo 的草稿即 Ravi Vakil 公告中連結的那份）；中文為本站翻譯。截至 2026 年 11 月 22 日，Alpöge 的 Lean 證明已由 Lean 與 Mathlib 社群認證（2026 年 11 月 21 日），但兩份宣稱的數學都還沒有被更廣泛的數學界接受。",
         ])}
       </p>
-    </figure>
+    </div>
   );
 }
 
@@ -363,7 +383,9 @@ function Timeline() {
               ))}
             </div>
             <div aria-hidden className="relative hidden sm:block">
-              <span className={`absolute left-1/2 w-0.5 -translate-x-1/2 bg-teal-100 ${i === 0 ? "top-2" : "top-0"} ${i === EVENTS.length - 1 ? "h-2" : "bottom-0"}`} />
+              <span
+                className={`absolute left-1/2 w-0.5 -translate-x-1/2 bg-teal-100 ${i === 0 ? "top-2" : "top-0"} ${i === EVENTS.length - 1 ? "h-2" : "bottom-0"}`}
+              />
               <span className={`absolute top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-white ${KIND[e.kind].dot}`} />
             </div>
             <div className="min-w-0 pb-6">
@@ -490,10 +512,7 @@ export default function RhConcept({ section }: { section: string | null }) {
             [
               ["Gates", "關卡"],
               ["Q1, and deciding what the check may trust", "Q1，以及決定檢查可以信任什麼"],
-              [
-                "Q2–Q4: replaying every step exactly, again and again, on independent kernels",
-                "Q2–Q4：在獨立核心上精確地、一再地重播每一步",
-              ],
+              ["Q2–Q4: replaying every step exactly, again and again, on independent kernels", "Q2–Q4：在獨立核心上精確地、一再地重播每一步"],
             ],
             [
               ["Digestion", "消化"],
@@ -539,7 +558,7 @@ export default function RhConcept({ section }: { section: string | null }) {
                 "Andrew Sutherland（MIT）在沙盒中獨立建置（全部 175,187 個模組，零錯誤），並公布每個檢查器花的時間與記憶體；截至 2026 年 11 月 22 日 16:20 UTC，Lean 自己的單執行緒核心在他那裡仍在執行（第 5 節列出這些數字）。",
               ],
               [
-                "The Lean check is settled; the mathematics is not yet digested. Nobody can yet explain the proof's ideas, and acceptance by the wider mathematical community (journals, the Clay Institute, which still lists RH as open) is a separate step. The joint statement ends: \"We look forward to all the activity in the mathematical community that will help explain the new ideas in this proof.\"",
+                'The Lean check is settled; the mathematics is not yet digested. Nobody can yet explain the proof\'s ideas, and acceptance by the wider mathematical community (journals, the Clay Institute, which still lists RH as open) is a separate step. The joint statement ends: "We look forward to all the activity in the mathematical community that will help explain the new ideas in this proof."',
                 "Lean 的檢查已經定案；數學還沒被消化。還沒有人能解說這份證明的想法，而更廣泛數學界的接受（期刊，以及仍把 RH 列為未解決的克雷研究所）是另一個步驟。聯合聲明的結語是：「我們期待數學界接下來的種種活動，幫忙解說這份證明裡的新想法。」",
               ],
             ]}
@@ -569,8 +588,7 @@ export default function RhConcept({ section }: { section: string | null }) {
               url: "https://xenaproject.wordpress.com/2026/11/12/and-the-proof-is-checked-in-lean/",
             },
             {
-              label:
-                "T. Tao, Unforced Euler singularity, unforced Navier–Stokes singularity, and the generalized Riemann hypothesis (20 Nov 2026)",
+              label: "T. Tao, Unforced Euler singularity, unforced Navier–Stokes singularity, and the generalized Riemann hypothesis (20 Nov 2026)",
               url: "https://terrytao.wordpress.com/2026/11/20/unforced-euler-singularity-unforced-navier-stokes-singularity-and-the-generalized-riemann-hypothesis/",
             },
             {
@@ -583,56 +601,73 @@ export default function RhConcept({ section }: { section: string | null }) {
 
       {/* ------------------------------------------------------------------------------------------------ 3 */}
       <Section page={PAGE} id="mirror" n={3} title={SECTIONS[2].title}>
-        <P
-          t={[
-            "On the same day a second GRH proof was announced, written entirely by a person, and readers using AI found problems in it within hours. Put the two side by side and the roles mirror each other:",
-            "同一天還公布了另一份 GRH 證明，完全由人寫成，而借助 AI 的讀者在幾小時內就找到其中的問題。把兩者並排，角色正好互為鏡像：",
+        <CardTabs
+          testid="rh-mirror-tabs"
+          tabs={[
+            {
+              id: "mirror",
+              label: ["Two claims, one stream each", "兩份宣稱，各只有一條流"],
+              body: (
+                <>
+                  <P
+                    t={[
+                      "On the same day a second GRH proof was announced, written entirely by a person, and readers using AI found problems in it within hours. Put the two side by side and the roles mirror each other:",
+                      "同一天還公布了另一份 GRH 證明，完全由人寫成，而借助 AI 的讀者在幾小時內就找到其中的問題。把兩者並排，角色正好互為鏡像：",
+                    ]}
+                  />
+                  <Figure
+                    caption={[
+                      "The same two kinds of worker, in opposite roles. Above, the machine writes and checks and people must digest. Below, a person writes, AI helps readers hunt for gaps, and a Lean formalization, if someone made one, would settle the logic (not the statement). Status as of 22 November 2026.",
+                      "同樣兩種工作者，角色互換。上面：機器寫、機器檢查，人必須消化。下面：人寫，AI 幫讀者找漏洞；如果有人把它形式化成 Lean，就能判定其中的邏輯（但不是陳述）。狀態截至 2026 年 11 月 22 日。",
+                    ]}
+                  >
+                    <MirrorPipelines />
+                  </Figure>
+                  <P
+                    t={[
+                      'The details: Ravi Vakil posted a "hurried announcement": Alessandro Maria Masullo has a proposed proof of GRH. Brian Conrad had been looking closely at it "for months" and it was "so far looking good to him". Vakil stressed: "It is all human, with no AI." About eight hours later he added an update: "Several people have contacted me to report problems in the proposed proof, identified with the assistance of different AI models." He makes "no claim as to the correctness of the proof strategy", and all issues "need to be resolved to the satisfaction of the community".',
+                      "細節：Ravi Vakil 發了一篇「匆忙的公告」：Alessandro Maria Masullo 提出了一個 GRH 的證明。Brian Conrad 已經仔細看了「好幾個月」，「到目前為止看起來不錯」。Vakil 強調：「全部是人寫的，沒有 AI。」大約八小時後他補充：「有好幾個人聯絡我，回報了這份證明中的問題，這些問題是借助不同的 AI 模型找到的。」他「不對證明策略的正確性做任何宣稱」，所有問題都「必須解決到讓數學界滿意」。",
+                    ]}
+                  />
+                  <P
+                    t={[
+                      "Two lessons. First, AI is already useful *as a reader* of human mathematics, not only as a writer: it can point at the step to look at. A pointer is not a verdict, though; whether each reported problem is real is still for experts to judge. Second, each pipeline has an open stage the other one has closed. That asymmetry is the whole argument of section 4.",
+                      "兩個教訓。第一，AI 已經能 *當讀者* 幫忙讀人寫的數學，而不只是當作者：它能指出該看哪一步。但指出不等於判決；每個被回報的問題是否真的成立，仍要由專家判斷。第二，每條流程都有一個階段是另一條已經完成、自己卻還開著的。這種不對稱，正是第 4 節的整個論點。",
+                    ]}
+                  />
+                  <Callout kind="note" title={["One proof, two languages: one stream each", "一個證明，兩種語言：各只有一條"]}>
+                    <P
+                      t={[
+                        "This site treats a proof as two mirrored streams, a natural-language proof for people and a Lean proof for the machine, linked step by step (a stated position, not a consensus). Seen that way, **as of 22 November 2026** each claim has one stream and is missing the other: Alpöge's is the Lean stream only, 17,374,215 lines, now certified by the Lean and Mathlib communities (21 November 2026), with the natural-language proof still owed; Masullo's is the natural-language stream only, with no Lean.",
+                        "本站把一個證明看成兩條互為鏡像的流：寫給人看的自然語言證明，和寫給機器看的 Lean 證明，兩者一步一步相連（這是本站的立場，不是共識）。這樣看，**截至 2026 年 11 月 22 日**，兩個宣稱各只有一條、缺了另一條：Alpöge 的只有 Lean 這一條，17,374,215 行，已由 Lean 與 Mathlib 社群認證（2026 年 11 月 21 日），自然語言證明則還欠著；Masullo 的只有自然語言這一條，沒有 Lean。",
+                      ]}
+                    />
+                  </Callout>
+                  <Figure
+                    caption={[
+                      "Each claim as a ladder with one rail missing, so every rung is still dashed: no step is yet linked to its partner in the other language. A certified rail is still only one rail. Status as of 22 November 2026.",
+                      "把每個宣稱畫成少了一根直桿的梯子，所以每根橫桿都還是虛線：還沒有任何一步連到另一種語言裡的對應步驟。通過認證的直桿，仍然只是一根。狀態截至 2026 年 11 月 22 日。",
+                    ]}
+                  >
+                    <OneStreamEach />
+                  </Figure>
+                  <P
+                    t={[
+                      "As of 22 November 2026 the two claims stand asymmetrically: Alpöge's is certified in Lean but still owes an argument written for people, while Masullo's is written for people but must first clear correctness (known glitches, problems reported within hours). If Masullo's gaps are repaired, history may record two independent routes to the same summit, as it did for Newton and Leibniz; until then, only one has passed a check.",
+                      "截至 2026 年 11 月 22 日，兩份宣稱的處境並不對稱：Alpöge 的已在 Lean 中通過認證，但還欠一份寫給人看的論證；Masullo 的是寫給人看的論證，但得先跨過正確性這一關（作者自承有小毛病，公布後數小時內就有讀者回報問題）。如果 Masullo 的缺口能補起來，歷史可能會像記下牛頓與萊布尼茲那樣，記下兩條通往同一座山頂的獨立路線；在那之前，只有一條通過了檢查。",
+                    ]}
+                  />
+                  <SiteLink to={["concept", "method", "two-languages"]} label={["One proof, two languages", "一個證明，兩種語言"]} />
+                </>
+              ),
+            },
+            {
+              id: "words",
+              label: ["In their own words", "他們自己的話"],
+              body: <InTheirOwnWords />,
+            },
           ]}
         />
-        <Figure
-          caption={[
-            "The same two kinds of worker, in opposite roles. Above, the machine writes and checks and people must digest. Below, a person writes, AI helps readers hunt for gaps, and a Lean formalization, if someone made one, would settle the logic (not the statement). Status as of 22 November 2026.",
-            "同樣兩種工作者，角色互換。上面：機器寫、機器檢查，人必須消化。下面：人寫，AI 幫讀者找漏洞；如果有人把它形式化成 Lean，就能判定其中的邏輯（但不是陳述）。狀態截至 2026 年 11 月 22 日。",
-          ]}
-        >
-          <MirrorPipelines />
-        </Figure>
-        <P
-          t={[
-            'The details: Ravi Vakil posted a "hurried announcement": Alessandro Maria Masullo has a proposed proof of GRH. Brian Conrad had been looking closely at it "for months" and it was "so far looking good to him". Vakil stressed: "It is all human, with no AI." About eight hours later he added an update: "Several people have contacted me to report problems in the proposed proof, identified with the assistance of different AI models." He makes "no claim as to the correctness of the proof strategy", and all issues "need to be resolved to the satisfaction of the community".',
-            "細節：Ravi Vakil 發了一篇「匆忙的公告」：Alessandro Maria Masullo 提出了一個 GRH 的證明。Brian Conrad 已經仔細看了「好幾個月」，「到目前為止看起來不錯」。Vakil 強調：「全部是人寫的，沒有 AI。」大約八小時後他補充：「有好幾個人聯絡我，回報了這份證明中的問題，這些問題是借助不同的 AI 模型找到的。」他「不對證明策略的正確性做任何宣稱」，所有問題都「必須解決到讓數學界滿意」。",
-          ]}
-        />
-        <P
-          t={[
-            "Two lessons. First, AI is already useful *as a reader* of human mathematics, not only as a writer: it can point at the step to look at. A pointer is not a verdict, though; whether each reported problem is real is still for experts to judge. Second, each pipeline has an open stage the other one has closed. That asymmetry is the whole argument of section 4.",
-            "兩個教訓。第一，AI 已經能 *當讀者* 幫忙讀人寫的數學，而不只是當作者：它能指出該看哪一步。但指出不等於判決；每個被回報的問題是否真的成立，仍要由專家判斷。第二，每條流程都有一個階段是另一條已經完成、自己卻還開著的。這種不對稱，正是第 4 節的整個論點。",
-          ]}
-        />
-        <Callout kind="note" title={["One proof, two languages: one stream each", "一個證明，兩種語言：各只有一條"]}>
-          <P
-            t={[
-              "This site treats a proof as two mirrored streams, a natural-language proof for people and a Lean proof for the machine, linked step by step (a stated position, not a consensus). Seen that way, **as of 22 November 2026** each claim has one stream and is missing the other: Alpöge's is the Lean stream only, 17,374,215 lines, now certified by the Lean and Mathlib communities (21 November 2026), with the natural-language proof still owed; Masullo's is the natural-language stream only, with no Lean.",
-              "本站把一個證明看成兩條互為鏡像的流：寫給人看的自然語言證明，和寫給機器看的 Lean 證明，兩者一步一步相連（這是本站的立場，不是共識）。這樣看，**截至 2026 年 11 月 22 日**，兩個宣稱各只有一條、缺了另一條：Alpöge 的只有 Lean 這一條，17,374,215 行，已由 Lean 與 Mathlib 社群認證（2026 年 11 月 21 日），自然語言證明則還欠著；Masullo 的只有自然語言這一條，沒有 Lean。",
-            ]}
-          />
-        </Callout>
-        <Figure
-          caption={[
-            "Each claim as a ladder with one rail missing, so every rung is still dashed: no step is yet linked to its partner in the other language. A certified rail is still only one rail. Status as of 22 November 2026.",
-            "把每個宣稱畫成少了一根直桿的梯子，所以每根橫桿都還是虛線：還沒有任何一步連到另一種語言裡的對應步驟。通過認證的直桿，仍然只是一根。狀態截至 2026 年 11 月 22 日。",
-          ]}
-        >
-          <OneStreamEach />
-        </Figure>
-        <InTheirOwnWords />
-        <P
-          t={[
-            "As of 22 November 2026 the two claims stand asymmetrically: Alpöge's is certified in Lean but still owes an argument written for people, while Masullo's is written for people but must first clear correctness (known glitches, problems reported within hours). If Masullo's gaps are repaired, history may record two independent routes to the same summit, as it did for Newton and Leibniz; until then, only one has passed a check.",
-            "截至 2026 年 11 月 22 日，兩份宣稱的處境並不對稱：Alpöge 的已在 Lean 中通過認證，但還欠一份寫給人看的論證；Masullo 的是寫給人看的論證，但得先跨過正確性這一關（作者自承有小毛病，公布後數小時內就有讀者回報問題）。如果 Masullo 的缺口能補起來，歷史可能會像記下牛頓與萊布尼茲那樣，記下兩條通往同一座山頂的獨立路線；在那之前，只有一條通過了檢查。",
-          ]}
-        />
-        <SiteLink to={["concept", "method", "two-languages"]} label={["One proof, two languages", "一個證明，兩種語言"]} />
         <Sources
           items={[
             {
@@ -665,12 +700,7 @@ export default function RhConcept({ section }: { section: string | null }) {
             "多數在職數學家在一個結果的自然語言證明通過同儕審查、並經得起長期檢驗後就接受它；Lean 證明很歡迎，但不是必要的。**本站的立場** 更強，而且這是一個立場，不是共識：今天，一個結果需要 *同時* 有自然語言證明與機器檢查過的（Lean）證明，只有其中一個都不完整。自然語言證明承載理解；Lean 證明承載對每一步的確定性。",
           ]}
         />
-        <P
-          t={[
-            "Who has said or found what, in the order of the events:",
-            "誰說過什麼、發現過什麼，依事件的先後排列：",
-          ]}
-        />
+        <P t={["Who has said or found what, in the order of the events:", "誰說過什麼、發現過什麼，依事件的先後排列："]} />
         <Timeline />
         <Callout kind="note" title={["Fair to both sides", "對雙方公平"]}>
           <P
