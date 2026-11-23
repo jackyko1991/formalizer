@@ -1,60 +1,203 @@
 /** Concept ▸ Limits of proofs (#/concept/limits[/<section>]). Lean code: lean/Formalizer/Pages/Limits.lean. */
 import { useLang } from "@learnkit/web";
-import { Callout, Figure, Lean, List, P, Page, Section, SiteLink, snippet, Sources, Table, TryIn, type SectionInfo } from "../kit";
-import { EmptyPromise, GodelMap, JunkGrid, VerdictFlow } from "./LimitsFigures";
+import {
+  Callout,
+  Figure,
+  Lean,
+  List,
+  P,
+  Page,
+  Section,
+  SiteLink,
+  snippet,
+  Sources,
+  Table,
+  TryIn,
+  type SectionInfo,
+} from "../kit";
+import {
+  ContradictionTwoViews,
+  EmptyPromise,
+  GodelMap,
+  JunkGrid,
+  VerdictFlow,
+} from "./LimitsFigures";
 
 const SECTIONS: SectionInfo[] = [
-  { id: "as-written", title: ["A proof checks the statement as written", "證明只檢查寫下來的陳述"] },
-  { id: "definitions", title: ["Wrong definitions, and how to catch them", "錯誤的定義，以及怎麼抓出來"] },
-  { id: "junk", title: ["Junk values: 2 − 3 = 0 and 5 / 0 = 0", "垃圾值：2 − 3 = 0 與 5 / 0 = 0"] },
-  { id: "sorry", title: ["`sorry`: a hole marked as a hole", "`sorry`：標明了的漏洞"] },
-  { id: "axioms", title: ["Axioms: what every proof takes on trust", "公理：每個證明都默默相信的東西"] },
-  { id: "trusted-base", title: ["The trusted base: kernel, build, hardware", "信任基礎：核心（kernel）、建置、硬體"] },
-  { id: "comparator", title: ["What Comparator adds, and what it can't", "Comparator 多做了什麼，又做不到什麼"] },
-  { id: "godel", title: ["Gödel: true but unprovable", "哥德爾：真的，卻證不出來"] },
+  {
+    id: "as-written",
+    title: [
+      "A proof checks the statement as written",
+      "證明只檢查寫下來的陳述",
+    ],
+  },
+  {
+    id: "definitions",
+    title: [
+      "Wrong definitions, and how to catch them",
+      "錯誤的定義，以及怎麼抓出來",
+    ],
+  },
+  {
+    id: "junk",
+    title: [
+      "Junk values: 2 − 3 = 0 and 5 / 0 = 0",
+      "垃圾值：2 − 3 = 0 與 5 / 0 = 0",
+    ],
+  },
+  {
+    id: "sorry",
+    title: ["`sorry`: a hole marked as a hole", "`sorry`：標明了的漏洞"],
+  },
+  {
+    id: "axioms",
+    title: [
+      "Axioms: what every proof takes on trust",
+      "公理：每個證明都默默相信的東西",
+    ],
+  },
+  {
+    id: "trusted-base",
+    title: [
+      "The trusted base: kernel, build, hardware",
+      "信任基礎：核心（kernel）、建置、硬體",
+    ],
+  },
+  {
+    id: "comparator",
+    title: [
+      "What Comparator adds, and what it can't",
+      "Comparator 多做了什麼，又做不到什麼",
+    ],
+  },
+  {
+    id: "godel",
+    title: ["Gödel: true but unprovable", "哥德爾：真的，卻證不出來"],
+  },
+  {
+    id: "turing-wittgenstein",
+    title: [
+      "Turing and Wittgenstein: is a contradiction dangerous?",
+      "圖靈與維根斯坦：矛盾危險嗎？",
+    ],
+  },
 ];
 
 /** Paper → Lean statement → proof: a person checks the first arrow, the kernel the second. */
 function WhoChecksFigure() {
   const { pick } = useLang();
   const boxes = [
-    { x: 10, label: pick(["The idea", "原本的想法"]), sub: pick(["paper, textbook, your head", "論文、課本、腦中"]) },
-    { x: 220, label: pick(["Lean statement", "Lean 陳述"]), sub: pick(["theorem … : …", "theorem … : …"]) },
+    {
+      x: 10,
+      label: pick(["The idea", "原本的想法"]),
+      sub: pick(["paper, textbook, your head", "論文、課本、腦中"]),
+    },
+    {
+      x: 220,
+      label: pick(["Lean statement", "Lean 陳述"]),
+      sub: pick(["theorem … : …", "theorem … : …"]),
+    },
     { x: 430, label: pick(["Proof", "證明"]), sub: pick(["by …", "by …"]) },
   ];
   return (
-    <svg viewBox="0 0 600 170" className="w-full max-w-[600px]" role="img" aria-label={pick(["Who checks what", "誰檢查什麼"])}>
+    <svg
+      viewBox="0 0 600 170"
+      className="w-full max-w-[600px]"
+      role="img"
+      aria-label={pick(["Who checks what", "誰檢查什麼"])}
+    >
       {boxes.map((b) => (
         <g key={b.x}>
-          <rect x={b.x} y={20} width={160} height={64} rx={10} className="fill-white stroke-gray-400" strokeWidth={1.5} />
-          <text x={b.x + 80} y={47} textAnchor="middle" className="fill-gray-900 text-[14px] font-semibold">
+          <rect
+            x={b.x}
+            y={20}
+            width={160}
+            height={64}
+            rx={10}
+            className="fill-white stroke-gray-400"
+            strokeWidth={1.5}
+          />
+          <text
+            x={b.x + 80}
+            y={47}
+            textAnchor="middle"
+            className="fill-gray-900 text-[14px] font-semibold"
+          >
             {b.label}
           </text>
-          <text x={b.x + 80} y={68} textAnchor="middle" className="fill-gray-500 text-[11px]">
+          <text
+            x={b.x + 80}
+            y={68}
+            textAnchor="middle"
+            className="fill-gray-500 text-[11px]"
+          >
             {b.sub}
           </text>
         </g>
       ))}
       {/* arrow 1: people */}
-      <line x1={172} y1={52} x2={214} y2={52} className="stroke-amber-500" strokeWidth={2} strokeDasharray="5 4" />
+      <line
+        x1={172}
+        y1={52}
+        x2={214}
+        y2={52}
+        className="stroke-amber-500"
+        strokeWidth={2}
+        strokeDasharray="5 4"
+      />
       <path d="M214 46 L222 52 L214 58 Z" className="fill-amber-500" />
       {/* arrow 2: kernel */}
-      <line x1={382} y1={52} x2={424} y2={52} className="stroke-teal-600" strokeWidth={2.5} />
+      <line
+        x1={382}
+        y1={52}
+        x2={424}
+        y2={52}
+        className="stroke-teal-600"
+        strokeWidth={2.5}
+      />
       <path d="M424 46 L432 52 L424 58 Z" className="fill-teal-600" />
-      <text x={195} y={112} textAnchor="middle" className="fill-amber-700 text-[12px] font-semibold">
+      <text
+        x={195}
+        y={112}
+        textAnchor="middle"
+        className="fill-amber-700 text-[12px] font-semibold"
+      >
         {pick(["checked by people", "由人檢查"])}
       </text>
-      <text x={195} y={130} textAnchor="middle" className="fill-amber-700 text-[11px]">
+      <text
+        x={195}
+        y={130}
+        textAnchor="middle"
+        className="fill-amber-700 text-[11px]"
+      >
         {pick(["(does it say what we mean?)", "（說的是我們想的嗎？）"])}
       </text>
-      <text x={405} y={112} textAnchor="middle" className="fill-teal-700 text-[12px] font-semibold">
+      <text
+        x={405}
+        y={112}
+        textAnchor="middle"
+        className="fill-teal-700 text-[12px] font-semibold"
+      >
         {pick(["checked by Lean", "由 Lean 檢查"])}
       </text>
-      <text x={405} y={130} textAnchor="middle" className="fill-teal-700 text-[11px]">
+      <text
+        x={405}
+        y={130}
+        textAnchor="middle"
+        className="fill-teal-700 text-[11px]"
+      >
         {pick(["(does the proof prove it?)", "（證明真的證出來了嗎？）"])}
       </text>
-      <text x={300} y={160} textAnchor="middle" className="fill-gray-500 text-[11px]">
-        {pick(["A wrong statement with a perfect proof is still wrong.", "陳述錯了，證明再完美也沒用。"])}
+      <text
+        x={300}
+        y={160}
+        textAnchor="middle"
+        className="fill-gray-500 text-[11px]"
+      >
+        {pick([
+          "A wrong statement with a perfect proof is still wrong.",
+          "陳述錯了，證明再完美也沒用。",
+        ])}
       </text>
     </svg>
   );
@@ -64,48 +207,103 @@ function WhoChecksFigure() {
 function TrustedBaseFigure() {
   const { pick } = useLang();
   const layers = [
-    { label: pick(["Hardware and operating system", "硬體與作業系統"]), cls: "fill-gray-100 stroke-gray-400" },
     {
-      label: pick(["Lean build: compiler, C runtime, big-number library", "Lean 建置：編譯器、C 執行環境、大數函式庫"]),
+      label: pick(["Hardware and operating system", "硬體與作業系統"]),
       cls: "fill-gray-100 stroke-gray-400",
     },
     {
-      label: pick(["Kernel: a small program that checks every step", "核心（kernel）：檢查每一步的小程式"]),
+      label: pick([
+        "Lean build: compiler, C runtime, big-number library",
+        "Lean 建置：編譯器、C 執行環境、大數函式庫",
+      ]),
+      cls: "fill-gray-100 stroke-gray-400",
+    },
+    {
+      label: pick([
+        "Kernel: a small program that checks every step",
+        "核心（kernel）：檢查每一步的小程式",
+      ]),
       cls: "fill-teal-50 stroke-teal-600",
     },
     {
-      label: pick(["Axioms: propext, Quot.sound, Classical.choice", "公理：propext、Quot.sound、Classical.choice"]),
+      label: pick([
+        "Axioms: propext, Quot.sound, Classical.choice",
+        "公理：propext、Quot.sound、Classical.choice",
+      ]),
       cls: "fill-teal-50 stroke-teal-600",
     },
     {
-      label: pick(["The statement and its definitions (people read these)", "陳述與它用到的定義（要靠人讀）"]),
+      label: pick([
+        "The statement and its definitions (people read these)",
+        "陳述與它用到的定義（要靠人讀）",
+      ]),
       cls: "fill-amber-50 stroke-amber-500",
     },
   ];
   const h = 34;
   return (
-    <svg viewBox="0 0 600 230" className="w-full max-w-[600px]" role="img" aria-label={pick(["The trusted base", "信任基礎"])}>
+    <svg
+      viewBox="0 0 600 230"
+      className="w-full max-w-[600px]"
+      role="img"
+      aria-label={pick(["The trusted base", "信任基礎"])}
+    >
       {layers.map((l, i) => {
         const y = 190 - i * (h + 6);
         const inset = i * 14;
         return (
           <g key={i}>
-            <rect x={20 + inset} y={y} width={440 - 2 * inset} height={h} rx={6} className={l.cls} strokeWidth={1.5} />
-            <text x={240} y={y + 21} textAnchor="middle" className="fill-gray-800 text-[12px]">
+            <rect
+              x={20 + inset}
+              y={y}
+              width={440 - 2 * inset}
+              height={h}
+              rx={6}
+              className={l.cls}
+              strokeWidth={1.5}
+            />
+            <text
+              x={240}
+              y={y + 21}
+              textAnchor="middle"
+              className="fill-gray-800 text-[12px]"
+            >
               {l.label}
             </text>
           </g>
         );
       })}
-      <text x={530} y={40} textAnchor="middle" className="fill-gray-600 text-[12px] font-semibold">
+      <text
+        x={530}
+        y={40}
+        textAnchor="middle"
+        className="fill-gray-600 text-[12px] font-semibold"
+      >
         {pick(["Your proof", "你的證明"])}
       </text>
-      <text x={530} y={58} textAnchor="middle" className="fill-gray-500 text-[11px]">
+      <text
+        x={530}
+        y={58}
+        textAnchor="middle"
+        className="fill-gray-500 text-[11px]"
+      >
         {pick(["sits on top", "建在最上面"])}
       </text>
-      <line x1={530} y1={68} x2={530} y2={200} className="stroke-gray-400" strokeWidth={1.5} />
+      <line
+        x1={530}
+        y1={68}
+        x2={530}
+        y2={200}
+        className="stroke-gray-400"
+        strokeWidth={1.5}
+      />
       <path d="M524 200 L530 210 L536 200 Z" className="fill-gray-400" />
-      <text x={530} y={225} textAnchor="middle" className="fill-gray-500 text-[11px]">
+      <text
+        x={530}
+        y={225}
+        textAnchor="middle"
+        className="fill-gray-500 text-[11px]"
+      >
         {pick(["trusted", "被信任的"])}
       </text>
     </svg>
@@ -152,7 +350,10 @@ export default function LimitsConcept({ section }: { section: string | null }) {
           ]}
         />
         <Figure
-          caption={["Two arrows, two different checkers. Lean only guards the second one.", "兩個箭頭，兩種檢查者。Lean 只守住第二個。"]}
+          caption={[
+            "Two arrows, two different checkers. Lean only guards the second one.",
+            "兩個箭頭，兩種檢查者。Lean 只守住第二個。",
+          ]}
         >
           <WhoChecksFigure />
         </Figure>
@@ -206,7 +407,10 @@ export default function LimitsConcept({ section }: { section: string | null }) {
         <Lean code={snippet("Limits", "bad-prime")} />
         <List
           items={[
-            ["Try the **edge cases**: 0, 1, the empty list, negative numbers.", "試試**邊界情況**：0、1、空串列、負數。"],
+            [
+              "Try the **edge cases**: 0, 1, the empty list, negative numbers.",
+              "試試**邊界情況**：0、1、空串列、負數。",
+            ],
             [
               "Check **one example you know by heart** (the sum of `[1, 2, 3]` is 6).",
               "檢查**一個你很熟的例子**（`[1, 2, 3]` 的總和是 6）。",
@@ -220,7 +424,10 @@ export default function LimitsConcept({ section }: { section: string | null }) {
         <p>
           <SiteLink
             to={["skills", "verify"]}
-            label={["More checks of this kind: Coding Skills ▸ Verifying a proof", "更多這類檢查：程式技巧 ▸ 驗證證明"]}
+            label={[
+              "More checks of this kind: Coding Skills ▸ Verifying a proof",
+              "更多這類檢查：程式技巧 ▸ 驗證證明",
+            ]}
           />
         </p>
         <TryIn ids={["reverse-twice", "induction-double"]} />
@@ -249,7 +456,13 @@ export default function LimitsConcept({ section }: { section: string | null }) {
           ]}
         />
         <Lean code={snippet("Limits", "junk-hyp")} />
-        <Callout kind="warn" title={["Where junk does bite: misformalization", "垃圾值真正會咬人的地方：形式化錯誤"]}>
+        <Callout
+          kind="warn"
+          title={[
+            "Where junk does bite: misformalization",
+            "垃圾值真正會咬人的地方：形式化錯誤",
+          ]}
+        >
           <P
             t={[
               "Junk values cannot break Lean, but they can make *your statement* say something you did not mean. A statement about `a - b` on natural numbers, written for a case where $b > a$ can happen, is silently about 0. When a formula has subtraction or division, ask: which type are these numbers, and can the bad case occur?",
@@ -267,7 +480,8 @@ export default function LimitsConcept({ section }: { section: string | null }) {
         <Sources
           items={[
             {
-              label: "Kevin Buzzard (Xena): Division by zero in type theory: a FAQ",
+              label:
+                "Kevin Buzzard (Xena): Division by zero in type theory: a FAQ",
               url: "https://xenaproject.wordpress.com/2020/07/05/division-by-zero-in-type-theory-a-faq/",
             },
           ]}
@@ -291,7 +505,10 @@ export default function LimitsConcept({ section }: { section: string | null }) {
         </Figure>
         <Lean
           code={snippet("Limits", "sorry-false")}
-          note={["Lean warns: declaration uses `sorry`.", "Lean 警告：declaration uses `sorry`。"]}
+          note={[
+            "Lean warns: declaration uses `sorry`.",
+            "Lean 警告：declaration uses `sorry`。",
+          ]}
         />
         <P
           t={[
@@ -300,7 +517,12 @@ export default function LimitsConcept({ section }: { section: string | null }) {
           ]}
         />
         <Lean code={snippet("Limits", "sorry-spread")} />
-        <P t={["Formalizer's runner looks at exactly this when you press Run:", "Formalizer 的執行器按下執行時看的就是這些："]} />
+        <P
+          t={[
+            "Formalizer's runner looks at exactly this when you press Run:",
+            "Formalizer 的執行器按下執行時看的就是這些：",
+          ]}
+        />
         <Table
           head={[
             ["What Lean reports", "Lean 回報的情況"],
@@ -312,16 +534,34 @@ export default function LimitsConcept({ section }: { section: string | null }) {
               ["**Lean found a problem.**", "**Lean 發現了問題。**"],
             ],
             [
-              ["No errors, but a `sorry` (or `sorryAx`) is left", "沒有錯誤，但還留著 `sorry`（或 `sorryAx`）"],
-              ["**Not finished yet**, with the goal at each `sorry`", "**還沒完成**，並列出每個 `sorry` 處的目標"],
+              [
+                "No errors, but a `sorry` (or `sorryAx`) is left",
+                "沒有錯誤，但還留著 `sorry`（或 `sorryAx`）",
+              ],
+              [
+                "**Not finished yet**, with the goal at each `sorry`",
+                "**還沒完成**，並列出每個 `sorry` 處的目標",
+              ],
             ],
             [
-              ["No `sorry`, but an axiom outside the standard three", "沒有 `sorry`，但用了標準三個以外的公理"],
-              ["**Lean found a problem**: *uses non-standard axioms*", "**Lean 發現了問題**：*uses non-standard axioms*"],
+              [
+                "No `sorry`, but an axiom outside the standard three",
+                "沒有 `sorry`，但用了標準三個以外的公理",
+              ],
+              [
+                "**Lean found a problem**: *uses non-standard axioms*",
+                "**Lean 發現了問題**：*uses non-standard axioms*",
+              ],
             ],
             [
-              ["No errors, no `sorry`, only standard axioms", "沒有錯誤、沒有 `sorry`、只用標準公理"],
-              ["**✓ Proved**, with the axiom list shown", "**✓ 已證明**，並顯示用到的公理"],
+              [
+                "No errors, no `sorry`, only standard axioms",
+                "沒有錯誤、沒有 `sorry`、只用標準公理",
+              ],
+              [
+                "**✓ Proved**, with the axiom list shown",
+                "**✓ 已證明**，並顯示用到的公理",
+              ],
             ],
           ]}
         />
@@ -384,7 +624,13 @@ export default function LimitsConcept({ section }: { section: string | null }) {
             "`#print axioms` 會把這個把戲揭穿，而 Formalizer（和 Comparator 一樣）會拒絕任何用到 `propext`、`Quot.sound`、`Classical.choice` 以外公理的證明。",
           ]}
         />
-        <Callout kind="note" title={["`native_decide`: trusting the compiler", "`native_decide`：相信編譯器"]}>
+        <Callout
+          kind="note"
+          title={[
+            "`native_decide`: trusting the compiler",
+            "`native_decide`：相信編譯器",
+          ]}
+        >
           <P
             t={[
               "`decide` asks the kernel to compute the answer step by step. `native_decide` instead compiles the check to machine code and runs it, which is much faster but means trusting the whole compiler, not just the kernel. In Lean v4.34.1 it records that trust as an extra axiom, so Formalizer rejects it like any other non-standard axiom.",
@@ -449,7 +695,10 @@ export default function LimitsConcept({ section }: { section: string | null }) {
         <p>
           <SiteLink
             to={["concept", "kernel"]}
-            label={["How the kernel checks a proof: Concept ▸ How Lean checks", "核心如何檢查證明：概念 ▸ Lean 如何檢查"]}
+            label={[
+              "How the kernel checks a proof: Concept ▸ How Lean checks",
+              "核心如何檢查證明：概念 ▸ Lean 如何檢查",
+            ]}
           />
         </p>
         <Sources
@@ -506,7 +755,10 @@ export default function LimitsConcept({ section }: { section: string | null }) {
         </Callout>
         <Sources
           items={[
-            { label: "leanprover/comparator (GitHub)", url: "https://github.com/leanprover/comparator" },
+            {
+              label: "leanprover/comparator (GitHub)",
+              url: "https://github.com/leanprover/comparator",
+            },
             {
               label: "Lean Language Reference: Validating a Lean Proof",
               url: "https://lean-lang.org/doc/reference/latest/ValidatingProofs/",
@@ -542,6 +794,73 @@ export default function LimitsConcept({ section }: { section: string | null }) {
             {
               label: "Wikipedia: Gödel's incompleteness theorems",
               url: "https://en.wikipedia.org/wiki/G%C3%B6del%27s_incompleteness_theorems",
+            },
+          ]}
+        />
+      </Section>
+
+      <Section
+        page="limits"
+        id="turing-wittgenstein"
+        n={9}
+        title={SECTIONS[8].title}
+      >
+        <P
+          t={[
+            "In Cambridge in 1939 Ludwig Wittgenstein gave a course of lectures on the foundations of mathematics. Alan Turing, three years after his paper on computable numbers, came to them and argued with him, and the argument survives in students' notes (edited by Cora Diamond in 1976). One exchange is about the question under this whole page: what does a contradiction in a system actually cost?",
+            "1939 年，維根斯坦（Ludwig Wittgenstein）在劍橋開了一門數學基礎的課。圖靈（Alan Turing）那時剛發表可計算數的論文三年，也來聽課，並和他辯論；這些辯論留在學生的筆記裡（1976 年由 Cora Diamond 編成書）。其中一段討論的，正是整頁背後的問題：一個系統裡有矛盾，到底要付出什麼代價？",
+          ]}
+        />
+        <List
+          items={[
+            [
+              "**Wittgenstein** asked why people fear a *hidden* contradiction so much. A calculus is something we make, a game with rules. If two rules clash somewhere, that square is a place where the game gives no instruction; we can mark it and not go there, and nothing done elsewhere becomes wrong.",
+              "**維根斯坦**問：為什麼大家這麼怕一個*藏起來的*矛盾？演算是我們自己做出來的東西，一個有規則的遊戲。如果兩條規則在某處打架，那一格就是遊戲沒有指示的地方；我們可以把它標出來、不走進去，別處做過的事並不因此變錯。",
+            ],
+            [
+              "**Turing** answered that the harm comes in when the mathematics is *applied*: if engineers compute with a system that contains a contradiction, a bridge may fall down. You may never notice the contradiction, but a result that passed through it is not to be trusted.",
+              "**圖靈**回答：傷害出現在數學被*應用*的時候。如果工程師用一個含有矛盾的系統來計算，橋就可能塌下來。你也許永遠沒發現那個矛盾，但經過它得出的結果就不能信。",
+            ],
+          ]}
+        />
+        <Figure
+          caption={[
+            "Left: Wittgenstein's picture, a game in which one square has rules that clash (red); you can play around it. Right: Turing's worry, which is exactly how Lean's logic works: from `False` every statement follows, including a statement and its opposite.",
+            "左：維根斯坦的圖像，一個遊戲裡有一格規則打架（紅色），你可以繞過它玩下去。右：圖靈的擔憂，而 Lean 的邏輯正是這樣運作：從 `False` 推得出每一個陳述，連一個陳述和它的反面都推得出來。",
+          ]}
+        >
+          <ContradictionTwoViews />
+        </Figure>
+        <P
+          t={[
+            "In Lean, Turing's side is built into the kernel. A contradiction is a proof of `False`, and `False` proves anything:",
+            "在 Lean 裡，圖靈這一方是寫進核心的。矛盾就是一個 `False` 的證明，而 `False` 什麼都證得出來：",
+          ]}
+        />
+        <Lean code={snippet("Limits", "explosion")} />
+        <P
+          t={[
+            'That is why the earlier sections watch so closely for anything that could smuggle in a contradiction: an extra `axiom` that clashes with the others, a `sorry` standing for a false step, a bug in the trusted base. One clashing axiom, and every "proved" in the project becomes worthless, because nothing can be told apart from its opposite; a `sorry` or a checker bug does the same to whatever rests on it. Lean cannot mark the bad square and play around it, as Wittgenstein suggested; it can only keep contradictions out, and `#print axioms` is how you see what was let in.',
+            "這就是為什麼前面幾節那麼小心地提防任何可能偷渡矛盾的東西：一條和其他公理衝突的額外 `axiom`、一個代表錯誤步驟的 `sorry`、信任基礎裡的一個 bug。只要有一條衝突的公理，專案裡每一個「已證明」都失去價值，因為任何結論都和它的反面分不開；一個 `sorry` 或一個檢查程式的 bug，也會對依賴它的一切造成同樣的後果。Lean 沒辦法像維根斯坦建議的那樣，標出壞掉的那一格再繞著玩；它只能把矛盾擋在門外，而 `#print axioms` 讓你看到放進來了什麼。",
+          ]}
+        />
+        <P
+          t={[
+            "Wittgenstein's side lives on in Lean too, in a different place. Lean only checks that the rules were followed; what the symbols mean is decided by how we use them. That `5 / 0 = 0` (section 3) is a rule someone chose, not a fact someone discovered, and whether a Lean statement says what a paper means (section 1) is a question about use that no kernel can answer. So both men were right about different parts: Turing about the kernel, Wittgenstein about the statement. (What Wittgenstein meant exactly is still debated by philosophers; the sources below give two readings.)",
+            "維根斯坦這一方也活在 Lean 裡，只是在別的地方。Lean 只檢查規則有沒有被遵守；符號是什麼意思，取決於我們怎麼用它。`5 / 0 = 0`（第 3 節）是某人選定的規則，不是某人發現的事實；一個 Lean 陳述說的是不是論文的意思（第 1 節），是一個關於使用的問題，沒有任何核心回答得了。所以兩人各對了一部分：圖靈說對了核心，維根斯坦說對了陳述。（維根斯坦的確切意思，哲學家至今仍在爭論；下面的來源給出兩種讀法。）",
+          ]}
+        />
+        <Sources
+          items={[
+            {
+              label:
+                "Á. B. Matthíasson, Contradictions and falling bridges: what was Wittgenstein's reply to Turing? (Br. J. Hist. Phil., 2020)",
+              url: "https://philarchive.org/rec/MATCAF-4",
+            },
+            {
+              label:
+                "W. Vanrie, Not a difference of opinion: Wittgenstein and Turing on contradictions in mathematics (2024)",
+              url: "https://philarchive.org/rec/VANNAD-6",
             },
           ]}
         />

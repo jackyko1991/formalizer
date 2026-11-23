@@ -87,6 +87,15 @@ theorem excludedMiddle (p : Prop) : p ∨ ¬p := Classical.em p
 
 #print axioms plain           -- 'plain' does not depend on any axioms
 #print axioms excludedMiddle  -- 'excludedMiddle' depends on axioms: [propext, Classical.choice, Quot.sound]
+
+-- snippet: explosion
+-- One contradiction, any conclusion. Given h : False, Lean accepts a statement and its opposite.
+theorem anything (h : False) : 2 + 2 = 5 := h.elim
+theorem itsOpposite (h : False) : 2 + 2 ≠ 5 := h.elim
+
+-- Two facts that clash are a contradiction too, and they prove whatever you like.
+theorem clash (n : Nat) (h₁ : n = 0) (h₂ : n = 1) : 1 = 2 := by
+  omega
 -- end
 
 end Formalizer.Pages.Limits
