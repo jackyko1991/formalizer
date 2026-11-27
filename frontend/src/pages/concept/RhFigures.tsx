@@ -8,6 +8,11 @@
  *                      look for gaps / Lean could settle the logic
  *   TwoPositions       mainstream practice next to this site's stated position
  *   OneStreamEach      one proof, two languages: each claim of 20 Nov 2026 is a ladder with one rail missing
+ *   BrokenLink         Masullo's §1.4.3 as a chain with one link false as printed
+ *   ShrinkingProof     the refactor of 25 Nov 2026 to scale: 17.4M → 477k → 113k lines, and its Lib/New split
+ *   RefactorArchitecture  the refactor drawn as a software architecture diagram (interface, implementation, library,
+ *                      application, spec, kernel as test suite, CI, review), with a definition for each part
+ *   OneOpenStatement   Masullo's main line: seven targets on one open statement, proved equivalent to the main claim
  * Labels are [English, Traditional Chinese]. Animation is skipped when the reader prefers reduced motion.
  */
 import { RichText, useLang } from "@learnkit/web";
@@ -1453,7 +1458,7 @@ export function BrokenLink() {
 /**
  * The same five theorems at three sizes, as squares whose areas are to scale (all lines, comments and blanks
  * included): Alpöge's published source (17,374,215 lines, the re-check repository's first commit) and the two editions
- * of lsernau/grh-lean (commit 72fead1, 25 Nov 2026: 477,086 and 112,798 lines, counted with wc). Below, each edition
+ * of lsernau/grh-lean (commit 72fead1, 25 Nov 2026: 477,124 and 112,827 lines, counted with wc). Below, each edition
  * split into `Lib` (background classed as known in the literature) and `New` (the set-up and the argument); the repo
  * calls the split "a working classification". Counted 27 Nov 2026.
  */
@@ -1468,16 +1473,16 @@ export function ShrinkingProof() {
       text: "fill-gray-700",
     },
     {
-      n: 477_086,
+      n: 477_124,
       t: ["Readable edition, 25 Nov", "可讀版，11 月 25 日"],
-      s: ["477,086 lines · 803 files", "477,086 行 · 803 個檔案"],
+      s: ["477,124 lines · 803 files", "477,124 行 · 803 個檔案"],
       cls: "fill-sky-200 stroke-sky-600",
       text: "fill-sky-800",
     },
     {
-      n: 112_798,
+      n: 112_827,
       t: ["Compact edition, 25 Nov", "精簡版，11 月 25 日"],
-      s: ["112,798 lines · 794 files", "112,798 行 · 794 個檔案"],
+      s: ["112,827 lines · 794 files", "112,827 行 · 794 個檔案"],
       cls: "fill-teal-500 stroke-teal-700",
       text: "fill-teal-800",
     },
@@ -1748,5 +1753,383 @@ export function OneOpenStatement() {
         ])}
       </text>
     </svg>
+  );
+}
+
+/**
+ * The refactor of 25 Nov 2026 as a software architecture diagram, before (Alpöge's published source) and after
+ * (lsernau/grh-lean, compact edition): the interface (Statements.lean) is the same on both sides; the implementation
+ * shrinks from 17,374,215 lines to 112,827 (all lines), split into a library (Lib, 77,850) and application code (New,
+ * 34,948); Challenge.lean is the spec the comparator checks against; Lean's kernel is the test suite under both; CI
+ * (Sutherland, Rubinstein) is green and the code review is pending. Hover or tap a part for its software meaning.
+ */
+type Part =
+  "iface" | "before" | "new" | "lib" | "spec" | "kernel" | "ci" | "review";
+const PARTS: Record<Part, { t: L; d: L }> = {
+  iface: {
+    t: ["Interface (API)", "介面（API）"],
+    d: [
+      "Statements.lean: the five theorem statements, in Mathlib's terms. Word for word the same before and after, so anything that uses the theorems sees no difference.",
+      "Statements.lean：五條定理陳述，用 Mathlib 的術語寫成。重構前後一字不差，所以任何使用這些定理的地方都看不出差別。",
+    ],
+  },
+  before: {
+    t: ["Implementation, before", "重構前的實作"],
+    d: [
+      "The proofs as published on 20 November: 17,374,215 lines in 175,187 files, about 7.5 times the size of all of Mathlib.",
+      "11 月 20 日公開的證明：175,187 個檔案、17,374,215 行，大約是整個 Mathlib 的 7.5 倍。",
+    ],
+  },
+  new: {
+    t: ["Application code: New", "應用程式碼：New"],
+    d: [
+      "The set-up and the argument: 34,948 lines in 219 files (compact edition). This is where the mathematics specific to this proof lives; the repository says its folder names make no claim of novelty.",
+      "設定與論證本身：219 個檔案、34,948 行（精簡版）。這份證明特有的數學都在這裡；儲存庫說資料夾的名字並不宣稱新穎。",
+    ],
+  },
+  lib: {
+    t: ["Library: Lib", "函式庫：Lib"],
+    d: [
+      "Background classed as known in the literature but missing from Mathlib: 77,850 lines in 573 files. It imports nothing from New, so the dependency points one way, as a library's should.",
+      "被歸為文獻中已知、但 Mathlib 還沒有的背景結果：573 個檔案、77,850 行。它不匯入 New 的任何東西，所以相依關係只有一個方向，就像函式庫該有的樣子。",
+    ],
+  },
+  spec: {
+    t: ["Spec: Challenge.lean", "規格：Challenge.lean"],
+    d: [
+      "The five theorems again, with `sorry` in place of proofs, like a header file. The tool Comparator checks that the implementation proves exactly this spec.",
+      "再寫一次五條定理，用 `sorry` 代替證明，就像標頭檔。Comparator 這個工具檢查實作證明的正是這份規格。",
+    ],
+  },
+  kernel: {
+    t: ["Test suite: Lean's kernel", "測試：Lean 的核心"],
+    d: [
+      "Software tests only sample behaviour; the kernel checks every step. In Lean any proof of a statement is as good as any other, so a refactor that still type-checks against the same statements, on the same three axioms, is correct by construction.",
+      "軟體測試只能抽樣檢查行為；核心檢查每一步。在 Lean 裡，一個陳述的任何證明都和其他證明一樣好，所以只要重構後仍對同樣的陳述通過型別檢查、只用同樣三條公理，它就保證正確。",
+    ],
+  },
+  ci: {
+    t: ["CI: green", "CI：全綠"],
+    d: [
+      "Independent runs, 25–26 November. Sutherland (MIT): both editions build in a sandbox and replay through the kernel; the paranoid comparator passes. Rubinstein (Waterloo): six kernels accept the compact edition.",
+      "11 月 25–26 日的獨立執行。Sutherland（MIT）：兩個版本都在沙盒中建置並通過核心重播；paranoid 模式的 comparator 通過。Rubinstein（滑鐵盧）：六個核心接受精簡版。",
+    ],
+  },
+  review: {
+    t: ["Code review: pending", "程式碼審查：未開始"],
+    d: [
+      'Green CI does not mean anyone understands the code. The README: "No mathematician has read it through, and no paper comes with it."',
+      "CI 全綠不代表有人看懂程式碼。README 說：「還沒有數學家把它從頭讀完，也沒有附帶論文。」",
+    ],
+  },
+};
+
+export function RefactorArchitecture() {
+  const { pick } = useLang();
+  const [on, setOn] = useState<Part | null>(null);
+  const hit = (k: Part) => ({
+    onMouseEnter: () => setOn(k),
+    onMouseLeave: () => setOn((c) => (c === k ? null : c)),
+    onClick: () => setOn((c) => (c === k ? null : k)),
+    onFocus: () => setOn(k),
+    onBlur: () => setOn((c) => (c === k ? null : c)),
+    tabIndex: 0,
+    role: "button",
+    "aria-label": pick(PARTS[k].t),
+    style: { cursor: "pointer", outline: "none" },
+  });
+  const ring = (k: Part) => (on === k ? 3 : 1.5);
+  const box = (
+    k: Part,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    fill: string,
+    stroke: string,
+    lines: L[],
+    dashed?: boolean,
+  ) => (
+    <g {...hit(k)}>
+      <rect
+        x={x}
+        y={y}
+        width={w}
+        height={h}
+        rx={8}
+        strokeWidth={ring(k)}
+        strokeDasharray={dashed ? "5 4" : undefined}
+        className={`${fill} ${stroke}`}
+      />
+      {lines.map((t, i) => (
+        <text
+          key={i}
+          x={x + w / 2}
+          y={y + h / 2 + (i - (lines.length - 1) / 2) * 15 + 4}
+          textAnchor="middle"
+          fontSize={i === 0 ? 12.5 : 11}
+          className={i === 0 ? "fill-gray-900 font-semibold" : "fill-gray-600"}
+          style={{ pointerEvents: "none" }}
+        >
+          {pick(t)}
+        </text>
+      ))}
+    </g>
+  );
+  const BX = 20;
+  const AX = 380;
+  const W = 240;
+  const help = on ? PARTS[on] : null;
+  return (
+    <div className="space-y-2">
+      <svg
+        viewBox="0 0 640 470"
+        className="w-full max-w-[640px]"
+        role="img"
+        aria-label={pick([
+          "The refactor as a software architecture diagram",
+          "把重構畫成軟體架構圖",
+        ])}
+      >
+        <text
+          x={BX + W / 2}
+          y={18}
+          textAnchor="middle"
+          fontSize={12}
+          className="fill-gray-500 font-semibold"
+        >
+          {pick(["BEFORE · 20 Nov", "重構前 · 11/20"])}
+        </text>
+        <text
+          x={AX + W / 2}
+          y={18}
+          textAnchor="middle"
+          fontSize={12}
+          className="fill-gray-500 font-semibold"
+        >
+          {pick(["AFTER · 25 Nov (compact)", "重構後 · 11/25（精簡版）"])}
+        </text>
+        {/* interface, the same on both sides */}
+        {box("iface", BX, 30, W, 46, "fill-amber-50", "stroke-amber-500", [
+          ["Statements.lean", "Statements.lean"],
+          ["interface: 5 statements", "介面：5 條陳述"],
+        ])}
+        {box("iface", AX, 30, W, 46, "fill-amber-50", "stroke-amber-500", [
+          ["Statements.lean", "Statements.lean"],
+          ["interface: 5 statements", "介面：5 條陳述"],
+        ])}
+        <line
+          x1={BX + W}
+          y1={48}
+          x2={AX}
+          y2={48}
+          className="stroke-amber-500"
+          strokeWidth={1.5}
+        />
+        <line
+          x1={BX + W}
+          y1={58}
+          x2={AX}
+          y2={58}
+          className="stroke-amber-500"
+          strokeWidth={1.5}
+        />
+        <text
+          x={320}
+          y={42}
+          textAnchor="middle"
+          fontSize={11}
+          className="fill-amber-700 font-semibold"
+        >
+          {pick(["unchanged", "不變"])}
+        </text>
+        {/* the spec, next to the interface on the right */}
+        {box(
+          "spec",
+          AX + 40,
+          92,
+          W - 80,
+          36,
+          "fill-white",
+          "stroke-gray-400",
+          [["Challenge.lean · spec", "Challenge.lean · 規格"]],
+          true,
+        )}
+        {/* implementation before */}
+        {box("before", BX, 92, W, 236, "fill-gray-100", "stroke-gray-400", [
+          ["Implementation", "實作"],
+          ["17,374,215 lines", "17,374,215 行"],
+          ["175,187 files", "175,187 個檔案"],
+        ])}
+        {/* implementation after: application above library */}
+        {box("new", AX, 144, W, 56, "fill-amber-100", "stroke-amber-500", [
+          ["New · application", "New · 應用程式"],
+          ["34,948 lines · 219 files", "34,948 行 · 219 個檔案"],
+        ])}
+        {box("lib", AX, 222, W, 106, "fill-sky-100", "stroke-sky-500", [
+          ["Lib · library", "Lib · 函式庫"],
+          ["77,850 lines · 573 files", "77,850 行 · 573 個檔案"],
+          ["imports nothing from New", "不匯入 New"],
+        ])}
+        <line
+          x1={AX + W / 2}
+          y1={200}
+          x2={AX + W / 2}
+          y2={216}
+          className="stroke-gray-500"
+          strokeWidth={1.5}
+        />
+        <path
+          d={`M${AX + W / 2 - 5} 214 L${AX + W / 2} 221 L${AX + W / 2 + 5} 214`}
+          fill="none"
+          className="stroke-gray-500"
+          strokeWidth={1.5}
+        />
+        <text
+          x={AX + W / 2 + 8}
+          y={213}
+          fontSize={10}
+          className="fill-gray-500"
+        >
+          {pick(["imports", "匯入"])}
+        </text>
+        {/* the refactor arrow */}
+        <line
+          x1={BX + W + 6}
+          y1={210}
+          x2={AX - 10}
+          y2={210}
+          className="stroke-teal-600"
+          strokeWidth={2.5}
+        />
+        <path
+          d={`M${AX - 16} 203 L${AX - 6} 210 L${AX - 16} 217 Z`}
+          className="fill-teal-600"
+        />
+        <text
+          x={320}
+          y={200}
+          textAnchor="middle"
+          fontSize={12}
+          className="fill-teal-700 font-semibold"
+        >
+          {pick(["refactor", "重構"])}
+        </text>
+        <text
+          x={320}
+          y={230}
+          textAnchor="middle"
+          fontSize={11}
+          className="fill-teal-700"
+        >
+          {pick(["≈154× fewer lines", "行數少約 154 倍"])}
+        </text>
+        {/* the kernel underneath both */}
+        <g {...hit("kernel")}>
+          <rect
+            x={BX}
+            y={346}
+            width={AX + W - BX}
+            height={40}
+            rx={8}
+            strokeWidth={ring("kernel")}
+            className="fill-slate-800 stroke-slate-900"
+          />
+          <text
+            x={320}
+            y={371}
+            textAnchor="middle"
+            fontSize={12.5}
+            className="fill-white font-semibold"
+            style={{ pointerEvents: "none" }}
+          >
+            {pick([
+              "Lean's kernel = the test suite: it checks every step, on both sides",
+              "Lean 的核心 = 測試：兩邊的每一步都檢查",
+            ])}
+          </text>
+        </g>
+        {/* CI and review, under the after side */}
+        <g {...hit("ci")}>
+          <rect
+            x={BX}
+            y={400}
+            width={290}
+            height={40}
+            rx={8}
+            strokeWidth={ring("ci")}
+            className="fill-emerald-50 stroke-emerald-500"
+          />
+          <text
+            x={BX + 145}
+            y={425}
+            textAnchor="middle"
+            fontSize={12}
+            className="fill-emerald-800 font-semibold"
+            style={{ pointerEvents: "none" }}
+          >
+            {pick([
+              "✓ CI: Sutherland · Rubinstein",
+              "✓ CI：Sutherland · Rubinstein",
+            ])}
+          </text>
+        </g>
+        <g {...hit("review")}>
+          <rect
+            x={330}
+            y={400}
+            width={290}
+            height={40}
+            rx={8}
+            strokeWidth={ring("review")}
+            strokeDasharray="5 4"
+            className="fill-white stroke-gray-400"
+          />
+          <text
+            x={475}
+            y={425}
+            textAnchor="middle"
+            fontSize={12}
+            className="fill-gray-700 font-semibold"
+            style={{ pointerEvents: "none" }}
+          >
+            {pick([
+              "○ code review: no mathematician yet",
+              "○ 程式碼審查：還沒有數學家",
+            ])}
+          </text>
+        </g>
+        <text
+          x={320}
+          y={462}
+          textAnchor="middle"
+          fontSize={10.5}
+          className="fill-gray-500"
+        >
+          {pick([
+            "Hover or tap a part for what it means in software.",
+            "滑過或點一下各部分，看它在軟體裡是什麼意思。",
+          ])}
+        </text>
+      </svg>
+      <div
+        className="min-h-[4.5rem] rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+        aria-live="polite"
+      >
+        {help ? (
+          <>
+            <span className="font-semibold text-gray-900">{pick(help.t)}.</span>{" "}
+            <RichText text={pick(help.d)} />
+          </>
+        ) : (
+          <span className="text-gray-500">
+            {pick([
+              "Same statements on top, a much smaller implementation underneath, and the same kernel checking both.",
+              "上面是同樣的陳述，下面是小得多的實作，而同一個核心檢查兩邊。",
+            ])}
+          </span>
+        )}
+      </div>
+    </div>
   );
 }

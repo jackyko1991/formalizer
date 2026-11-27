@@ -7,7 +7,7 @@
  * November 2026, when those sources were fetched). Pictures: RhFigures.tsx.
  */
 import { RelatedProblems, RichText, useLang } from "@learnkit/web";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useRef, useState, type ReactNode } from "react";
 import { CardTabs } from "./CardTabs";
 import {
   Callout,
@@ -30,14 +30,15 @@ import {
   OneOpenStatement,
   OneStreamEach,
   ProofArchitecture,
+  RefactorArchitecture,
   ShrinkingProof,
   TwoPositions,
 } from "./RhFigures";
 
 const PAGE = "rh";
 const AS_OF: [string, string] = [
-  "Facts about the claims on this page are as of 22 November 2026, except where dated later: the 76,000-line rewrite of the Lean proof and the state of Masullo's formalization are as of 27 November.",
-  "本頁關於這些宣稱的事實，除另標日期者外截至 2026 年 11 月 22 日；7.6 萬行的 Lean 改寫版與 Masullo 形式化的現況截至 11 月 27 日。",
+  "Facts about the claims on this page are as of 22 November 2026, except where dated later: the 76,000-line refactor of the Lean proof and the state of Masullo's formalization are as of 27 November.",
+  "本頁關於這些宣稱的事實，除另標日期者外截至 2026 年 11 月 22 日；7.6 萬行的 Lean 重構版與 Masullo 形式化的現況截至 11 月 27 日。",
 ];
 
 const RhMaps = lazy(() => import("./RhMaps"));
@@ -271,12 +272,12 @@ const EVENTS: {
     kind: "slow",
     faces: [FACES.sernau],
     who: [
-      "**Evidence:** the same Lean proof, rewritten shorter",
-      "**證據：** 同一份 Lean 證明，改寫得更短",
+      "**Evidence:** the same Lean proof, refactored",
+      "**證據：** 同一份 Lean 證明，重構過",
     ],
     said: [
-      "Luke Sernau, with colleagues at Anthropic and Claude, posted a rewriting of Alpöge's proof: the same five theorem statements in about 76,000 lines of code (compact) or 300,000 (readable, with a reading guide), against 17 million. Independent checkers accepted both editions within a day (section 2). Its README: no mathematician has read it through. Machines are now helping with digestion, not only with search.",
-      "Luke Sernau 與 Anthropic 的同事、以及 Claude 一起，貼出 Alpöge 證明的改寫版：同樣五條定理陳述，精簡版約 7.6 萬行程式碼、可讀版約 30 萬行（附閱讀指南），原本是 1700 萬行。一天之內，兩個版本都被獨立的檢查器接受（第 2 節）。它的 README 說：還沒有數學家把它從頭讀完。機器現在不只幫忙搜尋，也開始幫忙消化。",
+      "Luke Sernau, with colleagues at Anthropic and Claude, posted a refactor of Alpöge's proof: the same five theorem statements (the interface unchanged) in about 76,000 lines of code (compact) or 300,000 (readable, with a reading guide), against 17 million. Independent checkers accepted both editions within a day (section 2). Its README: no mathematician has read it through. Machines are now helping with digestion, not only with search.",
+      "Luke Sernau 與 Anthropic 的同事、以及 Claude 一起，貼出 Alpöge 證明的重構版：同樣五條定理陳述（介面不變），精簡版約 7.6 萬行程式碼、可讀版約 30 萬行（附閱讀指南），原本是 1700 萬行。一天之內，兩個版本都被獨立的檢查器接受（第 2 節）。它的 README 說：還沒有數學家把它從頭讀完。機器現在不只幫忙搜尋，也開始幫忙消化。",
     ],
     chip: [
       "human checking is slow; machine help is arriving",
@@ -446,6 +447,348 @@ function ReadersFound() {
         ]}
       />
     </>
+  );
+}
+
+/**
+ * Section 2, second tab: lsernau/grh-lean (25 Nov 2026) read as a refactor, in software terms: the five statements are
+ * the public interface and stay identical, the proofs are the implementation and are rewritten, the kernel is a test
+ * suite that checks every case. Sources: the repository's READMEs and guides (commit 72fead1), Sutherland's and
+ * Rubinstein's check pages; line counts by wc on 27 Nov 2026.
+ */
+function RefactorWhat() {
+  return (
+    <>
+      <P
+        t={[
+          "On 25 November Luke Sernau, with colleagues at Anthropic and Claude, published a **refactor** of the proof (lsernau/grh-lean): the five theorem statements (RH, and GRH for Dirichlet *L*-functions in four forms) are word for word the same as in the original, and the proofs behind them were rewritten. The README credits the mathematics plainly: \"The proof is Levent Alpöge's, with Claude.\" It keeps that proof's method, but many steps now use other arguments, and parts, mostly background, were ported and rewritten.",
+          "11 月 25 日，Luke Sernau 與 Anthropic 的同事、以及 Claude 一起，發布了這份證明的**重構**版（lsernau/grh-lean）：五條定理陳述（RH，以及 Dirichlet *L* 函數 GRH 的四種形式）與原版一字不差，陳述背後的證明則被整個改寫。README 清楚交代數學是誰的：「證明是 Levent Alpöge 的，與 Claude 一起。」它保留了那份證明的方法，但許多步驟改用別的論證，有些部分（大多是背景知識）是移植過來再改寫的。",
+        ]}
+      />
+      <Figure
+        caption={[
+          "The size of the implementation before and after the refactor, as squares to scale: 17.4 million lines, then 477,000 (readable edition) and 113,000 (compact edition), behind the same five statements. Below, each edition split into its library (Lib) and its application code (New). Counted from the repository on 27 November 2026.",
+          "重構前後實作的大小，用按比例的正方形表示：1740 萬行，然後是 47.7 萬行（可讀版）與 11.3 萬行（精簡版），背後是同樣五條陳述。下方把每個版本拆成函式庫（Lib）與應用程式碼（New）。2026 年 11 月 27 日依儲存庫計算。",
+        ]}
+      >
+        <ShrinkingProof />
+      </Figure>
+      <P
+        t={[
+          'Most of the code is library: 60% of the lines in the readable edition, 69% in the compact one. The application code, the argument itself, is about 192,000 lines and 35,000. That split is the first map of where the old mathematics ends and the new begins, but a rough one: the repository calls it "a working classification", says the folder names "make no claim of novelty", and lets `New` also hold known results stated for its data. The readable edition\'s guide gives a reading order, a glossary from Lean names to standard terms, and the architecture: three main theorems (A: short forms, B: enough forms, C: integral forms are long) that a main inequality combines.',
+          "大部分程式碼是函式庫：可讀版佔 60% 的行數，精簡版佔 69%。應用程式碼，也就是論證本身，約 19.2 萬行與 3.5 萬行。這個拆分是第一張標出舊數學在哪裡結束、新數學從哪裡開始的地圖，但很粗略：儲存庫自己稱之為「一種工作上的分類」，說資料夾的名字「並不宣稱新穎」，`New` 裡也放了一些針對其資料陳述的已知結果。可讀版的指南給出閱讀順序、從 Lean 名稱到標準術語的詞彙表，以及整體架構：由一條主不等式組合起來的三條主定理（A：短的形式、B：足夠多的形式、C：整的形式是長的）。",
+        ]}
+      />
+      <SiteLink
+        to={["concept", "rh", "maps"]}
+        label={[
+          "Explore its shape as a 3D map (section 5)",
+          "用 3D 地圖探索它的形狀（第 5 節）",
+        ]}
+      />
+    </>
+  );
+}
+
+/** Section 2, the proof's timeline: the status of the published proof as of 22 November 2026. */
+function OriginalStatus() {
+  return (
+    <>
+      <P
+        t={[
+          "Status of the published proof, as of 22 November 2026:",
+          "公開的證明的現況，截至 2026 年 11 月 22 日：",
+        ]}
+      />
+      <List
+        items={[
+          [
+            "The re-check repository (leanprover-community/riemann-hypothesis) keeps the published source exactly as its first commit: 175,187 files, 17,374,215 lines. On 21 November 2026 the Lean and Mathlib communities posted a joint statement: \"We hereby certify that both the statement and the proof of the Riemann Hypothesis are correct.\" Two independent tools (`comparator` and `con-leche --compare`) confirmed that the theorem proved is exactly Mathlib's `RiemannHypothesis`; several proof checkers, including Lean's official kernel, `con-leche` and `con-ron`, accepted the exported proof.",
+            "重驗儲存庫（leanprover-community/riemann-hypothesis）的第一個 commit 原封不動保留公開的原始碼：175,187 個檔案、17,374,215 行。2026 年 11 月 21 日，Lean 與 Mathlib 社群發表聯合聲明：「我們在此認證，黎曼猜想的陳述與證明都是正確的。」兩個獨立工具（`comparator` 與 `con-leche --compare`）確認被證明的定理正是 Mathlib 的 `RiemannHypothesis`；包括 Lean 官方核心、`con-leche` 與 `con-ron` 在內的好幾個證明檢查器，都接受了匯出的證明。",
+          ],
+          [
+            'A static scan finds no `axiom`, `sorry`, `native_decide` or `unsafe` in the text, but it does use metaprogramming that builds declarations directly, where "the kernel is the only check". That is exactly why the independent kernels matter.',
+            "靜態掃描在文字裡找不到 `axiom`、`sorry`、`native_decide` 或 `unsafe`，但它用了直接建立宣告的元程式，在那裡「核心是唯一的檢查」。這正是獨立核心之所以重要的原因。",
+          ],
+          [
+            "Andrew Sutherland (MIT) built it independently in a sandbox (all 175,187 modules, zero errors) and posted every checker's time and memory; Lean's own single-threaded kernels were still running there as of 22 November 2026, 16:20 UTC (section 5 shows the numbers).",
+            "Andrew Sutherland（MIT）在沙盒中獨立建置（全部 175,187 個模組，零錯誤），並公布每個檢查器花的時間與記憶體；截至 2026 年 11 月 22 日 16:20 UTC，Lean 自己的單執行緒核心在他那裡仍在執行（第 5 節列出這些數字）。",
+          ],
+          [
+            'The Lean check is settled; the mathematics is not yet digested. Nobody can yet explain the proof\'s ideas, and acceptance by the wider mathematical community (journals, the Clay Institute, which still lists RH as open) is a separate step. The joint statement ends: "We look forward to all the activity in the mathematical community that will help explain the new ideas in this proof."',
+            "Lean 的檢查已經定案；數學還沒被消化。還沒有人能解說這份證明的想法，而更廣泛數學界的接受（期刊，以及仍把 RH 列為未解決的克雷研究所）是另一個步驟。聯合聲明的結語是：「我們期待數學界接下來的種種活動，幫忙解說這份證明裡的新想法。」",
+          ],
+        ]}
+      />
+      <SiteLink
+        to={["concept", "checkers"]}
+        label={["The checkers and the four questions", "檢查器與四個問題"]}
+      />
+    </>
+  );
+}
+
+/** Section 2, the proof's timeline: the checks of the refactored editions, and where review stands. */
+function RefactorReview() {
+  return (
+    <>
+      <List
+        items={[
+          [
+            '**Andrew Sutherland (MIT), both editions, 25–26 Nov.** Both build in a sandbox in about 33 minutes on a 16-core, 128 GB machine, and every module replays through Lean\'s kernel. `lake comparator --paranoid` answers "Your solution is okay!" for the compact edition on two machines, and for the readable one on a 1.5 TB machine: its lean4lean kernel peaked at 332 GB there, so the 128 GB run gave no verdict.',
+            "**Andrew Sutherland（MIT），兩個版本，11 月 25–26 日。** 兩個版本都在沙盒中建置成功，在 16 核心、128 GB 的機器上約 33 分鐘，每個模組都通過 Lean 核心重播。`lake comparator --paranoid` 對精簡版在兩台機器上、對可讀版在一台 1.5 TB 的機器上都回答「Your solution is okay!」：可讀版的 lean4lean 核心在那裡記憶體峰值達 332 GB，所以 128 GB 那台沒有得出結論。",
+          ],
+          [
+            "**Michael Rubinstein (Waterloo), compact edition, 26 Nov.** All 794 modules build and replay; the comparator confirms the five theorems prove exactly the spec's statements, accepted by six kernels (Lean's default and paranoid kernels, nanoda, lean4lean, con-leche, con-ron), after five hours, run without Comparator's sandbox.",
+            "**Michael Rubinstein（滑鐵盧），精簡版，11 月 26 日。** 全部 794 個模組都建置並重播成功；comparator 確認五條定理證的正是規格裡的陳述，被六個核心接受（Lean 的預設與 paranoid 核心、nanoda、lean4lean、con-leche、con-ron），花了五小時，執行時沒有使用 Comparator 的沙盒。",
+          ],
+        ]}
+      />
+      <P
+        t={[
+          "Build performance improved too. The original took about 8 hours and about 100 GB of memory to build, and a single-threaded run of Lean's own kernel was still going after about 45 hours (section 5). The compact edition builds in one to two hours on 12 cores with 24 GB (the README's figure), within reach of a good workstation.",
+          "建置效能也改善了。原版建置花了約 8 小時、約 100 GB 記憶體，而 Lean 自己的核心以單執行緒跑了約 45 小時還沒跑完（第 5 節）。精簡版在 12 核心、24 GB 上一到兩小時就能建置（README 的數字），一台好的工作站就做得到。",
+        ]}
+      />
+      <Callout
+        kind="note"
+        title={[
+          "CI is green; the code review is still to come",
+          "CI 全綠；程式碼審查還沒開始",
+        ]}
+      >
+        <P
+          t={[
+            'In software, green CI does not mean anyone understands the code; that takes review. The README says where this one stands: "The proof has passed machine checks only, listed in each folder\'s README. No mathematician has read it through, and no paper comes with it." So on Tao\'s ladder above, the refactor makes the proof far easier to enter, but it is not yet a step up the digestion ladder. It does bear out what Alpöge predicted in his note: "My intuition insists it will be massively simplified, likely immediately." The 21 November certification by the Lean and Mathlib communities was for the original; the refactored editions rest on the independent checks above.',
+            "在軟體裡，CI 全綠不代表有人看懂了程式碼；那要靠審查。README 說明了這份程式碼的處境：「這個證明只通過了機器檢查，列在每個資料夾的 README 裡。還沒有數學家把它從頭讀完，也沒有附帶論文。」所以在上面陶哲軒的階梯上，這次重構讓證明容易走進去得多，但在消化那把梯子上還沒有往上爬一級。它倒是印證了 Alpöge 在說明裡的預言：「我的直覺堅持它會被大幅簡化，很可能馬上就會。」11 月 21 日 Lean 與 Mathlib 社群的認證針對的是原版；重構後的版本靠的是上面這些獨立檢查。",
+          ]}
+        />
+        <SiteLink
+          to={["skills", "verify", "comparator"]}
+          label={[
+            "Comparator: checking a proof you didn't write",
+            "Comparator：檢查不是你寫的證明",
+          ]}
+        />
+      </Callout>
+    </>
+  );
+}
+
+/**
+ * "What is a refactor?": a button that opens a dialog (the native <dialog>: Esc closes, focus stays inside) with the
+ * definition and the refactor drawn as a software architecture diagram (RefactorArchitecture).
+ */
+function RefactorExplainer() {
+  const { pick } = useLang();
+  const ref = useRef<HTMLDialogElement>(null);
+  const [shown, setShown] = useState(false);
+  const open = () => {
+    setShown(true);
+    ref.current?.showModal();
+  };
+  const close = () => ref.current?.close();
+  return (
+    <>
+      <button
+        type="button"
+        onClick={open}
+        className="mt-1.5 mr-3 inline-flex items-center gap-1 rounded-full border border-teal-300 bg-teal-50 px-2.5 py-0.5 text-sm text-teal-800 hover:bg-teal-100"
+        data-testid="rh-refactor-open"
+      >
+        {pick(["What is a refactor?", "什麼是重構？"])}
+      </button>
+      <dialog
+        ref={ref}
+        onClose={() => setShown(false)}
+        onClick={(e) => e.target === ref.current && close()}
+        aria-labelledby="rh-refactor-title"
+        className="m-auto max-h-[90vh] w-[min(46rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl bg-white p-0 shadow-2xl backdrop:bg-gray-900/45"
+        data-testid="rh-refactor-dialog"
+      >
+        {shown && (
+          <div className="space-y-4 p-5 sm:p-6">
+            <div className="flex items-start gap-3">
+              <h3
+                id="rh-refactor-title"
+                className="flex-1 text-xl font-semibold text-gray-900"
+              >
+                {pick(["What is a refactor?", "什麼是重構？"])}
+              </h3>
+              <button
+                type="button"
+                onClick={close}
+                className="-mt-1 -mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xl text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                aria-label={pick(["Close (Esc)", "關閉（Esc）"])}
+              >
+                ×
+              </button>
+            </div>
+            <P
+              t={[
+                "In software, a **refactor** changes the structure of code without changing what it does: the *interface* other code relies on stays fixed, and the *implementation* behind it is rewritten, to be shorter, clearer or faster. Tests then confirm that nothing observable changed.",
+                "在軟體裡，**重構**（refactor）是改變程式碼的結構、卻不改變它做的事：別的程式碼所依賴的*介面*固定不動，背後的*實作*被改寫，變得更短、更清楚或更快。接著由測試確認沒有任何看得到的行為改變。",
+              ]}
+            />
+            <P
+              t={[
+                "A Lean proof is code, so the idea carries over exactly, and more strongly: the five theorem statements are the interface, the proofs are the implementation, and Lean's kernel is a test suite that checks every step, not a sample. Since any proof of a statement is as good as any other, a refactor that still type-checks against the same statements is correct by construction.",
+                "Lean 證明就是程式碼，所以這個概念完全適用，而且更強：五條定理陳述是介面，證明是實作，而 Lean 的核心是一套檢查每一步、而不是抽樣的測試。既然一個陳述的任何證明都和其他證明一樣好，只要重構後仍對同樣的陳述通過型別檢查，它就保證正確。",
+              ]}
+            />
+            <RefactorArchitecture />
+            <p className="text-xs text-gray-500">
+              {pick([
+                "Compact edition; the readable one has the same shape at about four times the size. As of 27 November 2026.",
+                "精簡版；可讀版形狀相同，大約大四倍。截至 2026 年 11 月 27 日。",
+              ])}
+            </p>
+          </div>
+        )}
+      </dialog>
+    </>
+  );
+}
+
+/** One step in the life of the proof. `body` opens on demand; a step with status "next" is drawn dashed. */
+type Milestone = {
+  id: string;
+  date: L;
+  title: L;
+  summary: L;
+  status: "done" | "next";
+  body?: ReactNode;
+  /** shown next to the details button, e.g. a "what is…?" explainer */
+  extra?: ReactNode;
+};
+
+/**
+ * Section 2: the proof's versions as a timeline, newest work last. Add a milestone here when the proof changes again
+ * (a further refactor, a paper, a review). Every milestone starts folded; its details open on demand.
+ */
+const MILESTONES: Milestone[] = [
+  {
+    id: "published",
+    date: ["20 Nov 2026", "2026/11/20"],
+    title: ["Published: 17 million lines of Lean", "公開：1700 萬行 Lean"],
+    summary: [
+      "Alpöge's note announces RH and GRH for Dirichlet *L*-functions, proved with Claude; the proof is 17,374,215 lines in 175,187 files, and only Lean is published.",
+      "Alpöge 的說明宣布，與 Claude 一起證明了 RH 以及 Dirichlet *L* 函數的 GRH；證明有 175,187 個檔案、17,374,215 行，只公開了 Lean。",
+    ],
+    status: "done",
+  },
+  {
+    id: "certified",
+    date: ["21–22 Nov 2026", "2026/11/21–22"],
+    title: [
+      "Certified by the Lean and Mathlib communities",
+      "Lean 與 Mathlib 社群認證",
+    ],
+    summary: [
+      "A community re-check builds it from scratch; independent kernels accept it, and the communities certify the statement and the proof.",
+      "社群從頭重驗；獨立的核心接受了它，社群認證了陳述與證明。",
+    ],
+    status: "done",
+    body: <OriginalStatus />,
+  },
+  {
+    id: "refactor",
+    date: ["25 Nov 2026", "2026/11/25"],
+    title: [
+      "Refactored: 17 million → 76,000 lines",
+      "重構：1700 萬 → 7.6 萬行",
+    ],
+    summary: [
+      "Luke Sernau, with colleagues at Anthropic and Claude, rewrites the implementation behind the same five statements, in a compact and a readable edition.",
+      "Luke Sernau 與 Anthropic 的同事、以及 Claude 一起，在同樣五條陳述背後改寫實作，分成精簡版與可讀版。",
+    ],
+    status: "done",
+    body: <RefactorWhat />,
+    extra: <RefactorExplainer />,
+  },
+  {
+    id: "ci",
+    date: ["25–26 Nov 2026", "2026/11/25–26"],
+    title: ["CI green, code review pending", "CI 全綠，程式碼審查未開始"],
+    summary: [
+      "Independent checkers accept both refactored editions; no mathematician has yet read the proof through.",
+      "獨立檢查器接受了兩個重構版本；還沒有數學家把證明從頭讀完。",
+    ],
+    status: "done",
+    body: <RefactorReview />,
+  },
+  {
+    id: "for-people",
+    date: ["Next", "接下來"],
+    title: ["A proof written for people", "寫給人看的證明"],
+    summary: [
+      'Still to come. Alpöge intends "to write it properly"; a 265-page working guide specialised to ζ, "written with Claude, Codex and Gemini as an aid to studying it", is linked from Michael Rubinstein\'s check page as a work in progress, and does not yet prove the main inequality. As of 27 November 2026.',
+      "還沒有出現。Alpöge 打算「好好地把它寫出來」；Michael Rubinstein 的檢查頁面連到一份 265 頁、專門針對 ζ 的工作指南，「與 Claude、Codex 和 Gemini 一起寫成，作為研讀它的輔助」，仍在進行中，還沒有證出主不等式。截至 2026 年 11 月 27 日。",
+    ],
+    status: "next",
+  },
+];
+
+function ProofVersions() {
+  const { pick } = useLang();
+  const [open, setOpen] = useState<Set<string>>(() => new Set());
+  const toggle = (id: string) =>
+    setOpen((o) => {
+      const n = new Set(o);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  return (
+    <ol className="relative" data-testid="rh-versions">
+      {MILESTONES.map((m, i) => {
+        const isOpen = open.has(m.id);
+        const next = m.status === "next";
+        return (
+          <li key={m.id} className="grid grid-cols-[1.75rem_minmax(0,1fr)]">
+            <div aria-hidden className="relative">
+              <span
+                className={`absolute left-1/2 w-0.5 -translate-x-1/2 ${next ? "border-l-2 border-dashed border-teal-200 bg-transparent" : "bg-teal-100"} ${i === 0 ? "top-2" : "top-0"} ${i === MILESTONES.length - 1 ? "h-2" : "bottom-0"}`}
+              />
+              <span
+                className={`absolute top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full border-2 ${next ? "border-teal-400 bg-white" : "border-white bg-teal-600"}`}
+              />
+            </div>
+            <div className="min-w-0 pb-6">
+              <p className="text-xs font-semibold text-(--lk-accent)">
+                {pick(m.date)}
+              </p>
+              <h3
+                className={`font-semibold ${next ? "text-gray-500" : "text-gray-900"}`}
+              >
+                {pick(m.title)}
+              </h3>
+              <p className={`mt-1 ${next ? "text-gray-500" : ""}`}>
+                <RichText text={pick(m.summary)} />
+              </p>
+              {m.extra}
+              {m.body && (
+                <button
+                  type="button"
+                  onClick={() => toggle(m.id)}
+                  aria-expanded={isOpen}
+                  className="mt-1.5 text-sm text-(--lk-accent) hover:underline"
+                >
+                  {isOpen
+                    ? pick(["Hide the details ▴", "收起細節 ▴"])
+                    : pick(["Show the details ▾", "展開細節 ▾"])}
+                </button>
+              )}
+              {m.body && isOpen && (
+                <div className="mt-3 space-y-4 rounded-lg border border-gray-200 bg-white p-4">
+                  {m.body}
+                </div>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
@@ -728,8 +1071,8 @@ export default function RhConcept({ section }: { section: string | null }) {
       title={["AI + human: the Riemann case", "AI + 人：黎曼猜想的案例"]}
       intro={[
         "On 20 November 2026 a claimed proof of the Riemann hypothesis arrived as 17 million lines of Lean, written with an AI. On the same day an all-human proposal for the generalized version was announced, and readers using AI reported problems in it within hours. Together they show how a proof made by people and machines is built, what each side is good for, and what no checker can settle. This page draws the architecture, from a beginner's picture to the research questions. As of 22 November 2026 the Lean proof is " +
-          "certified by the Lean and Mathlib communities (21 November 2026), but its mathematics is still being digested; the all-human proposal is not accepted. Since then (as of 27 November) the Lean proof has been rewritten in 76,000 lines, and the all-human proposal's main step has been shown in Lean to be as strong as what it sets out to prove. This page explains the process, not a verdict on the mathematics.",
-        "2026 年 11 月 20 日，一個宣稱的黎曼猜想證明以 1700 萬行 Lean 的形式出現，是與 AI 合作寫成的。同一天，另一份完全由人寫的推廣版證明提案公布，而借助 AI 的讀者在幾小時內就回報了其中的問題。兩件事放在一起，正好說明人與機器合作的證明怎麼搭起來、各自擅長什麼，以及有什麼是任何檢查器都無法判定的。本頁把整個架構畫出來，從初學者看得懂的圖一路到研究層級的問題。截至 2026 年 11 月 22 日，那份 Lean 證明已由 Lean 與 Mathlib 社群認證（2026 年 11 月 21 日），但其中的數學仍在消化中；完全由人寫的提案則尚未被接受。在那之後（截至 11 月 27 日），Lean 證明被改寫成 7.6 萬行，而那份完全由人寫的提案，其主要步驟已在 Lean 中被證明和它要證的結論一樣強。本頁說明的是過程，不是對這些數學的判決。",
+          "certified by the Lean and Mathlib communities (21 November 2026), but its mathematics is still being digested; the all-human proposal is not accepted. Since then (as of 27 November) the Lean proof has been refactored into 76,000 lines, and the all-human proposal's main step has been shown in Lean to be as strong as what it sets out to prove. This page explains the process, not a verdict on the mathematics.",
+        "2026 年 11 月 20 日，一個宣稱的黎曼猜想證明以 1700 萬行 Lean 的形式出現，是與 AI 合作寫成的。同一天，另一份完全由人寫的推廣版證明提案公布，而借助 AI 的讀者在幾小時內就回報了其中的問題。兩件事放在一起，正好說明人與機器合作的證明怎麼搭起來、各自擅長什麼，以及有什麼是任何檢查器都無法判定的。本頁把整個架構畫出來，從初學者看得懂的圖一路到研究層級的問題。截至 2026 年 11 月 22 日，那份 Lean 證明已由 Lean 與 Mathlib 社群認證（2026 年 11 月 21 日），但其中的數學仍在消化中；完全由人寫的提案則尚未被接受。在那之後（截至 11 月 27 日），Lean 證明被重構成 7.6 萬行，而那份完全由人寫的提案，其主要步驟已在 Lean 中被證明和它要證的結論一樣強。本頁說明的是過程，不是對這些數學的判決。",
       ]}
     >
       {/* ------------------------------------------------------------------------------------------------ 1 */}
@@ -884,109 +1227,8 @@ export default function RhConcept({ section }: { section: string | null }) {
             "陶哲軒在 2026 年 11 月 20 日把三個新結果「依目前被『消化』的程度由高到低」排列：Euler 爆破（有人可讀的證明，也已在 Lean 中形式化）、Navier–Stokes 爆破（「技術上人可讀」，有 Lean 形式化，但還需要一份正式、專業寫成的證明），以及 Alpöge 的 GRH：「一個（巨大的）只有 Lean 的證明」。他沒有對正確性下判斷，並預期「消化的過程需要一些時間」。",
           ]}
         />
-        <Callout
-          kind="note"
-          title={[
-            "Status, as of 22 November 2026",
-            "現況（截至 2026 年 11 月 22 日）",
-          ]}
-        >
-          <List
-            items={[
-              [
-                "The re-check repository (leanprover-community/riemann-hypothesis) keeps the published source exactly as its first commit: 175,187 files, 17,374,215 lines. On 21 November 2026 the Lean and Mathlib communities posted a joint statement: \"We hereby certify that both the statement and the proof of the Riemann Hypothesis are correct.\" Two independent tools (`comparator` and `con-leche --compare`) confirmed that the theorem proved is exactly Mathlib's `RiemannHypothesis`; several proof checkers, including Lean's official kernel, `con-leche` and `con-ron`, accepted the exported proof.",
-                "重驗儲存庫（leanprover-community/riemann-hypothesis）的第一個 commit 原封不動保留公開的原始碼：175,187 個檔案、17,374,215 行。2026 年 11 月 21 日，Lean 與 Mathlib 社群發表聯合聲明：「我們在此認證，黎曼猜想的陳述與證明都是正確的。」兩個獨立工具（`comparator` 與 `con-leche --compare`）確認被證明的定理正是 Mathlib 的 `RiemannHypothesis`；包括 Lean 官方核心、`con-leche` 與 `con-ron` 在內的好幾個證明檢查器，都接受了匯出的證明。",
-              ],
-              [
-                'A static scan finds no `axiom`, `sorry`, `native_decide` or `unsafe` in the text, but it does use metaprogramming that builds declarations directly, where "the kernel is the only check". That is exactly why the independent kernels matter.',
-                "靜態掃描在文字裡找不到 `axiom`、`sorry`、`native_decide` 或 `unsafe`，但它用了直接建立宣告的元程式，在那裡「核心是唯一的檢查」。這正是獨立核心之所以重要的原因。",
-              ],
-              [
-                "Andrew Sutherland (MIT) built it independently in a sandbox (all 175,187 modules, zero errors) and posted every checker's time and memory; Lean's own single-threaded kernels were still running there as of 22 November 2026, 16:20 UTC (section 5 shows the numbers).",
-                "Andrew Sutherland（MIT）在沙盒中獨立建置（全部 175,187 個模組，零錯誤），並公布每個檢查器花的時間與記憶體；截至 2026 年 11 月 22 日 16:20 UTC，Lean 自己的單執行緒核心在他那裡仍在執行（第 5 節列出這些數字）。",
-              ],
-              [
-                'The Lean check is settled; the mathematics is not yet digested. Nobody can yet explain the proof\'s ideas, and acceptance by the wider mathematical community (journals, the Clay Institute, which still lists RH as open) is a separate step. The joint statement ends: "We look forward to all the activity in the mathematical community that will help explain the new ideas in this proof."',
-                "Lean 的檢查已經定案；數學還沒被消化。還沒有人能解說這份證明的想法，而更廣泛數學界的接受（期刊，以及仍把 RH 列為未解決的克雷研究所）是另一個步驟。聯合聲明的結語是：「我們期待數學界接下來的種種活動，幫忙解說這份證明裡的新想法。」",
-              ],
-            ]}
-          />
-          <SiteLink
-            to={["concept", "checkers"]}
-            label={["The checkers and the four questions", "檢查器與四個問題"]}
-          />
-        </Callout>
-        <Sub
-          t={[
-            "25 November: the same proof in 76,000 lines",
-            "11 月 25 日：同一個證明，7.6 萬行",
-          ]}
-        />
-        <P
-          t={[
-            'Five days after the claim, Luke Sernau posted a rewriting of it (lsernau/grh-lean), "produced in collaboration with my colleagues at Anthropic, and Claude". Its README is plain about whose proof it is: "The proof is Levent Alpöge\'s, with Claude." It follows that proof\'s method, but many steps are proved by other arguments, and parts, mostly background, were ported and rewritten. It comes in two editions with the same five theorems (RH, and GRH for Dirichlet *L*-functions in four forms), word for word the same statements as the original:',
-            "宣稱公布五天後，Luke Sernau 貼出它的改寫版（lsernau/grh-lean），「與我在 Anthropic 的同事以及 Claude 合作完成」。它的 README 清楚交代這是誰的證明：「證明是 Levent Alpöge 的，與 Claude 一起。」它沿用那份證明的方法，但許多步驟改用別的論證，有些部分（大多是背景知識）是移植過來再改寫的。它有兩個版本，證的是同樣五條定理（RH，以及 Dirichlet *L* 函數 GRH 的四種形式），陳述與原版一字不差：",
-          ]}
-        />
-        <Figure
-          caption={[
-            "Squares to scale: the same five statements, proved in 17.4 million lines, then 477,000 (readable edition) and 113,000 (compact edition). Below, each edition split into its two folders: Lib holds background the repository classes as known in the literature but missing from Mathlib; New holds the set-up and the argument. Counted from the repository on 27 November 2026.",
-            "正方形按比例：同樣五條陳述，先是 1740 萬行，然後是 47.7 萬行（可讀版）與 11.3 萬行（精簡版）。下方把每個版本拆成兩個資料夾：Lib 放的是儲存庫歸為文獻中已知、但 Mathlib 還沒有的背景結果；New 放的是設定與論證本身。2026 年 11 月 27 日依儲存庫計算。",
-          ]}
-        >
-          <ShrinkingProof />
-        </Figure>
-        <P
-          t={[
-            'The split into Lib and New is the first map of where the old mathematics ends and the new begins, and it is a rough one: the repository calls it "a working classification", says the folder names "make no claim of novelty", and lets New also hold known results stated for its data. Most of either edition is background (60% and 69% of the lines); the argument itself is about 192,000 lines in the readable edition and 35,000 in the compact one. The readable edition comes with a reading guide: a reading order, a glossary that translates the Lean names into standard terms, and three main theorems (A: short forms, B: enough forms, C: integral forms are long) that a main inequality combines.',
-            "把它拆成 Lib 與 New，是第一張標出舊數學在哪裡結束、新數學從哪裡開始的地圖，但它很粗略：儲存庫自己稱之為「一種工作上的分類」，說資料夾的名字「並不宣稱新穎」，New 裡也放了一些針對其資料陳述的已知結果。兩個版本的大部分都是背景（分別佔 60% 與 69% 的行數）；論證本身在可讀版約 19.2 萬行，在精簡版約 3.5 萬行。可讀版附有閱讀指南：閱讀順序、把 Lean 名稱翻成標準術語的詞彙表，以及由一條主不等式組合起來的三條主定理（A：短的形式、B：足夠多的形式、C：整的形式是長的）。",
-          ]}
-        />
-        <Table
-          head={[
-            ["Check, by whom", "檢查，由誰做"],
-            ["Result", "結果"],
-          ]}
-          rows={[
-            [
-              [
-                "Andrew Sutherland (MIT), both editions, 25–26 Nov",
-                "Andrew Sutherland（MIT），兩個版本，11 月 25–26 日",
-              ],
-              [
-                'Both compile in a sandbox in about 33 minutes on a 16-core, 128 GB machine; every module replays through Lean\'s kernel; `lake comparator --paranoid` answers "Your solution is okay!" for the compact edition on two machines and for the readable one on a 1.5 TB machine. Its last kernel, lean4lean, peaked at 332 GB on the readable edition, so the 128 GB run gave no verdict.',
-                "兩個版本都在沙盒中編譯成功，在 16 核心、128 GB 的機器上約 33 分鐘；每個模組都通過 Lean 核心重播；`lake comparator --paranoid` 對精簡版在兩台機器上、對可讀版在一台 1.5 TB 的機器上都回答「Your solution is okay!」。其中最後一個核心 lean4lean 在可讀版上記憶體峰值達 332 GB，所以 128 GB 那台沒有得出結論。",
-              ],
-            ],
-            [
-              [
-                "Michael Rubinstein (Waterloo), compact edition, 26 Nov",
-                "Michael Rubinstein（滑鐵盧），精簡版，11 月 26 日",
-              ],
-              [
-                "All 794 modules compile and replay; the comparator confirms the five theorems prove exactly the challenge file's statements, accepted by six kernels (Lean's default and paranoid kernels, nanoda, lean4lean, con-leche, con-ron), after five hours, run without Comparator's sandbox.",
-                "全部 794 個模組都編譯並重播成功；comparator 確認五條定理證的正是挑戰檔案裡的陳述，被六個核心接受（Lean 的預設與 paranoid 核心、nanoda、lean4lean、con-leche、con-ron），花了五小時，執行時沒有使用 Comparator 的沙盒。",
-              ],
-            ],
-          ]}
-        />
-        <P
-          t={[
-            "Compare section 5: the original took about 8 hours and about 100 GB of memory to build, and a single-threaded run of Lean's own kernel was still going after about 45 hours. The compact edition builds in one to two hours on 12 cores with 24 GB (the README's figure), within reach of a good workstation.",
-            "對照第 5 節：原版建置花了約 8 小時、約 100 GB 記憶體，而 Lean 自己的核心以單執行緒跑了約 45 小時還沒跑完。精簡版在 12 核心、24 GB 上一到兩小時就能建置（README 的數字），一台好的工作站就做得到。",
-          ]}
-        />
-        <Callout
-          kind="note"
-          title={["Shorter is not yet digested", "變短，還不等於被消化"]}
-        >
-          <P
-            t={[
-              'The README says it in two sentences: "The proof has passed machine checks only, listed in each folder\'s README. No mathematician has read it through, and no paper comes with it." The compact edition is written "to be short, not to be easy to read". So on Tao\'s ladder above, the rewrite makes the Lean proof far easier to enter (from a proof nobody could open to one a reader can navigate with a guide), but it is not yet a step up the digestion ladder. It does show something Alpöge predicted in his note: "My intuition insists it will be massively simplified, likely immediately." The 21 November certification by the Lean and Mathlib communities was for the original; the shorter editions rest on the independent checks above.',
-              "README 用兩句話說明：「這個證明只通過了機器檢查，列在每個資料夾的 README 裡。還沒有數學家把它從頭讀完，也沒有附帶論文。」精簡版是「為了短而寫，不是為了好讀」。所以在上面陶哲軒的階梯上，這次改寫讓 Lean 證明容易走進去得多（從一份沒人打得開的證明，變成讀者能照著指南走進去的證明），但在消化那把梯子上還沒有往上爬一級。它倒是印證了 Alpöge 在說明裡的預言：「我的直覺堅持它會被大幅簡化，很可能馬上就會。」11 月 21 日 Lean 與 Mathlib 社群的認證針對的是原版；較短的版本靠的是上面這些獨立檢查。",
-            ]}
-          />
-        </Callout>
+        <Sub t={["The proof, version by version", "這份證明，一版一版來看"]} />
+        <ProofVersions />
         <Sources
           items={[
             {
@@ -1086,8 +1328,8 @@ export default function RhConcept({ section }: { section: string | null }) {
                   >
                     <P
                       t={[
-                        "This site treats a proof as two mirrored streams, a natural-language proof for people and a Lean proof for the machine, linked step by step (a stated position, not a consensus). Seen that way, **as of 22 November 2026** each claim has one stream and is missing the other: Alpöge's is the Lean stream only, 17,374,215 lines, now certified by the Lean and Mathlib communities (21 November 2026), with the natural-language proof still owed; Masullo's is the natural-language stream only, with no Lean. **Update, 27 November:** both missing streams have begun. Alpöge's Lean now also exists in a 76,000-line rewrite with a reading guide (section 2), still Lean, not yet a proof for people; Masullo's draft is being formalized by a crowd, which has reached its main step (the third tab).",
-                        "本站把一個證明看成兩條互為鏡像的流：寫給人看的自然語言證明，和寫給機器看的 Lean 證明，兩者一步一步相連（這是本站的立場，不是共識）。這樣看，**截至 2026 年 11 月 22 日**，兩個宣稱各只有一條、缺了另一條：Alpöge 的只有 Lean 這一條，17,374,215 行，已由 Lean 與 Mathlib 社群認證（2026 年 11 月 21 日），自然語言證明則還欠著；Masullo 的只有自然語言這一條，沒有 Lean。**11 月 27 日更新：**兩邊缺的那條流都已開始。Alpöge 的 Lean 現在也有一份 7.6 萬行、附閱讀指南的改寫版（第 2 節），但仍是 Lean，還不是寫給人看的證明；Masullo 的草稿正由一群人形式化，已經走到它的主要步驟（第三個分頁）。",
+                        "This site treats a proof as two mirrored streams, a natural-language proof for people and a Lean proof for the machine, linked step by step (a stated position, not a consensus). Seen that way, **as of 22 November 2026** each claim has one stream and is missing the other: Alpöge's is the Lean stream only, 17,374,215 lines, now certified by the Lean and Mathlib communities (21 November 2026), with the natural-language proof still owed; Masullo's is the natural-language stream only, with no Lean. **Update, 27 November:** both missing streams have begun. Alpöge's Lean now also exists as a 76,000-line refactor with a reading guide (section 2), still Lean, not yet a proof for people; Masullo's draft is being formalized by a crowd, which has reached its main step (the third tab).",
+                        "本站把一個證明看成兩條互為鏡像的流：寫給人看的自然語言證明，和寫給機器看的 Lean 證明，兩者一步一步相連（這是本站的立場，不是共識）。這樣看，**截至 2026 年 11 月 22 日**，兩個宣稱各只有一條、缺了另一條：Alpöge 的只有 Lean 這一條，17,374,215 行，已由 Lean 與 Mathlib 社群認證（2026 年 11 月 21 日），自然語言證明則還欠著；Masullo 的只有自然語言這一條，沒有 Lean。**11 月 27 日更新：**兩邊缺的那條流都已開始。Alpöge 的 Lean 現在也有一份 7.6 萬行、附閱讀指南的重構版（第 2 節），但仍是 Lean，還不是寫給人看的證明；Masullo 的草稿正由一群人形式化，已經走到它的主要步驟（第三個分頁）。",
                       ]}
                     />
                   </Callout>

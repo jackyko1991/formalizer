@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Formalizer · the shape of the claimed Riemann-hypothesis proof: writes frontend/public/rh/proof-map.json.
+"""Formalizer · the shape of the Riemann-hypothesis proof: writes frontend/public/rh/proof-map-*.json.
 
     # in WSL / Linux, once (≈1.6 GB; the published source is the repository's first commit):
     git clone --depth 1 https://github.com/leanprover-community/riemann-hypothesis ~/fz/rh
@@ -23,6 +23,15 @@ header); it then
 * counts the files reachable from Main.lean along imports (what the proof actually uses, transitively).
 
 With --mathlib it also counts Mathlib's own .lean files and lines (for the scale comparison on the page).
+
+The refactored proof of 25 Nov 2026 (lsernau/grh-lean) keeps each edition in its own folder; --root reads one of them
+as if it were the repository root, and --repo-name records where it came from:
+
+    git clone --depth 1 https://github.com/lsernau/grh-lean ~/fz/grh-lean
+    python3 scripts/rh_map/generate.py --repo ~/fz/grh-lean --rev HEAD --root grh-compact \
+        --repo-name lsernau/grh-lean --target 140 --out frontend/public/rh/proof-map-compact.json
+    python3 scripts/rh_map/generate.py --repo ~/fz/grh-lean --rev HEAD --root grh \
+        --repo-name lsernau/grh-lean --target 160 --out frontend/public/rh/proof-map-readable.json
 The per-file table goes to --files-out (TSV, not shipped). Output: compact JSON arrays, ≈1–2 MB, gzip-friendly.
 """
 
@@ -39,7 +48,8 @@ import threading
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
-OUT = ROOT / "frontend" / "public" / "rh" / "proof-map.json"
+# the original source's map; the refactored editions go to …/proof-map-compact.json and …/proof-map-readable.json
+OUT = ROOT / "frontend" / "public" / "rh" / "proof-map-original.json"
 STATEMENT = "src/Statements.lean"
 MAIN = "src/Main.lean"
 TOP_FILES = 4
@@ -51,17 +61,18 @@ def git(repo: Path, *args: str) -> bytes:
     return subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True).stdout
 
 
-def list_files(repo: Path, rev: str) -> list[tuple[str, str, int]]:
-    """[(path, blob id, size)] of every .lean file at `rev`."""
+def list_files(repo: Path, rev: str, root: str = "") -> list[tuple[str, str, int]]:
+    """[(path, blob id, size)] of every .lean file at `rev` (under `root`, with that prefix removed)."""
     out = []
+    prefix = root.strip("/") + "/" if root.strip("/") else ""
     for entry in git(repo, "ls-tree", "-r", "-l", "-z", rev).split(b"\0"):
         if not entry:
             continue
         meta, path = entry.split(b"\t", 1)
         _mode, kind, sha, size = meta.split()
         p = path.decode("utf-8")
-        if kind == b"blob" and p.endswith(".lean"):
-            out.append((p, sha.decode(), int(size)))
+        if kind == b"blob" and p.endswith(".lean") and p.startswith(prefix):
+            out.append((p.removeprefix(prefix), sha.decode(), int(size)))
     return out
 
 
@@ -182,6 +193,8 @@ def main() -> None:
     ap.add_argument("--repo", type=Path, required=True, help="a clone of leanprover-community/riemann-hypothesis")
     ap.add_argument("--rev", default="40e56bab026552e089d7afcfeff08d2defb9c005", help="the commit to read")
     ap.add_argument("--target", type=int, default=900, help="about how many districts")
+    ap.add_argument("--root", default="", help="read only this folder of the repository, as if it were the root")
+    ap.add_argument("--repo-name", default="leanprover-community/riemann-hypothesis", help="owner/name, for links")
     ap.add_argument("--mathlib", type=Path, help="a Mathlib checkout, to count its files and lines")
     ap.add_argument("--out", type=Path, default=OUT)
     ap.add_argument("--files-out", type=Path, help="also write the per-file table (path, module, lines, imports)")
@@ -190,7 +203,9 @@ def main() -> None:
 
     commit = git(repo, "rev-parse", args.rev).decode().strip()
     commit_date = git(repo, "show", "-s", "--format=%cI", commit).decode().strip()
-    entries = list_files(repo, commit)
+    entries = list_files(repo, commit, args.root)
+    if args.root:  # an edition folder: its sources only (src/), not scripts/ or the comparator's Challenge.lean
+        entries = [e for e in entries if e[0].startswith("src/")]
     print(f"{commit[:8]}: {len(entries)} .lean files", flush=True)
     files = []
     for (path, _sha, size), data in zip(entries, read_blobs(repo, [e[1] for e in entries])):
@@ -282,7 +297,8 @@ def main() -> None:
 
     doc = {
         "meta": {
-            "repo": "leanprover-community/riemann-hypothesis",
+            "repo": args.repo_name,
+            "root": args.root.strip("/"),
             "commit": commit,
             "commitDate": commit_date,
             "fetched": datetime.date.today().isoformat(),
