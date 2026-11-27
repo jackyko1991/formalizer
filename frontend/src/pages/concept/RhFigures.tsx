@@ -1449,3 +1449,304 @@ export function BrokenLink() {
     </svg>
   );
 }
+
+/**
+ * The same five theorems at three sizes, as squares whose areas are to scale (all lines, comments and blanks
+ * included): Alpöge's published source (17,374,215 lines, the re-check repository's first commit) and the two editions
+ * of lsernau/grh-lean (commit 72fead1, 25 Nov 2026: 477,086 and 112,798 lines, counted with wc). Below, each edition
+ * split into `Lib` (background classed as known in the literature) and `New` (the set-up and the argument); the repo
+ * calls the split "a working classification". Counted 27 Nov 2026.
+ */
+export function ShrinkingProof() {
+  const { pick } = useLang();
+  const sizes: { n: number; t: L; s: L; cls: string; text: string }[] = [
+    {
+      n: 17_374_215,
+      t: ["Published, 20 Nov", "11 月 20 日公開"],
+      s: ["17,374,215 lines · 175,187 files", "17,374,215 行 · 175,187 個檔案"],
+      cls: "fill-gray-100 stroke-gray-400",
+      text: "fill-gray-700",
+    },
+    {
+      n: 477_086,
+      t: ["Readable edition, 25 Nov", "可讀版，11 月 25 日"],
+      s: ["477,086 lines · 803 files", "477,086 行 · 803 個檔案"],
+      cls: "fill-sky-200 stroke-sky-600",
+      text: "fill-sky-800",
+    },
+    {
+      n: 112_798,
+      t: ["Compact edition, 25 Nov", "精簡版，11 月 25 日"],
+      s: ["112,798 lines · 794 files", "112,798 行 · 794 個檔案"],
+      cls: "fill-teal-500 stroke-teal-700",
+      text: "fill-teal-800",
+    },
+  ];
+  const S = 220; // side of the largest square
+  const side = (n: number) => S * Math.sqrt(n / sizes[0].n);
+  const split: { t: L; lib: number; neu: number }[] = [
+    { t: ["Readable", "可讀版"], lib: 285_088, neu: 191_998 },
+    { t: ["Compact", "精簡版"], lib: 77_850, neu: 34_948 },
+  ];
+  const BAR = 300; // width of the readable edition's bar; the compact one is to the same scale
+  const scale = BAR / (split[0].lib + split[0].neu);
+  return (
+    <svg
+      viewBox="0 0 640 400"
+      className="w-full max-w-[640px]"
+      role="img"
+      aria-label={pick([
+        "The same five theorems in 17.4 million, 477,000 and 113,000 lines",
+        "同樣五條定理：1740 萬行、47.7 萬行、11.3 萬行",
+      ])}
+    >
+      {sizes.map((z, i) => {
+        const a = side(z.n);
+        return (
+          <rect
+            key={i}
+            x={10}
+            y={10 + S - a}
+            width={a}
+            height={a}
+            strokeWidth={1.2}
+            className={z.cls}
+          />
+        );
+      })}
+      {sizes.map((z, i) => {
+        const y = 40 + i * 62;
+        return (
+          <g key={`l${i}`}>
+            <text
+              x={260}
+              y={y}
+              fontSize={13}
+              className={`${z.text} font-semibold`}
+            >
+              {pick(z.t)}
+            </text>
+            <text x={260} y={y + 17} fontSize={11} className="fill-gray-500">
+              {pick(z.s)}
+            </text>
+          </g>
+        );
+      })}
+      <text x={260} y={222} fontSize={11} className="fill-gray-600">
+        {pick([
+          "Areas to scale: about 154 times smaller, same five statements.",
+          "面積按比例：大約小了 154 倍，五條陳述完全相同。",
+        ])}
+      </text>
+      {split.map((b, i) => {
+        const y = 278 + i * 46;
+        const wl = b.lib * scale;
+        const wn = b.neu * scale;
+        const pct = Math.round((100 * b.lib) / (b.lib + b.neu));
+        return (
+          <g key={`s${i}`}>
+            <text
+              x={10}
+              y={y + 15}
+              fontSize={12}
+              className="fill-gray-900 font-semibold"
+            >
+              {pick(b.t)}
+            </text>
+            <rect
+              x={110}
+              y={y}
+              width={wl}
+              height={22}
+              className="fill-sky-300"
+            />
+            <rect
+              x={110 + wl}
+              y={y}
+              width={wn}
+              height={22}
+              className="fill-amber-400"
+            />
+            <text
+              x={118 + wl + wn}
+              y={y + 15}
+              fontSize={11}
+              className="fill-gray-600"
+            >
+              {pick([
+                `${pct}% Lib · ${100 - pct}% New`,
+                `${pct}% Lib · ${100 - pct}% New`,
+              ])}
+            </text>
+          </g>
+        );
+      })}
+      <rect x={110} y={256} width={12} height={12} className="fill-sky-300" />
+      <text x={127} y={266} fontSize={11} className="fill-gray-700">
+        {pick(["Lib: background classed as known", "Lib：歸為已知的背景結果"])}
+      </text>
+      <rect x={350} y={256} width={12} height={12} className="fill-amber-400" />
+      <text x={367} y={266} fontSize={11} className="fill-gray-700">
+        {pick(["New: the set-up and the argument", "New：設定與論證本身"])}
+      </text>
+      <text x={10} y={388} fontSize={11} className="fill-gray-500">
+        {pick([
+          "All lines, with comments and blanks; in lines of code, about 300,000 and 76,000.",
+          "含註解與空行的總行數；只算程式碼約 30 萬與 7.6 萬行。",
+        ])}
+      </text>
+    </svg>
+  );
+}
+
+/**
+ * Masullo's main line in the crowdsourced formalization, as its README stated it on 26–27 Nov 2026: Chapters 2–7 and
+ * 9–13 stated (all but eight theorems proved) → Theorem 12.5.1.1 (the cancellation of the zeros outside the strip,
+ * p. 520), the one statement without proof → the seven target theorems. Lean proves that this cancellation, for every
+ * width, is equivalent to the main claim (RiemannMasullo.hasSum_exteriorZeros_iff_isEmpty), so the open step is as
+ * strong as what it is meant to prove.
+ */
+export function OneOpenStatement() {
+  const { pick } = useLang();
+  const boxes: { x: number; w: number; t: L; s: L; open?: boolean }[] = [
+    {
+      x: 8,
+      w: 170,
+      t: ["Chapters 2–12", "第 2–12 章"],
+      s: ["~13,200 theorems stated", "約 13,200 條定理已陳述"],
+    },
+    {
+      x: 234,
+      w: 172,
+      t: ["Theorem 12.5.1.1", "定理 12.5.1.1"],
+      s: ["zeros outside the strip cancel", "帶外的零點互相抵消"],
+      open: true,
+    },
+    {
+      x: 462,
+      w: 170,
+      t: ["7 target theorems", "7 條目標定理"],
+      s: ["Hecke GRH … RH", "Hecke GRH … RH"],
+    },
+  ];
+  return (
+    <svg
+      viewBox="0 0 640 210"
+      className="w-full max-w-[640px]"
+      role="img"
+      aria-label={pick([
+        "All seven targets rest on one open statement, proved equivalent to the main claim",
+        "七條目標都靠一條未證的陳述，而它被證明與主要主張等價",
+      ])}
+    >
+      {boxes.map((b, i) => (
+        <g key={i}>
+          <rect
+            x={b.x}
+            y={30}
+            width={b.w}
+            height={62}
+            rx={10}
+            strokeWidth={1.5}
+            strokeDasharray={b.open ? "5 4" : undefined}
+            className={
+              b.open
+                ? "fill-red-50 stroke-red-500"
+                : "fill-white stroke-gray-500"
+            }
+          />
+          <text
+            x={b.x + b.w / 2}
+            y={57}
+            textAnchor="middle"
+            fontSize={13}
+            className={
+              b.open
+                ? "fill-red-700 font-semibold"
+                : "fill-gray-900 font-semibold"
+            }
+          >
+            {pick(b.t)}
+          </text>
+          <text
+            x={b.x + b.w / 2}
+            y={77}
+            textAnchor="middle"
+            fontSize={11}
+            className="fill-gray-500"
+          >
+            {pick(b.s)}
+          </text>
+        </g>
+      ))}
+      {[178, 406].map((x, i) => (
+        <g key={`a${i}`}>
+          <line
+            x1={x + 4}
+            y1={61}
+            x2={x + 50}
+            y2={61}
+            className="stroke-gray-500"
+            strokeWidth={2}
+          />
+          <path
+            d={`M${x + 48} 56 L${x + 55} 61 L${x + 48} 66 Z`}
+            className="fill-gray-500"
+          />
+        </g>
+      ))}
+      <text
+        x={320}
+        y={20}
+        textAnchor="middle"
+        fontSize={11}
+        className="fill-red-700"
+      >
+        {pick(["no proof (p. 520)", "沒有證明（第 520 頁）"])}
+      </text>
+      {/* the equivalence: from the open box round to the targets' main claim */}
+      <path
+        d="M320 92 C 320 140, 547 140, 547 92"
+        fill="none"
+        className="stroke-red-500"
+        strokeWidth={1.5}
+      />
+      <path
+        d="M315 99 L320 92 L325 99"
+        fill="none"
+        className="stroke-red-500"
+        strokeWidth={1.5}
+      />
+      <path
+        d="M542 99 L547 92 L552 99"
+        fill="none"
+        className="stroke-red-500"
+        strokeWidth={1.5}
+      />
+      <text
+        x={433}
+        y={150}
+        textAnchor="middle"
+        fontSize={11}
+        className="fill-red-700 font-semibold"
+      >
+        {pick([
+          "⇔ proved in Lean: equivalent to the main claim",
+          "⇔ 已在 Lean 中證明：與主要主張等價",
+        ])}
+      </text>
+      <text
+        x={320}
+        y={190}
+        textAnchor="middle"
+        fontSize={11}
+        className="fill-gray-600"
+      >
+        {pick([
+          "The missing step is as strong as what it should prove. As of 27 November 2026.",
+          "缺的這一步，和它要證明的結論一樣強。截至 2026 年 11 月 27 日。",
+        ])}
+      </text>
+    </svg>
+  );
+}
