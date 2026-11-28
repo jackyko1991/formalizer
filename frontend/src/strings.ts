@@ -32,6 +32,7 @@ export const STRINGS = {
   "tab.provers": ["AI provers", "AI 證明器"],
   "tab.rh": ["AI + human: the Riemann case", "AI + 人：黎曼猜想的案例"],
   "tab.views": ["Six views on an unreadable proof", "看不懂的證明：六種觀點"],
+  "tab.ainative": ["AI-native mathematics", "AI 原生數學"],
   "tab.skills": ["Skills", "Skills"],
   "tab.mcp": ["MCP", "MCP"],
   "tab.roadmap": ["Product roadmap", "產品路線圖"],

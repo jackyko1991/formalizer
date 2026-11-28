@@ -1511,6 +1511,10 @@ export default function RhConcept({ section }: { section: string | null }) {
             to={["concept", "provers"]}
             label={["AI provers", "AI 證明器"]}
           />
+          <SiteLink
+            to={["concept", "ainative"]}
+            label={["AI-native mathematics", "AI 原生數學"]}
+          />
         </p>
         <p className="text-xs text-gray-500">{pick(AS_OF)}</p>
         <Sources

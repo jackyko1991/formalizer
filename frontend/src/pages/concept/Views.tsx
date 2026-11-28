@@ -1135,8 +1135,8 @@ export default function ViewsConcept({ section }: { section: string | null }) {
           />
           <P
             t={[
-              "On this layer Buzzard and Voevodsky are right: once a proof runs to hundreds of pages, we should no longer rely on referees to check it line by line. Some problems have simply outgrown the context a single human mind can hold. Human-guided AI, with every step checked by machine, is the direction this site stands for. For its largest problems, mathematics is moving from a romantic age of craft into an industrial one.",
-              "在這一層，Buzzard 和 Voevodsky 說得對：證明一長到幾百頁，就不該再指望審稿人逐行把關。我們得承認，有些數學問題已大到超出單一人腦能容納的脈絡；由人引導、由 AI 推進、由機器逐步檢查，是我們選擇站的方向。對最大的那些問題，數學正從手工的浪漫時代走向工業化的時代。",
+              "On this layer Buzzard and Voevodsky are right: once a proof runs to hundreds of pages, we should no longer rely on referees to check it line by line. Human-guided AI, with every step checked by machine, is the direction this site stands for; the page *AI-native mathematics* sets out that workflow.",
+              "在這一層，Buzzard 和 Voevodsky 說得對：證明一長到幾百頁，就不該再指望審稿人逐行把關。由人引導、由 AI 推進、由機器逐步檢查，是本站選擇站的方向；〈AI 原生數學〉這一頁把這套工作流完整寫出來。",
             ]}
           />
           <SiteLink to={["concept", "method", "two-languages"]} label={["One proof, two languages, as a picture", "一個證明，兩種語言：看圖"]} />
@@ -1157,6 +1157,7 @@ export default function ViewsConcept({ section }: { section: string | null }) {
         />
         <p className="flex flex-wrap gap-x-5 gap-y-1">
           <SiteLink to={["concept", "rh"]} label={["The Riemann case: AI + human, step by step", "黎曼案例：AI + 人，一步一步看"]} />
+          <SiteLink to={["concept", "ainative"]} label={["AI-native mathematics: the new workflow", "AI 原生數學：新的工作流"]} />
           <SiteLink to={["concept", "checkers"]} label={["The checkers", "檢查器"]} />
         </p>
         <Sources

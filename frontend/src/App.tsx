@@ -31,6 +31,7 @@ import ProversConcept from "./pages/concept/Provers";
 import CheckersConcept from "./pages/concept/Checkers";
 import RhConcept from "./pages/concept/Rh";
 import ViewsConcept from "./pages/concept/Views";
+import AiNativeConcept from "./pages/concept/AiNative";
 import MathlibSkill from "./pages/skills/Mathlib";
 import RoadmapAgent from "./pages/agents/Roadmap";
 import { McpAgent, SkillsAgent } from "./pages/agents/Setup";
@@ -42,7 +43,7 @@ import { STRINGS } from "./strings";
 const REPO_URL = "https://github.com/jackyko1991/formalizer";
 const SCROLL = "fz-scroll";
 /** Concept's sub-pages (Tensorizer's order, History last); only History is built so far */
-const CONCEPT_TABS = ["method", "feynman", "maths", "kernel", "checkers", "limits", "provers", "rh", "views", "history"] as const;
+const CONCEPT_TABS = ["method", "feynman", "maths", "kernel", "checkers", "limits", "provers", "rh", "views", "ainative", "history"] as const;
 const SKILLS_TABS = ["tactics", "search", "mathlib", "structure", "errors", "verify"] as const;
 /** Further reading: books & papers, then the learnkit series (Code labs, Explorables) */
 const READING = ["books", "papers", "labs", "explorables"] as const;
@@ -57,6 +58,7 @@ const CONCEPT_PAGES: Record<string, PageView> = {
   provers: ProversConcept,
   rh: RhConcept,
   views: ViewsConcept,
+  ainative: AiNativeConcept,
 };
 const SKILLS_PAGES: Record<string, PageView> = {
   tactics: TacticsSkill,
