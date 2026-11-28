@@ -1009,6 +1009,102 @@ const VC_TERMS: { term: L; code: L; maths: L }[] = [
   { term: ["history", "歷史（history）"], code: ["every past version kept; any change can be undone", "每個過去的版本都留著；任何改動都能撤回"], maths: ["every version of the proof, dated and citable", "證明的每一版都有日期、可以引用"] },
 ];
 
+const COPIES = ["proof_v1.tex", "proof_v2.tex", "proof_v2_final.tex", "proof_v2_final.20261128.tex"];
+const LOG: { hash: string; msg: L; date: L }[] = [
+  { hash: "e5f6a7c", msg: ["fix the bound in Lemma 3", "修正引理 3 的界"], date: ["28 Nov 2026", "2026/11/28"] },
+  { hash: "c3d4e5f", msg: ["prove Lemma 2", "證明引理 2"], date: ["21 Nov 2026", "2026/11/21"] },
+  { hash: "b2c3d4e", msg: ["second draft", "第二稿"], date: ["14 Nov 2026", "2026/11/14"] },
+  { hash: "a1b2c3d", msg: ["first draft", "初稿"], date: ["7 Nov 2026", "2026/11/07"] },
+];
+
+/** A file icon: a page with a folded corner. */
+function FileIcon({ cls }: { cls: string }) {
+  return (
+    <svg viewBox="0 0 20 24" className={`h-5 w-4 shrink-0 ${cls}`} aria-hidden>
+      <path d="M2 1 h11 l5 5 v17 h-16 z" className="fill-white" stroke="currentColor" strokeWidth={1.5} />
+      <path d="M13 1 v5 h5" fill="none" stroke="currentColor" strokeWidth={1.5} />
+    </svg>
+  );
+}
+
+/**
+ * git's mark, after the Git logo by Jason Long (CC BY 3.0): a red-orange rounded diamond; a white line enters from the
+ * upper-left edge, runs through the top node to the right node, and a vertical line drops from the top node to the
+ * bottom one. Geometry traced from the logo, scaled to a 48-unit box.
+ */
+function GitMark() {
+  return (
+    <svg viewBox="0 0 48 48" className="h-12 w-12 shrink-0" role="img" aria-label="git">
+      <rect x={7} y={7} width={34} height={34} rx={4} transform="rotate(45 24 24)" fill="#F05032" />
+      <g stroke="white" strokeWidth={2.9} fill="none">
+        <polyline points="16.6,6.6 24,14.4 34,23.8" strokeLinecap="butt" strokeLinejoin="round" />
+        <line x1={24} y1={14.4} x2={24} y2={33.5} />
+      </g>
+      <g fill="white">
+        <circle cx={24} cy={14.4} r={3.7} />
+        <circle cx={34} cy={23.8} r={3.7} />
+        <circle cx={24} cy={33.5} r={3.7} />
+      </g>
+    </svg>
+  );
+}
+
+/** Without version control: a folder of copies. With git: one file, and every version in its history. */
+function FileCopies() {
+  const { pick } = useLang();
+  return (
+    <div className="space-y-1">
+      <div className="grid items-stretch gap-3 p-0.5 text-xs sm:grid-cols-[1fr_auto_1fr]" data-testid="file-copies">
+        <div className="space-y-1.5 rounded-lg bg-gray-50 p-3 ring-1 ring-gray-200">
+          <p className="font-semibold text-gray-600">{pick(["Without version control", "沒有版本控制"])}</p>
+          <ul className="space-y-1">
+            {COPIES.map((f, k) => (
+              <li key={f} className="flex items-center gap-1.5 text-[11px] text-gray-700" style={{ fontFamily: MONO }}>
+                <FileIcon cls={k === COPIES.length - 1 ? "text-red-400" : "text-gray-400"} />
+                <span className="break-all">{f}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-[11px] text-gray-500">
+            {pick(["Which is the latest? What changed between them, and why? Who has which copy?", "哪個才是最新的？它們之間改了什麼、為什麼？誰手上是哪一份？"])}
+          </p>
+        </div>
+        <span className="self-center text-center text-lg text-gray-400">
+          <span className="hidden sm:inline">→</span>
+          <span className="sm:hidden">↓</span>
+        </span>
+        <div className="space-y-1.5 rounded-lg bg-white p-3 ring-1 ring-orange-200">
+          <div className="flex items-center gap-2">
+            <GitMark />
+            <div>
+              <p className="font-semibold text-gray-800">{pick(["With git", "用 git"])}</p>
+              <p className="flex items-center gap-1 text-[11px] text-gray-700" style={{ fontFamily: MONO }}>
+                <FileIcon cls="text-orange-500" /> proof.tex
+              </p>
+            </div>
+          </div>
+          <ul className="space-y-1 border-l-2 border-orange-200 pl-2">
+            {LOG.map((c) => (
+              <li key={c.hash} className="text-[11px] text-gray-700">
+                <span className="text-orange-700" style={{ fontFamily: MONO }}>
+                  {c.hash}
+                </span>{" "}
+                {pick(c.msg)} <span className="text-gray-400">· {pick(c.date)}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-[11px] text-gray-500">
+            {pick(["One file. Every version kept, each with what changed, who, when and why.", "一個檔案。每一版都保留，各自記下改了什麼、誰、何時、為什麼。"])}
+          </p>
+        </div>
+      </div>
+      <p className="text-[10px] text-gray-400">
+        {pick(["Git logo by Jason Long (CC BY 3.0).", "Git 標誌由 Jason Long 設計（CC BY 3.0）。"])}
+      </p>
+    </div>
+  );
+}
+
 /** "What is version control?": a button in the git figure that opens a dialog with the terms, for code and for maths. */
 function VersionControlExplainer() {
   const { pick } = useLang();
@@ -1022,6 +1118,7 @@ function VersionControlExplainer() {
                 ])}
               />
             </p>
+            <FileCopies />
             <div className="overflow-x-auto rounded-lg border border-gray-200">
               <table className="w-full text-left text-xs">
                 <thead className="bg-gray-50 text-gray-500 uppercase">
