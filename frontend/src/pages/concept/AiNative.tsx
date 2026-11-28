@@ -144,7 +144,7 @@ export default function AiNativeConcept({ section }: { section: string | null })
               "重構縮短的是證明的*實作*。還有一種更深的簡化，深入到數學本身。平常的數學是正向的，從公理走到定理。**反推數學**（reverse mathematics）由 Harvey Friedman 在 1975 年開創、Stephen Simpson 等人發展，方向相反：給定一條定理，它真正需要哪些公理？它最驚人的發現是：許多日常數學的定理，在一個很弱的基礎系統之上，都*等價*於少數幾個公理系統之一，也就是「五大系統」：RCA₀、WKL₀、ACA₀、ATR₀ 與 Π¹₁-CA₀。",
             ]}
           />
-          <Figure caption={["One proof graph, four readings. Solid amber: axioms; dashed: lemmas; indigo: the theorem; teal: a new concept.", "同一張證明圖，四種讀法。琥珀色實線：公理；虛線：引理；靛藍：定理；青綠：新概念。"]}>
+          <Figure caption={["One proof graph, four readings. Arrows run from what is used to what it proves; walking backwards, from the theorem to what it rests on. Solid amber: axioms; dashed: lemmas; indigo: the theorem; teal: a new concept.", "同一張證明圖，四種讀法。箭頭從被用到的指向它證出的；反向走時，從定理指向它所依賴的。琥珀色實線：公理；虛線：引理；靛藍：定理；青綠：新概念。"]}>
             <ReversePath />
           </Figure>
           <P
@@ -504,6 +504,10 @@ export default function AiNativeConcept({ section }: { section: string | null })
               url: "https://doi.org/10.1073/pnas.2214840120",
             },
             { label: "Reservoir, the Lean package index", url: "https://reservoir.lean-lang.org/" },
+            {
+              label: "T. Tao, Unforced Euler singularity, unforced Navier–Stokes singularity, and the generalized Riemann hypothesis (20 Nov 2026)",
+              url: "https://terrytao.wordpress.com/2026/11/20/unforced-euler-singularity-unforced-navier-stokes-singularity-and-the-generalized-riemann-hypothesis/",
+            },
           ]}
         />
       </Section>
@@ -519,6 +523,18 @@ export default function AiNativeConcept({ section }: { section: string | null })
         <Figure caption={["As machines produce more, the first gate (correctness) gets cheap and complete. The gates that remain are people's: is it the right question, and does it matter? Hover or tap a layer.", "機器產出得越多，第一道關卡（正確性）就越便宜、越完整。剩下的關卡屬於人：問的問題對嗎？它重要嗎？滑過或點一層看看。"]}>
           <TasteFunnel />
         </Figure>
+        <P
+          t={[
+            "**Why the statement gate is the hard one.** The kernel's gate is cheap; the statement gate is not. A formal definition rarely stands alone: a statement about fluids rests on real numbers, derivatives, function spaces and integrals, each built on further layers of Mathlib, and confirming that the whole stack means exactly the object a mathematician or physicist has in mind takes deep expertise in both the mathematics and the library. The Navier–Stokes problem shows how much must be pinned down: the domain (all of ℝ³, or a periodic box), which initial data count (smooth, divergence-free, decaying at infinity), and what counts as a smooth solution with bounded energy, or as a blowup. Change one choice and the statement may become easier, harder or a different problem, while every proof of it still checks. In software this is the costliest kind of bug, a correct program for the wrong specification, found late and expensive to undo.",
+            "**為什麼陳述這道關卡最難。** 核心那道關卡很便宜；陳述那道不是。一個形式化定義很少單獨存在：一條關於流體的陳述，建立在實數、導數、函數空間與積分之上，而每一樣又建立在 Mathlib 更底下的好幾層之上；要確認整疊東西說的，正好就是數學家或物理學家心裡想的那個對象，需要同時精通數學與這個函式庫。Navier–Stokes 問題顯示要釘死的東西有多少：定義域（整個 ℝ³，還是週期性的盒子）、哪些初始資料算數（光滑、無散度、在無窮遠處衰減），以及什麼算是能量有界的光滑解、什麼算爆破。改掉其中一個選擇，陳述就可能變得更容易、更難，或變成另一道題，而它的每個證明照樣通過檢查。在軟體裡，這是代價最高的一種錯誤：為錯的規格寫出正確的程式，發現得晚、改起來貴。",
+          ]}
+        />
+        <Links
+          items={[
+            { to: ["concept", "limits", "definitions"], label: ["Wrong definitions, and how to catch them", "錯誤的定義，以及怎麼抓出來"] },
+            { to: ["concept", "method", "comparator"], label: ["Comparator: is it the right theorem?", "Comparator：證的是對的定理嗎？"] },
+          ]}
+        />
         <Callout kind="tip" title={["This site's position (not a consensus)", "本站的立場（不是共識）"]}>
           <List
             items={[
@@ -531,12 +547,12 @@ export default function AiNativeConcept({ section }: { section: string | null })
                 "**好的數學家會有更多工作，而不是更少。** 每個人能指揮的，遠超過自己單獨能證明的；而機器能執行得越多，對方向的需求就越大。",
               ],
               [
-                "**Taste and quality control become the essential skills.** When correctness is cheap, the scarce things are choosing good questions, writing the right statements, and recognising an idea worth keeping.",
-                "**品味與品質把關會成為最關鍵的能力。** 正確性變便宜之後，稀缺的是選好問題、寫對陳述，以及認出值得留下的想法。",
+                "**Taste and quality control become the essential skills.** When correctness is cheap, the scarce things are choosing good questions, writing statements that mean what they should through every layer of definitions, and recognising an idea worth keeping.",
+                "**品味與品質把關會成為最關鍵的能力。** 正確性變便宜之後，稀缺的是選好問題、寫出穿過每一層定義仍然意思正確的陳述，以及認出值得留下的想法。",
               ],
               [
-                "**Mathematics can grow much more complicated.** Proofs too long for any one person are now possible and checkable. The Riemann hypothesis and the Navier–Stokes blowup announced in November 2026 look like the beginning of a new era, not its end.",
-                "**數學可以變得複雜得多。** 長到任何一個人都扛不動的證明，現在做得出來、也查得了。2026 年 11 月宣布的黎曼猜想與 Navier–Stokes 爆破，看起來是一個新時代的開始，而不是結束。",
+                "**Mathematics can grow much more complicated.** Proofs too long for any one person are now possible and checkable. On 20 November 2026 Terence Tao listed, besides the Lean proof of the Riemann hypothesis, a claimed blowup for the unforced Navier–Stokes equations, \"technically human-readable\" and formalized in Lean but still needing a professionally written proof; neither result is digested yet. They look like the beginning of a new era, not its end.",
+                "**數學可以變得複雜得多。** 長到任何一個人都扛不動的證明，現在做得出來、也查得了。2026 年 11 月 20 日，陶哲軒除了黎曼猜想的 Lean 證明，還列出一個宣稱的無外力 Navier–Stokes 方程爆破：「技術上人可讀」、已在 Lean 中形式化，但仍需要一份正式、專業寫成的證明；兩者都還沒被消化。它們看起來是一個新時代的開始，而不是結束。",
               ],
               [
                 "**Machine proofs will be translated for people.** The refactor took the RH proof from 17.4 million lines to 113,000 in five days: from beyond any career to within reach of a small team, by the arithmetic of section 5. This site expects machine-to-human translation to follow, though as of 27 November 2026 no mathematician has read even the compact edition through, and the proof written for people is still the next milestone.",
@@ -564,8 +580,19 @@ export default function AiNativeConcept({ section }: { section: string | null })
         <Links
           items={[
             { to: ["concept", "rh"], label: ["The Riemann case: AI + human, step by step", "黎曼案例：AI + 人，一步一步看"] },
+            { to: ["concept", "rh", "architecture"], label: ["Tao's digestion ladder, on the RH page", "RH 頁上陶哲軒的消化階梯"] },
             { to: ["concept", "views", "stance"], label: ["Where Formalizer stands", "Formalizer 的立場"] },
             { to: ["problems", "research"], label: ["Try it: the research workspace", "動手試：研究工作區"] },
+          ]}
+        />
+        <Sources
+          items={[
+            {
+              label: "T. Tao, Unforced Euler singularity, unforced Navier–Stokes singularity, and the generalized Riemann hypothesis (20 Nov 2026)",
+              url: "https://terrytao.wordpress.com/2026/11/20/unforced-euler-singularity-unforced-navier-stokes-singularity-and-the-generalized-riemann-hypothesis/",
+            },
+            { label: "C. Fefferman, Existence and smoothness of the Navier–Stokes equation (Clay Mathematics Institute, official problem description)", url: "https://www.claymath.org/wp-content/uploads/2022/06/navierstokes.pdf" },
+            { label: "openai/NavierStokesAndEuler: the Navier–Stokes and Euler challenges in Lean (Formalizer's flagship problem)", url: "https://github.com/openai/NavierStokesAndEuler" },
           ]}
         />
         <p className="text-xs text-gray-500">{pick(["Facts about November 2026 are as of 27 November 2026, with sources on the RH page.", "關於 2026 年 11 月的事實截至 2026 年 11 月 27 日，出處見 RH 頁。"])}</p>

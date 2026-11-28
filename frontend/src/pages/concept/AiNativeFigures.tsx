@@ -772,19 +772,33 @@ export function ReversePath() {
         </text>
         {/* the graph sits right of the row label */}
         <g transform="translate(40 0)">
+        {/* arrowheads 60% along each edge (markerMid on a three-point polyline), so crossing edges keep apart; one marker per colour */}
+        <defs>
+          {[
+            ["rp-gray", "fill-gray-400"],
+            ["rp-violet", "fill-violet-500"],
+            ["rp-faint", "fill-gray-200"],
+          ].map(([id, cls]) => (
+            <marker key={id} id={id} viewBox="0 0 10 10" refX={5} refY={5} markerWidth={8} markerHeight={8} markerUnits="userSpaceOnUse" orient="auto">
+              <path d="M0 0 L10 5 L0 10 z" className={cls} />
+            </marker>
+          ))}
+        </defs>
         {edges.map(([a, b]) => {
           const p = at(a);
           const q = at(b);
           const off = faded(a) || faded(b);
+          const on = lit(a, b);
+          // forward: from what is used up to what it proves; backward (lit): from the theorem down to what it uses
+          const [x1, y1, x2, y2] = on ? [q.x, q.y + 12, p.x, p.y - 12] : [p.x, p.y - 12, q.x, q.y + 12];
           return (
-            <line
+            <polyline
               key={`${a}-${b}`}
-              x1={p.x}
-              y1={p.y - 12}
-              x2={q.x}
-              y2={q.y + 12}
-              strokeWidth={lit(a, b) ? 2.2 : 1.2}
-              className={off ? "stroke-gray-200" : lit(a, b) ? "stroke-violet-500" : "stroke-gray-300"}
+              points={`${x1},${y1} ${x1 + 0.6 * (x2 - x1)},${y1 + 0.6 * (y2 - y1)} ${x2},${y2}`}
+              fill="none"
+              strokeWidth={on ? 2.2 : 1.3}
+              markerMid={`url(#${off ? "rp-faint" : on ? "rp-violet" : "rp-gray"})`}
+              className={off ? "stroke-gray-200" : on ? "stroke-violet-500" : "stroke-gray-400"}
             />
           );
         })}
@@ -1141,7 +1155,9 @@ export function GitFlow() {
       </div>
       <svg viewBox="0 0 800 340" className="w-full" role="img" aria-label={pick(["Branches merge into main only through the kernel", "分支只能通過核心才能合併進 main"])}>
         {/* main */}
-        <line x1={30} x2={785} y1={MAIN_Y} y2={MAIN_Y} className="stroke-gray-900" strokeWidth={3.5} />
+        <line x1={30} x2={780} y1={MAIN_Y} y2={MAIN_Y} className="stroke-gray-900" strokeWidth={3.5} />
+        {/* main runs forward in time: an arrowhead at its end */}
+        <path d={`M796 ${MAIN_Y} L778 ${MAIN_Y - 9} L778 ${MAIN_Y + 9} Z`} className="fill-gray-900" />
         <text x={24} y={MAIN_Y - 14} fontSize={13} className="fill-emerald-600 font-bold">
           main
         </text>
@@ -1434,8 +1450,8 @@ const GO: { year: string; go?: L; maths?: L }[] = [
   {
     year: "Nov 2026",
     maths: [
-      "A Lean proof of RH, with Claude; a crowd formalizes a 940-page draft in days; a Navier–Stokes blowup with a Lean formalization.",
-      "與 Claude 合作的 RH Lean 證明；群眾幾天內形式化一份 940 頁的草稿；有 Lean 形式化的 Navier–Stokes 爆破。",
+      "A Lean proof of RH, with Claude; a crowd formalizes a 940-page draft in days; Terence Tao lists a claimed Navier–Stokes blowup with a Lean formalization, its professional write-up still owed.",
+      "與 Claude 合作的 RH Lean 證明；群眾幾天內形式化一份 940 頁的草稿；陶哲軒列出一個宣稱的 Navier–Stokes 爆破，已有 Lean 形式化，但正式寫成的證明還欠著。",
     ],
   },
   { year: "next", maths: ["Training and daily work change, as they did in Go.", "訓練與日常工作改變，就像圍棋那樣。"] },
