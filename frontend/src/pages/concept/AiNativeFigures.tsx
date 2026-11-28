@@ -519,7 +519,7 @@ export function DivideConquer() {
  * A small pill button that opens a dialog (the native <dialog>: Esc, × or a click outside closes it), like the RH
  * page's "What is a refactor?". The body renders only while open.
  */
-function InfoDialog({ id, label, width, children }: { id: string; label: L; width: string; children: ReactNode }) {
+export function InfoDialog({ id, label, width, children }: { id: string; label: L; width: string; children: ReactNode }) {
   const { pick } = useLang();
   const ref = useRef<HTMLDialogElement>(null);
   const [shown, setShown] = useState(false);

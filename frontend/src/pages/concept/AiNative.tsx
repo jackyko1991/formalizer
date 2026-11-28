@@ -6,8 +6,9 @@
  * leads. Sections 5–7 are this site's position, not a consensus; facts about November 2026 are as on the RH page.
  */
 import { useLang } from "@learnkit/web";
+import { CardTabs } from "./CardTabs";
 import { Callout, Figure, List, P, Page, Section, SiteLink, Sources, Table, type SectionInfo } from "../kit";
-import { DependencyStacks, DivideConquer, Eras, GitFlow, GoTimeline, OneMind, PaperStacks, ReadingBudget, ReversePath, TasteFunnel, TddCycle, WorkflowSwitch } from "./AiNativeFigures";
+import { DependencyStacks, DivideConquer, InfoDialog, Eras, GitFlow, GoTimeline, OneMind, PaperStacks, ReadingBudget, ReversePath, TasteFunnel, TddCycle, WorkflowSwitch } from "./AiNativeFigures";
 
 const PAGE = "ainative";
 
@@ -40,8 +41,8 @@ export default function AiNativeConcept({ section }: { section: string | null })
       focus={section}
       title={["AI-native mathematics", "AI 原生數學"]}
       intro={[
-        "For most of its history mathematics was done by one mind, or a few, with paper: understanding, proving, writing and checking all happened in human heads. November 2026 showed another way of working: a 17-million-line Lean proof of the Riemann hypothesis made with Claude, a refactor that cut it about 154-fold in five days, and about ninety people with their coding agents formalizing a 940-page human draft in four days. This page sets the two workflows side by side, borrows software engineering's vocabulary for the new one, and ends with where this site thinks it leads. From section 5 on, it is **this site's position, not a consensus**.",
-        "在大部分的歷史裡，數學由一個人或少數幾個人，用紙筆完成：理解、證明、寫作與檢查，全都發生在人的腦袋裡。2026 年 11 月展示了另一種工作方式：一份與 Claude 合作完成、1700 萬行的黎曼猜想 Lean 證明；一次在五天內把它縮短約 154 倍的重構；以及大約九十個人帶著各自的程式代理，四天內把一份 940 頁的人寫草稿形式化。本頁把兩種工作流並排比較，借用軟體工程的詞彙來描述新的那一種，最後談本站認為它會走向哪裡。從第 5 節起是**本站的立場，不是共識**。",
+        "For most of its history mathematics was done by one mind, or a few, with paper: understanding, proving, writing and checking all happened in human heads. November 2026 showed another way of working: a 17-million-line Lean proof of the Riemann hypothesis made with Claude, a refactor that cut it about 154-fold in five days, and about ninety people with their coding agents formalizing a 940-page human draft in four days. This page sets the two workflows side by side, borrows software engineering's vocabulary for the new one, and ends with where this site thinks it leads. From section 5 on, it is **this site's position, not a consensus**. One warning up front: an AI agent (such as Claude Code, Codex or Antigravity) is a collaborative tool working in a prepared environment, not a web chatbot to ask one question, and in 2026 it does not solve top-tier problems end to end on its own (section 2).",
+        "在大部分的歷史裡，數學由一個人或少數幾個人，用紙筆完成：理解、證明、寫作與檢查，全都發生在人的腦袋裡。2026 年 11 月展示了另一種工作方式：一份與 Claude 合作完成、1700 萬行的黎曼猜想 Lean 證明；一次在五天內把它縮短約 154 倍的重構；以及大約九十個人帶著各自的程式代理，四天內把一份 940 頁的人寫草稿形式化。本頁把兩種工作流並排比較，借用軟體工程的詞彙來描述新的那一種，最後談本站認為它會走向哪裡。從第 5 節起是**本站的立場，不是共識**。先說一句提醒：AI 代理（例如 Claude Code、Codex 或 Antigravity）是在建置好的環境裡工作的協作工具，不是丟一個問題就等答案的網頁聊天機器人；而且在 2026 年，它不會自己從頭到尾解決頂尖難題（第 2 節）。",
       ]}
     >
       {/* ------------------------------------------------------------------------------------------------ 1 */}
@@ -108,12 +109,86 @@ export default function AiNativeConcept({ section }: { section: string | null })
             "在 AI 原生工作流裡，**人是架構師**。人選題、固定陳述、畫出策略、評判結果；AI 代理把計畫填滿；Lean 核心檢查每一步；許多台機器負責建置。工作的拆法就像大型軟體：分而治之。",
           ]}
         />
+        <Callout kind="warn" title={["Read this first: an AI agent is a collaborator, not a web chatbot", "請先讀這段：AI 代理是協作工具，不是網頁聊天機器人"]}>
+          <P
+            t={[
+              "An AI agent (such as Claude Code, Codex or Antigravity) may run on the same core model as a web chatbot (ChatGPT, Gemini or Claude in a browser). What differs is the setting: the agent works *inside a prepared environment*, your project, Lean, Mathlib, the kernel's error messages and other tools, and keeps working for hours. With that setup and tooling built for the field, it does far more than the chatbot. Pasting one question into a web chatbot may well disappoint; an agent is a tool to **collaborate** with, not an oracle to ask. And **in 2026 it does not solve top-tier problems end to end**: experts still choose the problem and the direction, write the statement, and judge the result.",
+              "AI 代理（例如 Claude Code、Codex 或 Antigravity）的核心模型，可能和網頁聊天機器人（瀏覽器裡的 ChatGPT、Gemini 或 Claude）相同。差別在於工作的環境：代理在*建置好的環境裡*工作，包括你的專案、Lean、Mathlib、核心的錯誤訊息與其他工具，並且一連工作好幾個小時。有了這樣的環境建置與為該領域打造的工具，它能做的遠多於聊天機器人。把一個問題丟進網頁聊天機器人，很可能令你失望；代理是一個要與它**協作**的工具，不是一個問了就有答案的神諭。而且**在 2026 年，它不會從頭到尾自己解決頂尖難題**：選題與方向、寫陳述、評判結果，仍然要靠專家。",
+            ]}
+          />
+          <InfoDialog id="agent" label={["Chatbot vs agent, and what guidance means", "聊天機器人與代理，以及什麼是指引"]} width="44rem">
+          <P
+            t={[
+              "**Same core, different tool.** A chatbot, such as the web version of ChatGPT, Gemini or Claude, answers a question in a chat window. An agent, such as Claude Code, Codex or Antigravity, may use the same model, but it works *inside a project*: it reads and edits the files, runs Lean, reads the kernel's errors, tries again, and keeps going for hours, often as many copies on many machines. Proofs on the scale of this page come from agents working in a Lean repository under a person's direction, not from pasting a problem into a chat box.",
+              "**核心相同，工具不同。** 聊天機器人（例如網頁版的 ChatGPT、Gemini 或 Claude）在對話框裡回答一個問題。代理（例如 Claude Code、Codex 或 Antigravity）可能用的是同一個模型，但它在*專案裡面*工作：讀檔、改檔、執行 Lean、讀核心的錯誤訊息、再試一次，一連做上好幾個小時，常常是許多份同時在許多台機器上跑。本頁這種規模的證明，來自在人的指揮下、於 Lean 儲存庫裡工作的代理，而不是把題目貼進對話框。",
+            ]}
+          />
+          <Table
+            head={[
+              ["", ""],
+              ["Web chatbot (e.g. ChatGPT, Gemini on the web)", "網頁聊天機器人（如網頁版 ChatGPT、Gemini）"],
+              ["AI agent", "AI 代理"],
+            ]}
+            rows={[
+              [["The model inside", "裡面的模型"], ["often the same", "常常相同"], ["often the same", "常常相同"]],
+              [["The setting", "工作環境"], ["little: the conversation, perhaps a few general tools such as email or maps", "很少：只有對話，或少量通用工具，例如電子郵件、地圖"], ["a prepared environment: the project, Lean, Mathlib, tools, instructions", "建置好的環境：專案、Lean、Mathlib、工具、指示"]],
+              [["Where it works", "在哪裡工作"], ["a chat window", "對話框"], ["inside your project: files, terminal, Lean", "在你的專案裡：檔案、終端機、Lean"]],
+              [["How long", "做多久"], ["one answer", "一個回答"], ["hours, thousands of steps, many machines", "數小時、成千上萬步、許多台機器"]],
+              [["What checks it", "誰來檢查"], ["nothing, unless you do", "沒有，除非你自己查"], ["the Lean kernel, on every attempt", "Lean 核心，每一次嘗試都查"]],
+              [["What it needs from you", "需要你提供什麼"], ["a question", "一個問題"], ["a direction, a statement, a plan, and review", "方向、陳述、計畫，以及審查"]],
+              [["How to use it", "怎麼用"], ["ask, read the answer", "問問題、讀答案"], ["collaborate: discuss, plan, let it work, review, repeat", "協作：討論、規劃、讓它工作、審查、再來一輪"]],
+            ]}
+          />
+          <P
+            t={[
+              "**Do not expect top-tier problems to be solved end to end, at least in 2026.** No agent today takes an open problem and returns an accepted solution by itself. In every case on this site, experts chose the problem and the direction. Levent Alpöge, in his own words, \"guided us to the right situation\" before Claude's work began to leave him in awe, and he still calls the finished Lean proof only \"a step\" until the argument is understood and written for people. Masullo's draft was read by people working with AI, not by AI alone.",
+              "**別期待頂尖難題能被從頭到尾自動解決，至少在 2026 年不行。** 今天沒有任何代理能接過一道公開難題，自己交回一個被接受的解答。本站的每一個案例裡，選題與方向都是專家定的。用 Levent Alpöge 自己的話說，是他「把我們帶到正確的情境」，之後 Claude 的工作才開始讓他驚嘆；而且在論證被理解、被寫給人看之前，他仍只把完成的 Lean 證明稱為「一步」。Masullo 的草稿，是由與 AI 一起工作的人讀出問題的，不是 AI 自己。",
+            ]}
+          />
+          <P
+            t={[
+              "On hard problems an agent still needs **professional guidance**: someone who knows the field well enough to choose a promising direction, write the statement correctly, see when the agent is stuck, circling or proving the wrong thing, and judge what the result means. Without that, an agent can run for days and return nothing, or return a long, fully checked proof of a statement nobody wanted. As in software, agents make skilled people far faster; they do not replace knowing what to build.",
+              "面對難題，代理仍然需要**專業的指引**：需要一個夠懂這個領域的人，去選一個有希望的方向、把陳述寫對、看出代理卡住了、在原地打轉，或是證錯了東西，並判斷結果代表什麼。少了這些，代理可能跑上好幾天、什麼都沒交回來；或交回一份又長、又完全通過檢查、卻是沒人想要的陳述的證明。就像軟體一樣，代理讓有能力的人快得多；它不會取代「知道要做什麼」。",
+            ]}
+          />
+          <Links
+            items={[
+              { to: ["concept", "rh", "mirror"], label: ["Alpöge in his own words, on the RH page", "RH 頁上 Alpöge 自己的話"] },
+              { to: ["agents", "skills"], label: ["Set up an agent for Lean", "為 Lean 設定代理"] },
+            ]}
+          />
+          </InfoDialog>
+        </Callout>
+        <CardTabs
+          testid="architect-tabs"
+          tabs={[
+            {
+              id: "workflow",
+              label: ["Two workflows", "兩種工作流"],
+              body: (
+                <>
         <Figure caption={["The same eight stages, two workflows: traditional above, AI-native below. Tap a stage to compare. Only the first and last stay with people alone.", "同樣八個階段，兩種工作流：上面是傳統，下面是 AI 原生。點一個階段比較看看。只有第一個與最後一個仍完全屬於人。"]}>
           <WorkflowSwitch />
         </Figure>
+                </>
+              ),
+            },
+            {
+              id: "divide",
+              label: ["Divide and conquer", "分而治之"],
+              body: (
+                <>
         <Figure caption={["Divide and conquer in seven steps, across three levels of abstraction. Solid outline: the theorem; dashed: a lemma. The outline's colour tells the state.", "分而治之的七個步驟，跨越三個抽象層次。實線外框是定理，虛線是引理；外框的顏色表示狀態。"]}>
           <DivideConquer />
         </Figure>
+                </>
+              ),
+            },
+            {
+              id: "roles",
+              label: ["Who leads what", "誰主導什麼"],
+              body: (
+                <>
         <Table
           head={[
             ["Part of the work", "工作的部分"],
@@ -137,7 +212,14 @@ export default function AiNativeConcept({ section }: { section: string | null })
             "RH 的證明就是這樣一版一版走過來的：2026 年 11 月 20 日公開；11 月 21–22 日由 Lean 與 Mathlib 社群認證；11 月 25 日從 1740 萬行重構成 477,124 行（可讀版）與 112,827 行（精簡版）；11 月 25–26 日被獨立檢查器接受。還缺的是最後一步：寫給人看的證明。",
           ]}
         />
-        <Callout kind="note" title={["Reverse mathematics: walking the path backwards", "反推數學：把路倒過來走"]}>
+                </>
+              ),
+            },
+            {
+              id: "reverse",
+              label: ["Reverse mathematics", "反推數學"],
+              body: (
+                <>
           <P
             t={[
               "A refactor shortens the *implementation* of a proof. A second way to simplify goes deeper, into the mathematics. Ordinary mathematics goes forward, from axioms to theorems. **Reverse mathematics**, begun by Harvey Friedman in 1975 and developed by Stephen Simpson and others, goes backward: given a theorem, which axioms does it really need? Its striking finding is that many theorems of ordinary mathematics are, over a weak base system, *equivalent* to one of a handful of axiom systems, the \"Big Five\": RCA₀, WKL₀, ACA₀, ATR₀ and Π¹₁-CA₀.",
@@ -172,7 +254,11 @@ export default function AiNativeConcept({ section }: { section: string | null })
               { label: "riemann-masullo issue #7673 (25 Nov 2026)", url: "https://github.com/mccorvie/riemann-masullo/issues/7673" },
             ]}
           />
-        </Callout>
+                </>
+              ),
+            },
+          ]}
+        />
         <Links
           items={[
             { to: ["concept", "rh", "architecture"], label: ["The RH proof, version by version", "RH 證明，一版一版來看"] },
