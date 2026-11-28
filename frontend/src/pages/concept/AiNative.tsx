@@ -141,8 +141,8 @@ export default function AiNativeConcept({ section }: { section: string | null })
           />
           <P
             t={[
-              "**Do not expect top-tier problems to be solved end to end, at least in 2026.** No agent today takes an open problem and returns an accepted solution by itself. In every case on this site, experts chose the problem and the direction. Levent Alpöge, in his own words, \"guided us to the right situation\" before Claude's work began to leave him in awe, and he still calls the finished Lean proof only \"a step\" until the argument is understood and written for people. Masullo's draft was read by people working with AI, not by AI alone.",
-              "**別期待頂尖難題能被從頭到尾自動解決，至少在 2026 年不行。** 今天沒有任何代理能接過一道公開難題，自己交回一個被接受的解答。本站的每一個案例裡，選題與方向都是專家定的。用 Levent Alpöge 自己的話說，是他「把我們帶到正確的情境」，之後 Claude 的工作才開始讓他驚嘆；而且在論證被理解、被寫給人看之前，他仍只把完成的 Lean 證明稱為「一步」。Masullo 的草稿，是由與 AI 一起工作的人讀出問題的，不是 AI 自己。",
+              "**Do not expect top-tier problems to be solved end to end, at least in 2026.** No agent today takes an open problem and returns an accepted solution by itself. In every case on this site, experts chose the problem and the direction. The Riemann proof was guided by a specialist in exactly this field: Levent Alpöge is a number theorist (PhD Princeton 2020 under Manjul Bhargava, Junior Fellow of Harvard's Society of Fellows 2021–25, now a mathematician at Anthropic). In his own words, he \"guided us to the right situation\" before Claude's work began to leave him in awe, and he still calls the finished Lean proof only \"a step\" until the argument is understood and written for people. Masullo's draft was read by people working with AI, not by AI alone.",
+              "**別期待頂尖難題能被從頭到尾自動解決，至少在 2026 年不行。** 今天沒有任何代理能接過一道公開難題，自己交回一個被接受的解答。本站的每一個案例裡，選題與方向都是專家定的。黎曼猜想的證明，是由這個領域本身的專家引導的：Levent Alpöge 是數論學家（2020 年普林斯頓大學博士，指導教授 Manjul Bhargava；2021–25 年哈佛學人學會 Junior Fellow；現為 Anthropic 的數學家）。用他自己的話說，是他「把我們帶到正確的情境」，之後 Claude 的工作才開始讓他驚嘆；而且在論證被理解、被寫給人看之前，他仍只把完成的 Lean 證明稱為「一步」。Masullo 的草稿，是由與 AI 一起工作的人讀出問題的，不是 AI 自己。",
             ]}
           />
           <P
@@ -155,6 +155,12 @@ export default function AiNativeConcept({ section }: { section: string | null })
             items={[
               { to: ["concept", "rh", "mirror"], label: ["Alpöge in his own words, on the RH page", "RH 頁上 Alpöge 自己的話"] },
               { to: ["agents", "skills"], label: ["Set up an agent for Lean", "為 Lean 設定代理"] },
+            ]}
+          />
+          <Sources
+            items={[
+              { label: "Mathematics Genealogy Project: Levent Alpöge (Ph.D. Princeton 2020, advisor Manjul Bhargava)", url: "https://mathgenealogy.com/id.php?id=264243" },
+              { label: "Harvard Mathematics: Levent Alpöge, Junior Fellow", url: "https://www.math.harvard.edu/people/alpoge-levent" },
             ]}
           />
           </InfoDialog>
